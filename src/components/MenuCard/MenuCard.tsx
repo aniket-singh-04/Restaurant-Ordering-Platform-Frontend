@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Star, Clock, Flame, Leaf } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { MenuCardProps } from "./types";
+import { formatPrice } from "../../utils/formatPrice";
 
 export default function MenuCard({ item, index }: MenuCardProps) {
   const navigate = useNavigate();
@@ -21,18 +22,20 @@ export default function MenuCard({ item, index }: MenuCardProps) {
           src={item.image}
           alt={item.name}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+          loading="lazy"
+          decoding="async"
         />
 
         {/* 3D Badge */}
         {item.has3DModel && (
-          <div className="absolute top-3 left-3 rounded-full bg-[linear-gradient(135deg,rgb(249,116,21)_0%,rgb(249,158,31)_50%,rgb(250,201,56)_100%)] from-orange-500 to-pink-500 px-2 py-1 text-xs font-bold text-white">
+          <div className="absolute top-3 left-3 rounded-full bg-[linear-linear(135deg,rgb(249,116,21)_0%,rgb(249,158,31)_50%,rgb(250,201,56)_100%)] px-2 py-1 text-xs font-bold text-white">
             3D View
           </div>
         )}
 
         {/* Price Badge */}
         <div className="absolute bottom-3 right-3 rounded-full bg-white/70 px-3 py-1.5 font-bold text-foreground backdrop-blur-md">
-          ₹{item.price}
+          {formatPrice(item.price)}
         </div>
 
         {/* Diet indicators */}
@@ -52,24 +55,20 @@ export default function MenuCard({ item, index }: MenuCardProps) {
             </div>
           )}
         </div>
-
-
       </div>
 
       {/* Content */}
       <div className="p-4 text-left">
-        <h3 className="mb-1 line-clamp-1 font-display text-lg font-semibold ">
+        <h3 className="mb-1 line-clamp-1 font-display text-lg font-semibold">
           {item.name}
         </h3>
-        <p className="mb-3 line-clamp-2 text-sm">
-          {item.description}
-        </p>
+        <p className="mb-3 line-clamp-2 text-sm">{item.description}</p>
 
         {/* Meta info */}
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-1">
-            <Star className="h-4 w-4 fill-primary text-primary" />
-            <span className="font-medium ">{item.rating}</span>
+            <Star className="h-4 w-4 fill-orange-500 text-orange-500" />
+            <span className="font-medium">{item.rating}</span>
           </div>
           <div className="flex items-center gap-1">
             <Clock className="h-4 w-4" />

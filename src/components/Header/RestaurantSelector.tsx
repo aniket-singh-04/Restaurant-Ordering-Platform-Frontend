@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { restaurants } from "./constants";
 import { useClickOutside } from "./useClickOutside";
 import {
@@ -8,6 +8,7 @@ import {
   ListboxOptions,
 } from "@headlessui/react";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
+import { getStoredRestaurantSelection } from "./storage";
 
 export default function RestaurantSelector({
   onApply,
@@ -22,6 +23,15 @@ export default function RestaurantSelector({
   useClickOutside(ref, () => setOpen(false));
 
   const selectedRestaurant = restaurants.find((r) => r.name === restaurant);
+
+  useEffect(() => {
+    const {
+      restaurant: storedRestaurant,
+      table: storedTable,
+    } = getStoredRestaurantSelection();
+    if (storedRestaurant) setRestaurant(storedRestaurant);
+    if (storedTable !== null) setTable(storedTable);
+  }, []);
 
   function apply() {
     if (!restaurant || !table) return;

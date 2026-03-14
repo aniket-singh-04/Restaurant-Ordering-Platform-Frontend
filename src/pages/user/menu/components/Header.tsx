@@ -10,7 +10,9 @@ export default function Header({ title, className }: HeaderProps) {
   const navigate = useNavigate();
 
   return (
-    <header className={`${className}sticky top-0 z-40 bg-[#fff9f0] border-b border-[#f0e6d6] backdrop-blur-md`}>
+    <header
+      className={`${className ? `${className} ` : ""}sticky top-0 z-40 bg-[#fff9f0] border-b border-[#f0e6d6] backdrop-blur-md`}
+    >
       <div className="flex items-center h-16 px-4">
         <button
           onClick={() => navigate(-1)}

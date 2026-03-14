@@ -1,6 +1,7 @@
-import { Star, Clock, Leaf, Flame } from 'lucide-react';
-import { motion } from 'framer-motion';
-import type { MenuItem } from '../../../../components/MenuCard/types';
+import { Star, Clock, Leaf, Flame } from "lucide-react";
+import { motion } from "framer-motion";
+import type { MenuItem } from "../../../../components/MenuCard/types";
+import { formatPrice } from "../../../../utils/formatPrice";
 
 interface ItemInfoProps {
   item: MenuItem;
@@ -8,13 +9,17 @@ interface ItemInfoProps {
 
 export default function ItemInfo({ item }: ItemInfoProps) {
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-4"
+    >
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="font-display text-2xl font-bold">{item.name}</h2>
           <div className="flex items-center gap-3 mt-2">
             <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 fill-primary text-primary" />
+              <Star className="w-4 h-4 fill-orange-500 text-orange-500" />
               <span className="font-medium">{item.rating}</span>
             </div>
             <div className="flex items-center gap-1 text-muted-foreground">
@@ -36,7 +41,9 @@ export default function ItemInfo({ item }: ItemInfoProps) {
           </div>
         </div>
         <div className="text-right">
-          <p className="text-2xl font-bold text-primary">₹{item.price}</p>
+          <p className="text-2xl font-bold text-primary">
+            {formatPrice(item.price)}
+          </p>
         </div>
       </div>
 

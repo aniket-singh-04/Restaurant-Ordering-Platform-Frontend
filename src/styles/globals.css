@@ -1,6 +1,11 @@
 * {
   box-sizing: border-box;
 }
+html,
+body,
+#root {
+  min-height: 100%;
+}
 /* Always show vertical scrollbar, horizontal scroll auto */
 html {
   overflow-y: scroll; /* Always show vertical scrollbar */
@@ -24,11 +29,60 @@ html::-webkit-scrollbar-thumb:hover {
 }
 body {
   background-color: #fbfaf8;
+  color: #1f1914;
 }
 #root {
-  max-width: 1280px;
+  width: 100%;
   margin: 0 auto;
-  text-align: center;
+}
+
+:root {
+  --color-primary: #f97316;
+  --color-secondary: #fff3e0;
+  --color-foreground: #1f1914;
+  --color-muted: #6b7280;
+  --color-success: #16a34a;
+  --color-warning: #f59e0b;
+}
+
+.bg-card {
+  background-color: #ffffff;
+}
+.bg-secondary {
+  background-color: var(--color-secondary);
+}
+.text-foreground {
+  color: var(--color-foreground);
+}
+.text-muted-foreground {
+  color: var(--color-muted);
+}
+.text-primary {
+  color: var(--color-primary);
+}
+.text-success {
+  color: var(--color-success);
+}
+.text-warning {
+  color: var(--color-warning);
+}
+.shadow-warm {
+  box-shadow: 0 8px 20px rgba(249, 115, 22, 0.12);
+}
+.shadow-warm-lg {
+  box-shadow: 0 16px 40px rgba(249, 115, 22, 0.2);
+}
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+}
+.warm-linear {
+  background: linear-linear(135deg, #f97316, #f59e0b);
+  color: #ffffff;
+}
+.font-display {
+  font-family: "Georgia", "Times New Roman", serif;
 }
 /* Hide scrollbar for all browsers chrome , safari */
 /* .scrollbar-hide::-webkit-scrollbar {

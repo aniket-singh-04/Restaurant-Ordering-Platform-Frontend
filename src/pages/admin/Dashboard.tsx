@@ -1,0 +1,272 @@
+import type { LucideIcon } from "lucide-react";
+import { motion } from "framer-motion";
+import {
+  TrendingUp,
+  DollarSign,
+  ShoppingBag,
+  Users,
+  ArrowUp,
+  ArrowDown,
+  Clock,
+  Bell,
+} from "lucide-react";
+
+const currencyFormatter = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  maximumFractionDigits: 0,
+});
+const numberFormatter = new Intl.NumberFormat("en-IN");
+
+const formatCurrency = (value: number) => currencyFormatter.format(value);
+const formatNumber = (value: number) => numberFormatter.format(value);
+
+type Stat = {
+  label: string;
+  value: number | string;
+  format: "currency" | "number" | "text";
+  change: string;
+  isPositive: boolean;
+  icon: LucideIcon;
+};
+
+const stats: Stat[] = [
+  {
+    label: "Today's Revenue",
+    value: 12450,
+    format: "currency",
+    change: "+12%",
+    isPositive: true,
+    icon: DollarSign,
+  },
+  {
+    label: "Total Orders",
+    value: 48,
+    format: "number",
+    change: "+8%",
+    isPositive: true,
+    icon: ShoppingBag,
+  },
+  {
+    label: "Active Tables",
+    value: 12,
+    format: "number",
+    change: "-2",
+    isPositive: false,
+    icon: Users,
+  },
+  {
+    label: "Avg. Prep Time",
+    value: "18 min",
+    format: "text",
+    change: "-3 min",
+    isPositive: true,
+    icon: Clock,
+  },
+];
+
+const formatStatValue = (stat: Stat) => {
+  if (stat.format === "currency" && typeof stat.value === "number") {
+    return formatCurrency(stat.value);
+  }
+  if (stat.format === "number" && typeof stat.value === "number") {
+    return formatNumber(stat.value);
+  }
+  return String(stat.value);
+};
+
+const recentOrders = [
+  {
+    id: "ORD-001",
+    table: "5",
+    items: 3,
+    total: 850,
+    status: "preparing",
+    time: "2 min ago",
+  },
+  {
+    id: "ORD-002",
+    table: "12",
+    items: 5,
+    total: 1250,
+    status: "pending",
+    time: "5 min ago",
+  },
+  {
+    id: "ORD-003",
+    table: "3",
+    items: 2,
+    total: 480,
+    status: "ready",
+    time: "8 min ago",
+  },
+  {
+    id: "ORD-004",
+    table: "8",
+    items: 4,
+    total: 960,
+    status: "preparing",
+    time: "12 min ago",
+  },
+];
+
+export default function AdminDashboard() {
+  return (
+    <div className="text-left space-y-8 bg-[#fff9f2] min-h-screen">
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="font-serif text-2xl text-left font-bold text-[#3b2f2f]">
+            Dashboard
+          </h1>
+          <p className="text-[#6b665f]">
+            Welcome back! Here's what's happening today.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="relative rounded-xl bg-linear-to-tr from-yellow-400 to-orange-500 p-3"
+          aria-label="Open notifications"
+        >
+          <Bell className="w-5 h-5 text-white" />
+          <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center">
+            3
+          </span>
+        </button>
+      </header>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat, idx) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.1 }}
+            className="bg-white rounded-xl shadow-md p-6"
+          >
+            <div className="flex justify-between mb-4">
+              <div className="w-10 h-10 rounded-lg bg-[#fce8d8] flex items-center justify-center text-[#ef6820]">
+                <stat.icon className="w-6 h-6" />
+              </div>
+              <div
+                className={`flex items-center gap-1 font-semibold text-sm ${
+                  stat.isPositive ? "text-green-600" : "text-red-600"
+                }`}
+              >
+                {stat.isPositive ? (
+                  <ArrowUp className="w-4 h-4" />
+                ) : (
+                  <ArrowDown className="w-4 h-4" />
+                )}
+                {stat.change}
+              </div>
+            </div>
+            <p className="font-serif font-bold text-xl text-[#3b2f2f]">
+              {formatStatValue(stat)}
+            </p>
+            <p className="text-[#6b665f]">{stat.label}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Recent Orders */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white rounded-xl shadow-md p-6"
+        >
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="font-serif font-semibold text-lg text-[#3b2f2f]">
+              Recent Orders
+            </h2>
+            <button type="button" className="text-[#3b2f2f] font-semibold">
+              View All
+            </button>
+          </div>
+          <div className="space-y-4">
+            {recentOrders.map((order) => (
+              <div
+                key={order.id}
+                className="flex justify-between items-center bg-[#fdf7f1] rounded-lg p-4"
+              >
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-[#3b2f2f]">{order.id}</p>
+                    <span
+                      className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold uppercase text-white ${
+                        order.status === "preparing"
+                          ? "bg-blue-400"
+                          : order.status === "pending"
+                            ? "bg-yellow-400"
+                            : "bg-green-400"
+                      }`}
+                    >
+                      {order.status}
+                    </span>
+                  </div>
+                  <p className="text-[#6b665f] text-sm text-left mt-1">
+                    Table {order.table} - {order.items} items
+                  </p>
+                </div>
+                <div className="text-right text-[#3b2f2f]">
+                  <p className="font-semibold">{formatCurrency(order.total)}</p>
+                  <p className="text-xs text-[#6b665f]">{order.time}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-white rounded-xl shadow-md p-6"
+        >
+          <h2 className="font-serif font-semibold text-lg text-[#3b2f2f] mb-6">
+            Quick Actions
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button type="button" className="text-left flex flex-col items-start gap-4 bg-[#fdf7f1] rounded-xl p-6">
+              <ShoppingBag className="text-[#ef6820] w-8 h-8" />
+              <div>
+                <p className="font-semibold text-[#3b2f2f]">New Order</p>
+                <p className="text-[#6b665f] text-sm">Create manual order</p>
+              </div>
+            </button>
+            <button type="button" className="text-left flex flex-col items-start gap-4 bg-[#fdf7f1] rounded-xl p-6">
+              <TrendingUp className="text-[#22c55e] w-8 h-8" />
+              <div>
+                <p className="font-semibold text-[#3b2f2f]">Reports</p>
+                <p className="text-[#6b665f] text-sm">View analytics</p>
+              </div>
+            </button>
+          </div>
+
+          {/* Popular Today */}
+          <div className="mt-6">
+            <h3 className="font-semibold text-[#3b2f2f] mb-4">Popular Today</h3>
+            <div className="space-y-3">
+              {["Butter Chicken", "Margherita Pizza", "Gourmet Burger"].map(
+                (item, i) => (
+                  <div key={item} className="flex items-center justify-between">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#ef6820] text-white font-semibold">
+                      {i + 1}
+                    </span>
+                    <span className="flex-1 text-[#3b2f2f] ml-4">{item}</span>
+                    <span className="text-[#6b665f] text-sm">
+                      {15 - i * 3} orders
+                    </span>
+                  </div>
+                ),
+              )}
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}

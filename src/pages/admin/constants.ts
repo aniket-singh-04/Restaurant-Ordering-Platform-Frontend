@@ -1,0 +1,49 @@
+import type { ElementType } from "react";
+import {
+  BarChart3,
+  ClipboardList,
+  LayoutDashboard,
+  Settings,
+  User,
+  UtensilsCrossed,
+} from "lucide-react";
+import { MdManageAccounts } from "react-icons/md";
+import type { UserRole } from "../../features/auth/types";
+
+export interface AdminNavItem {
+  to: string;
+  icon: ElementType;
+  label: string;
+  end?: boolean;
+  roles?: UserRole[];
+}
+
+export const adminNavItems: AdminNavItem[] = [
+  { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
+  { to: "/admin/menu", icon: UtensilsCrossed, label: "Menu" },
+  { to: "/admin/orders", icon: ClipboardList, label: "Orders" },
+  {
+    to: "/admin/analytics",
+    icon: BarChart3,
+    label: "Analytics",
+    roles: ["ADMIN", "SUPER_ADMIN", "RESTRO_OWNER"],
+  },
+  {
+    to: "/admin/settings",
+    icon: Settings,
+    label: "Settings",
+    roles: ["ADMIN", "SUPER_ADMIN", "RESTRO_OWNER"],
+  },
+  {
+    to: "/admin/addups",
+    icon: User,
+    label: "Add Ups",
+    roles: ["ADMIN", "SUPER_ADMIN", "RESTRO_OWNER"],
+  },
+  {
+    to: "/admin/accountmanagement",
+    icon: MdManageAccounts,
+    label: "Accounts",
+    roles: ["ADMIN", "SUPER_ADMIN", "RESTRO_OWNER"],
+  },
+];

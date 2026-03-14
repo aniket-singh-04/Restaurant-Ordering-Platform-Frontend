@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Star, Clock, Leaf, Flame } from "lucide-react";
 import { menuItems } from "../../../store/store";
@@ -7,39 +7,25 @@ import AddOnsSelector from "./components/AddOnsSelector";
 import SpecialInstructions from "./components/SpecialInstructions";
 import QuantitySelector from "./components/QuantitySelector";
 import AddToCartButton from "./components/AddToCartButton";
-
-
-
-export interface AddOn {
-  id: string;
-  name: string;
-  price: number;
-}
-
-export interface CartItem {
-  id: string;
-  menuItemId: string;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-  addOns: AddOn[];
-  specialInstructions?: string;
-}
-
-
-
+import { formatPrice } from "../../../utils/formatPrice";
+import { useCart } from "../../../context/CartContext";
 
 export default function MenuItemDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addItem } = useCart();
 
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [quantity, setQuantity] = useState(1);
-  const [selectedAddOns, setSelectedAddOns] = useState<AddOn[]>([]);
+  const [selectedAddOns, setSelectedAddOns] = useState<
+    { id: string; name: string; price: number }[]
+  >([]);
   const [specialInstructions, setSpecialInstructions] = useState("");
 
-  const item = menuItems.find((i) => i.id === id);
+  const item = useMemo(() => menuItems.find((i) => i.id === id), [id]);
+
+  useEffect(() => {
+    if (!item) navigate("/menu");
+  }, [item, navigate]);
 
   if (!item) {
     return (
@@ -55,52 +41,41 @@ export default function MenuItemDetail() {
     );
   }
 
-  useEffect(() => {
-    if (!item) navigate("/menu");
-  }, [item]);
-
-  const toggleAddOn = (addOn: AddOn) => {
+  const toggleAddOn = (addOn: { id: string; name: string; price: number }) => {
     setSelectedAddOns((prev) =>
       prev.find((a) => a.id === addOn.id)
         ? prev.filter((a) => a.id !== addOn.id)
-        : [...prev, addOn]
+        : [...prev, addOn],
     );
   };
 
   const addOnsTotal = selectedAddOns.reduce(
     (sum, addon) => sum + addon.price,
-    0
+    0,
   );
 
   const totalPrice = (item.price + addOnsTotal) * quantity;
 
   const handleAddToCart = () => {
-    setCartItems((prev) => [
-      ...prev,
-      {
-        id: `${item.id}-${Date.now()}`,
-        menuItemId: item.id,
-        name: item.name,
-        price: item.price,
-        quantity,
-        image: item.image,
-        addOns: selectedAddOns,
-        specialInstructions: specialInstructions || undefined,
-      },
-    ]);
-    navigate(-1);
+    addItem({
+      menuItemId: item.id,
+      name: item.name,
+      imageUrl: item.image,
+      basePrice: item.price,
+      finalUnitPrice: item.price + addOnsTotal,
+      currency: "INR",
+      quantity,
+      addOns: selectedAddOns,
+      specialInstructions: specialInstructions || undefined,
+    });
+    navigate("/cart");
   };
 
   return (
     <div className="min-h-screen bg-[#fff9f0] pb-32 font-sans">
-      {/* Header */}
-      <Header
-        title={item.name}
-        className={"sticky top-0 z-50 border-b bg-white"}
-      />
+      <Header title={item.name} className="sticky top-0 z-50 border-b bg-white " />
 
       <main className="container mx-auto max-w-5xl px-4 py-8">
-        {/* Card */}
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2">
             {/* IMAGE SECTION */}
@@ -109,27 +84,30 @@ export default function MenuItemDetail() {
                 src={item.image}
                 alt={item.name}
                 loading="lazy"
-                className="w-full object-fill rounded-3xl"
+                className="w-full object-cover rounded-3xl"
               />
-
-              <button
-                type="button"
-                aria-label="3D View"
-                className="cursor-pointer absolute top-3 right-3 rounded-full bg-white px-3 py-1.5 text-xs sm:text-sm font-medium text-gray-800 shadow hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
-              >
-                3D View
-              </button>
+              {item.has3DModel && (
+                <button
+                  type="button"
+                  aria-label="3D View"
+                  className="cursor-pointer absolute top-3 right-3 rounded-full bg-white px-3 py-1.5 text-xs sm:text-sm font-medium text-gray-800 shadow hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+                >
+                  3D View
+                </button>
+              )}
             </div>
 
             {/* DETAILS SECTION */}
             <div className="text-left p-8 flex flex-col justify-between">
               <div className="space-y-4">
-                <h1 className="text-4xl font-extrabold">{item.name}</h1>
+                <h1 className="text-3xl sm:text-4xl font-extrabold">
+                  {item.name}
+                </h1>
 
                 <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                   <div className="flex items-center gap-1">
                     <Star className="w-5 h-5 text-yellow-500" />
-                    {item.rating.toFixed(1)}
+                    {(item.rating ?? 0).toFixed(1)}
                   </div>
 
                   <div className="flex items-center gap-1">
@@ -153,7 +131,7 @@ export default function MenuItemDetail() {
                 </div>
 
                 <p className="text-3xl font-extrabold text-orange-500">
-                  ₹{item.price}
+                  {formatPrice(item.price)}
                 </p>
 
                 <p className="text-gray-700 leading-relaxed">
@@ -171,7 +149,6 @@ export default function MenuItemDetail() {
             </div>
           </div>
 
-          {/* SPECIAL INSTRUCTIONS */}
           <div className="px-6 pb-6">
             <SpecialInstructions
               value={specialInstructions}
@@ -181,13 +158,9 @@ export default function MenuItemDetail() {
         </div>
       </main>
 
-      {/* BOTTOM BAR */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-xl p-4">
         <div className="container mx-auto max-w-5xl flex items-center justify-between gap-4">
-          <QuantitySelector
-            quantity={quantity}
-            setQuantity={setQuantity}
-          />
+          <QuantitySelector quantity={quantity} setQuantity={setQuantity} />
 
           <AddToCartButton
             totalPrice={totalPrice}

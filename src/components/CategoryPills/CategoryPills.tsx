@@ -20,7 +20,7 @@ export default function CategoryPills({
               ${
                 isActive
                   ? "text-white bg-linear-to-br from-orange-500 via-orange-400 to-yellow-400"
-                  : "bg-[#eae4dc] hover:bg-linear-to-br from-orange-250 via-orange-200 to-yellow-200 text-gray-700"
+                  : "bg-[#eae4dc] hover:bg-linear-to-br from-orange-200 via-orange-100 to-yellow-100 text-gray-700"
               }
             `}
           >

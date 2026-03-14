@@ -11,4 +11,10 @@ export default defineConfig({
     }),
     tailwindcss(),
   ],
+    // server: {
+    // port: 3001,      // Change to your desired port
+    // strictPort: true // Optional: fails if port is already in use0
+    // or 
+    // npm run dev -- --port 3001
+  // }
 })
