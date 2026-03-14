@@ -1,84 +1,197 @@
-# Restaurant Ordering Platform — Orderly
+# Restaurant Ordering Platform Frontend
 
-Short description
-A React + TypeScript frontend for a restaurant ordering platform (Vite-style entry). Provides a component-based UI (header, menu cards, category pills, footer), a small store slice for categories, utilities, and layouts for user/admin pages.
+React + TypeScript frontend for a restaurant ordering platform built with Vite. The app includes customer-facing menu browsing and cart flows, plus an admin area for dashboard, menu, orders, analytics, settings, and account management.
+
+## Tech Stack
+
+- React 19
+- TypeScript
+- Vite
+- React Router
+- Tailwind CSS
+- Framer Motion
+- Headless UI
+- Lucide React
+
+## Getting Started
+
+### 1. Install dependencies
+
+```bash
+npm install
 ```
 
-Project structure (key files)
-- Entry
-  - [src/main.tsx](src/main.tsx)
-  - [src/App.tsx](src/App.tsx)
-  - [src/index.css](src/index.css)
-- Assets & styles
-  - [src/assets/](src/assets) — fonts, icons, images
-  - [src/styles/globals.css](src/styles/globals.css)
-- Components (reusable UI)
-  - [src/components/Header/Header.tsx](src/components/Header/Header.tsx)
-  - [src/components/Header/constants.ts](src/components/Header/constants.ts)
-  - [src/components/Header/index.ts](src/components/Header/index.ts)
-  - [src/components/CategoryPills/CategoryPills.tsx](src/components/CategoryPills/CategoryPills.tsx)
-  - [src/components/MenuCard/MenuCard.tsx](src/components/MenuCard/MenuCard.tsx)
-  - [src/components/Footer/Footer.tsx](src/components/Footer/Footer.tsx)
-  - [src/components/Food3DViewer/Food3DViewer.tsx](src/components/Food3DViewer/Food3DViewer.tsx)
-- Pages & Layouts
-  - [src/pages/user/menu/MenuView.tsx](src/pages/user/menu/MenuView.tsx)
-  - [src/pages/user/menu/MenuViewIdx.tsx](src/pages/user/menu/MenuViewIdx.tsx)
-  - [src/pages/user/menu/MenuItemDetail.tsx](src/pages/user/menu/MenuItemDetail.tsx)
-  - [src/pages/admin/Dashboard.tsx](src/pages/admin/Dashboard.tsx)
-  - [src/layouts/MainLayout.tsx](src/layouts/MainLayout.tsx)
-  - [src/layouts/AdminLayout.tsx](src/layouts/AdminLayout.tsx)
-- State & hooks
-  - [src/store/store.ts](src/store/store.ts)
-  - [src/store/index.ts](src/store/index.ts)
-  - [src/store/categories.slice.ts](src/store/categories.slice.ts)
-  - [src/hooks/useDebounce.ts](src/hooks/useDebounce.ts)
-  - [src/context/ThemeContext.tsx](src/context/ThemeContext.tsx)
-- Types & utils
-  - [src/types/index.ts](src/types/index.ts)
-  - [src/utils/formatPrice.ts](src/utils/formatPrice.ts)
+### 2. Start the development server
+
+```bash
+npm run dev
 ```
 
-What each area does (concise)
-- src/components: UI building blocks. Import these into pages or layouts.
-- src/pages: Route-level components. Keep routing logic outside if using a router.
-- src/layouts: App-level shells (header/footer wrappers).
-- src/store: Global state (slice pattern). Initialize store in [src/main.tsx](src/main.tsx) or [src/App.tsx](src/App.tsx).
-- src/hooks & src/context: Reusable hooks and React contexts.
-- src/styles & src/assets: Global CSS and static assets.
+### 3. Run the production build
 
-Common tasks
-- Add a new component:
-  1. Create folder in src/components/MyComponent
-  2. Add MyComponent.tsx and index.ts exporting default
-  3. Import via relative path: ./components/MyComponent
-- Add a new page:
-  1. Create file under src/pages/...
-  2. Add route in your router (if present) and wrap with a layout.
-- Convert Tailwind -> plain CSS:
-  - Create a .css alongside component.
-  - Replace utility classes with semantic classNames and import the .css.
+```bash
+npm run build
+```
 
-Troubleshooting
-- Missing imports after refactor: run `npx tsc --noEmit` to list errors and update paths.
-- Dev server not starting: ensure correct scripts in package.json (common: `dev`, `build`, `preview`).
-- CSS not applied: confirm component imports its .css and project CSS loader is configured.
+## Available Scripts
 
-Notes & recommendations
-- Add an index barrel in each component folder for simpler imports.
-- Add linting (ESLint) and formatting (Prettier) for consistency.
-- Add unit tests (Jest / Vitest) for critical components: Header, MenuCard, utils/formatPrice.
+- `npm run dev` starts the Vite dev server.
+- `npm run build` runs `tsc -b` and then creates the production bundle with Vite.
+- `npm run lint` runs ESLint.
+- `npm run preview` previews the built app locally.
 
-References (open these files directly)
-- [src/main.tsx](src/main.tsx)
-- [src/App.tsx](src/App.tsx)
-- [src/components/Header/Header.tsx](src/components/Header/Header.tsx)
-- [src/components/Header/constants.ts](src/components/Header/constants.ts)
-- [src/components/CategoryPills/CategoryPills.tsx](src/components/CategoryPills/CategoryPills.tsx)
-- [src/store/store.ts](src/store/store.ts)
-- [src/styles/globals.css](src/styles/globals.css)
+## Route Overview
 
-If you want, I can:
-- generate a README.md file in the repo,
-- create barrel index.ts files for each folder,
-- or produce a checklist to convert Tailwind classes to plain CSS per component (I can auto-generate CSS files for selected components).  
-Tell me which option to do
+Public routes:
+
+- `/login`
+- `/register`
+- `/forgot-password`
+- `/reset-password`
+
+Protected customer routes:
+
+- `/`
+- `/menu`
+- `/menu/:id`
+- `/cart`
+- `/profile`
+
+Protected admin routes:
+
+- `/admin`
+- `/admin/menu`
+- `/admin/menu/new`
+- `/admin/menu/edit/:id`
+- `/admin/orders`
+- `/admin/analytics`
+- `/admin/settings`
+- `/admin/addups`
+- `/admin/accountmanagement`
+
+Supporting routes:
+
+- `/not-authorized`
+- `*` -> not found
+
+## Project Structure
+
+```text
+src/
+  app/
+    AppProviders.tsx
+    router.tsx
+  components/
+    Header/
+      Header.tsx
+      RestaurantSelector.tsx
+      storage.ts
+  constants/
+    storageKeys.ts
+  context/
+    AuthContext.tsx
+    CartContext.tsx
+    ThemeContext.tsx
+    ToastContext.tsx
+  features/
+    auth/
+      access.ts
+      storage.ts
+      types.ts
+      user.ts
+  hooks/
+    useDebounce.ts
+    useLocalStorage.ts
+  pages/
+    admin/
+      AdminLayout.tsx
+      AddUp.tsx
+      MenuManagement.tsx
+      constants.ts
+      components/
+        MenuFormPage.tsx
+        shared/
+          AdminFormControls.tsx
+    user/
+      menu/
+        MenuHome.tsx
+        MenuList.tsx
+        MenuItemDetail.tsx
+        menu.utils.ts
+        components/
+          MenuItemsGrid.tsx
+          MenuPageLayout.tsx
+          MenuSearchBar.tsx
+  routes/
+    ProtectedRoute.tsx
+    PublicRoute.tsx
+  store/
+  styles/
+  types/
+  utils/
+    api.ts
+    formatPrice.ts
+    storage.ts
+    validators.ts
+```
+
+## Architecture Notes
+
+### App Bootstrap
+
+- `src/App.tsx` is intentionally thin.
+- `src/app/AppProviders.tsx` composes theme, toast, auth, and cart providers.
+- `src/app/router.tsx` owns route registration and route guards.
+
+### Auth
+
+- `src/features/auth/types.ts` contains shared auth types.
+- `src/features/auth/access.ts` contains role constants and role-matching helpers.
+- `src/features/auth/user.ts` normalizes API user payloads.
+- `src/features/auth/storage.ts` centralizes token persistence.
+
+### Storage
+
+- `src/constants/storageKeys.ts` holds local storage keys in one place.
+- `src/utils/storage.ts` contains reusable local storage helpers.
+- Header restaurant/table selection also uses a dedicated helper in `src/components/Header/storage.ts`.
+
+### Menu UI Reuse
+
+- `src/pages/user/menu/menu.utils.ts` contains shared menu filtering helpers.
+- `MenuPageLayout.tsx` standardizes the customer menu page shell.
+- `MenuSearchBar.tsx` reuses the menu search input UI.
+- `MenuItemsGrid.tsx` reuses menu card rendering and empty states.
+
+### Admin UI Reuse
+
+- `src/pages/admin/constants.ts` centralizes admin navigation config.
+- `src/pages/admin/components/shared/AdminFormControls.tsx` contains reusable admin section, field, input, textarea, and checkbox wrappers.
+- `AddUp.tsx` and `MenuFormPage.tsx` use those shared admin controls to reduce duplication.
+
+## Important Files
+
+- `src/main.tsx` mounts the application.
+- `src/App.tsx` connects providers and the router.
+- `src/app/router.tsx` defines the route tree.
+- `src/context/AuthContext.tsx` manages session state and refresh/logout behavior.
+- `src/utils/api.ts` contains the shared API request wrapper.
+- `src/pages/user/menu/MenuHome.tsx` and `src/pages/user/menu/MenuList.tsx` drive customer menu discovery.
+- `src/pages/admin/AdminLayout.tsx` drives admin shell navigation.
+
+## Known Issues
+
+At the moment, `npm run build` is blocked by existing project issues outside the core refactor:
+
+- `src/components/Food3DViewer/Food3DViewer.tsx` requires `@react-three/fiber`, `@react-three/drei`, and `three`, but those packages are not currently present in `package.json`.
+- `src/pages/admin/Accounts.tsx` still contains unused imports/state that fail the current TypeScript build settings.
+
+If you want the build fully green, those two areas should be cleaned up next.
+
+## Development Guidelines
+
+- Keep business logic in place and prefer structural refactors over behavior changes.
+- Reuse shared helpers in `src/app`, `src/features`, `src/utils`, and `src/pages/.../components/shared` before duplicating logic.
+- Add new route-level pages under `src/pages`.
+- Add reusable UI under `src/components` or feature-local `components` folders when it is page-specific.
+- Keep storage keys and auth role rules centralized instead of scattering strings across pages.
