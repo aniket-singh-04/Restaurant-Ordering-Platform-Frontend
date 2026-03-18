@@ -31,14 +31,13 @@ const roles: RoleOption[] = [
 const statusOptions: Status[] = ["ACTIVE", "INACTIVE"];
 
 interface BranchForm {
-  restaurantId: string;
   name: string;
   address: string;
   city: string;
-  geoLocation: {
-    type: "Point";
-    coordinates: [number, number];
-  };
+  // geoLocation: {
+  //   type: "Point";
+  //   coordinates: [number, number];
+  // };
   status: Status;
   openingHours: {
     open: string;
@@ -61,11 +60,10 @@ export default function AddUp() {
   const [userLoading, setUserLoading] = useState(false);
 
   const [branchForm, setBranchForm] = useState<BranchForm>({
-    restaurantId: user?.restroId ?? "",
     name: "",
     address: "",
     city: "",
-    geoLocation: { type: "Point", coordinates: [77.6, 12.97] },
+    // geoLocation: { type: "Point", coordinates: [77.6, 12.97] },
     status: "ACTIVE",
     openingHours: { open: "10:00", close: "22:00" },
   });
@@ -128,10 +126,6 @@ export default function AddUp() {
   };
 
   const handleCreateBranch = async () => {
-    if (!branchForm.restaurantId) {
-      pushToast({ title: "Restaurant ID is required", variant: "error" });
-      return;
-    }
     if (!branchForm.name.trim()) {
       pushToast({ title: "Branch name is required", variant: "error" });
       return;
@@ -143,7 +137,9 @@ export default function AddUp() {
 
     setBranchLoading(true);
     try {
-      await api.post("/api/v1/branches", branchForm);
+      await api.post("/api/v1/branches/create-branch", branchForm , {
+        credentials: 'include'
+      });
       pushToast({ title: "Branch created", variant: "success" });
       setBranchForm((prev) => ({ ...prev, name: "", address: "", city: "" }));
     } catch (err: any) {
@@ -162,14 +158,14 @@ export default function AddUp() {
       pushToast({ title: "Restaurant name is required", variant: "error" });
       return;
     }
-    if (!restaurantForm.legalName.trim()) {
-      pushToast({ title: "Legal name is required", variant: "error" });
-      return;
-    }
-    if (!isValidGst(restaurantForm.gstNumber)) {
-      pushToast({ title: "Valid GST number is required", variant: "error" });
-      return;
-    }
+    // if (!restaurantForm.legalName.trim()) {
+    //   pushToast({ title: "Legal name is required", variant: "error" });
+    //   return;
+    // }
+    // if (!isValidGst(restaurantForm.gstNumber)) {
+    //   pushToast({ title: "Valid GST number is required", variant: "error" });
+    //   return;
+    // }
     if (!isValidEmail(restaurantForm.supportEmail)) {
       pushToast({ title: "Valid support email is required", variant: "error" });
       return;
@@ -181,7 +177,9 @@ export default function AddUp() {
 
     setRestaurantLoading(true);
     try {
-      await api.post("/api/v1/restaurants", restaurantForm);
+      await api.post("/api/v1/restaurants/create-restaurant", restaurantForm ,{
+        credentials: 'include'
+      });
       pushToast({ title: "Restaurant created", variant: "success" });
       setRestaurantForm({
         name: "",
@@ -316,7 +314,7 @@ export default function AddUp() {
         title="Create Branch"
         className="w-full sm:w-100 shadow-md space-y-6"
       >
-        <AdminInputField
+        {/* <AdminInputField
           label="Restaurant ID"
           type="text"
           value={branchForm.restaurantId}
@@ -324,7 +322,7 @@ export default function AddUp() {
             setBranchForm({ ...branchForm, restaurantId: e.target.value })
           }
           labelClassName="text-sm text-[#5a4c4c] mb-1"
-        />
+        /> */}
 
         <AdminInputField
           label="Branch Name"
@@ -350,7 +348,7 @@ export default function AddUp() {
           labelClassName="text-sm text-[#5a4c4c] mb-1"
         />
 
-        <div className="flex gap-4">
+        {/* <div className="flex gap-4">
           <AdminInputField
             label="Longitude"
             type="number"
@@ -389,7 +387,7 @@ export default function AddUp() {
             containerClassName="flex-1"
             labelClassName="text-sm text-[#5a4c4c] mb-1"
           />
-        </div>
+        </div> */}
 
         <AdminField label="Status" labelClassName="text-sm text-[#5a4c4c] mb-1">
           <Listbox
