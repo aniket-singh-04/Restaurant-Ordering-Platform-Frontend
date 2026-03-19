@@ -1,15 +1,18 @@
-﻿
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { ReactNode } from "react";
-import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
-import { ChevronDownIcon, Edit, Trash2, UserPlus, Plus } from "lucide-react";
-import { api } from "../../utils/api";
-import { useToast } from "../../context/ToastContext";
+﻿import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
+import { CheckIcon, ChevronDownIcon } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import type { FormEvent } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { useDebounce } from "../../hooks/useDebounce";
-import { isValidEmail, isValidGst, isValidPhone, isStrongPassword } from "../../utils/validators";
+import { useToast } from "../../context/ToastContext";
+import { api } from "../../utils/api";
+import {
+  isStrongPassword,
+  isValidEmail,
+  isValidGst,
+  isValidPhone,
+} from "../../utils/validators";
 
-type StatusOption = "ACTIVE" | "INACTIVE" | "OPEN" | "CLOSED" | "DISABLED";
+type BranchStatus = "OPEN" | "CLOSED" | "DISABLED";
 type RoleOption = "STAFF" | "BRANCH_OWNER";
 
 interface Restaurant {
@@ -23,482 +26,571 @@ interface Restaurant {
   isVerified: boolean;
 }
 
-interface Branch {
+interface BranchOpeningHours {
+  open: string;
+  close: string;
+}
+
+interface BranchOwner {
+  ownerId: string;
+  name: string;
+  email: string;
+  phone: string;
+}
+
+interface BranchStaff {
+  staffId: string;
+  role: string;
+  name: string;
+  email: string;
+}
+
+interface BranchResponse {
   id: string;
+  restaurantId: string;
   name: string;
   address: string;
   city: string;
-  status: "OPEN" | "CLOSED" | "DISABLED";
-  owner?: string;
-  staffCount: number;
+  status: BranchStatus;
+  openingHours: BranchOpeningHours;
+  branchOwner: BranchOwner | null;
+  branchStaffId: BranchStaff[];
+  createdAt: string;
+  updatedAt: string;
 }
 
-interface User {
+interface EditableBranch extends BranchResponse {
+  branchOwnerId: string;
+  staffIds: string[];
+}
+
+interface ManagedUser {
   id: string;
-  fullName: string;
+  name: string;
   email: string;
   phone: string;
   role: RoleOption;
-  branch?: string;
-  status: StatusOption;
-  isVerified: boolean;
+  restroId: string | null;
+  branchIds: string[];
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
-type ModalProps = {
-  title: string;
-  open: boolean;
-  onClose: () => void;
-  children: ReactNode;
+interface EditableUser extends ManagedUser {
+  draftPassword: string;
+}
+
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  count?: number;
+  message?: string;
+}
+
+interface BranchForm {
+  name: string;
+  address: string;
+  city: string;
+  status: BranchStatus;
+  openingHours: BranchOpeningHours;
+}
+
+interface UserForm {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  role: RoleOption;
+  branchIds: string[];
+  isActive: boolean;
+}
+
+type RestaurantFieldKey =
+  | "name"
+  | "legalName"
+  | "gstNumber"
+  | "supportEmail"
+  | "supportPhone";
+
+const DEFAULT_OPENING_HOURS: BranchOpeningHours = {
+  open: "10:00",
+  close: "22:00",
 };
 
-function Modal({ title, open, onClose, children }: ModalProps) {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">{title}</h3>
-          <button onClick={onClose} className="text-sm text-gray-500">
-            Close
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-}
+const BRANCH_STATUS_OPTIONS: BranchStatus[] = ["OPEN", "CLOSED", "DISABLED"];
 
-const PAGE_SIZE = 10;
+const ROLE_OPTIONS: Array<{ label: string; value: RoleOption }> = [
+  { label: "Staff", value: "STAFF" },
+  { label: "Branch Owner", value: "BRANCH_OWNER" },
+];
+
+const RESTAURANT_FIELDS: Array<{
+  label: string;
+  key: RestaurantFieldKey;
+  type: "text" | "email" | "tel";
+  full?: boolean;
+}> = [
+    { label: "Name", key: "name", type: "text" },
+    { label: "Legal Name", key: "legalName", type: "text" },
+    { label: "GST Number", key: "gstNumber", type: "text" },
+    { label: "Support Email", key: "supportEmail", type: "email" },
+    { label: "Support Phone", key: "supportPhone", type: "tel", full: true },
+  ];
+
+const createEmptyBranchForm = (): BranchForm => ({
+  name: "",
+  address: "",
+  city: "",
+  status: "OPEN",
+  openingHours: { ...DEFAULT_OPENING_HOURS },
+});
+
+const createEmptyUserForm = (): UserForm => ({
+  name: "",
+  email: "",
+  phone: "",
+  password: "",
+  role: "STAFF",
+  branchIds: [],
+  isActive: true,
+});
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Please try again.";
+
+const toggleIdSelection = (ids: string[], id: string) =>
+  ids.includes(id) ? ids.filter((currentId) => currentId !== id) : [...ids, id];
+
+const getRoleBadgeClass = (role: RoleOption) =>
+  role === "BRANCH_OWNER"
+    ? "bg-orange-100 text-orange-700"
+    : "bg-blue-100 text-blue-700";
+
+const getStatusBadgeClass = (status: BranchStatus) => {
+  if (status === "OPEN") return "bg-emerald-100 text-emerald-700";
+  if (status === "CLOSED") return "bg-amber-100 text-amber-700";
+  return "bg-red-100 text-red-700";
+};
+
+const mapBranchToDraft = (branch: BranchResponse): EditableBranch => ({
+  ...branch,
+  openingHours: {
+    open: branch.openingHours?.open ?? DEFAULT_OPENING_HOURS.open,
+    close: branch.openingHours?.close ?? DEFAULT_OPENING_HOURS.close,
+  },
+  branchOwnerId: branch.branchOwner?.ownerId ?? "",
+  staffIds: branch.branchStaffId.map((staff) => staff.staffId),
+});
+
+const mapUserToDraft = (managedUser: ManagedUser): EditableUser => ({
+  ...managedUser,
+  branchIds: [...managedUser.branchIds],
+  draftPassword: "",
+});
 
 export default function Accounts() {
   const { user } = useAuth();
   const { pushToast } = useToast();
 
-  const [restaurantId, setRestaurantId] = useState(user?.restroId ?? "");
+  const [restaurantId, setRestaurantId] = useState("");
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
-  const [branches, setBranches] = useState<Branch[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
+  const [branches, setBranches] = useState<EditableBranch[]>([]);
+  const [users, setUsers] = useState<EditableUser[]>([]);
   const [loading, setLoading] = useState(false);
+  const [restaurantSaving, setRestaurantSaving] = useState(false);
+  const [creatingBranch, setCreatingBranch] = useState(false);
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [savingBranchId, setSavingBranchId] = useState<string | null>(null);
+  const [savingUserId, setSavingUserId] = useState<string | null>(null);
+  const [confirmRestaurantSave, setConfirmRestaurantSave] = useState(false);
+  const [branchForm, setBranchForm] = useState<BranchForm>(createEmptyBranchForm);
+  const [userForm, setUserForm] = useState<UserForm>(createEmptyUserForm);
 
-  const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<RoleOption | "">("");
-  const [branchFilter, setBranchFilter] = useState<string | "">("");
-  const [statusFilter, setStatusFilter] = useState<StatusOption | "">("");
-  const [sortBy, setSortBy] = useState<"name" | "status" | "role">("name");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-
-  const [userPage, setUserPage] = useState(1);
-  const [branchPage, setBranchPage] = useState(1);
-
-  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
-  const [selectedBranches, setSelectedBranches] = useState<Set<string>>(new Set());
-
-  const [userModalOpen, setUserModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [userForm, setUserForm] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    role: "STAFF" as RoleOption,
-    branch: "",
-    status: "ACTIVE" as StatusOption,
-    isVerified: false,
-    password: "",
-  });
-
-  const [branchModalOpen, setBranchModalOpen] = useState(false);
-  const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
-  const [branchForm, setBranchForm] = useState({
-    name: "",
-    address: "",
-    city: "",
-    status: "OPEN" as Branch["status"],
-  });
-
-  const debouncedSearch = useDebounce(search, 250);
   const fetchData = useCallback(async () => {
-    if (!restaurantId) return;
+    if (!restaurantId) {
+      setRestaurant(null);
+      setBranches([]);
+      setUsers([]);
+      return;
+    }
+
     setLoading(true);
     try {
-      const [resRes, resBranches, resUsers] = await Promise.all([
-        api.get<Restaurant>(`/api/v1/restaurants/${restaurantId}`),
-        api.get<Branch[]>(`/api/v1/branches?restaurantId=${restaurantId}`),
-        api.get<User[]>(`/api/v1/users?restaurantId=${restaurantId}`),
+      const [restaurantResponse, branchResponse, userResponse] = await Promise.all([
+        api.get<ApiResponse<Restaurant>>(`/api/v1/restaurants/${restaurantId}`),
+        api.get<ApiResponse<BranchResponse[]>>(`/api/v1/branches/${restaurantId}`),
+        api.get<ApiResponse<ManagedUser[]>>(`/api/v1/users?restaurantId=${restaurantId}`),
       ]);
-      setRestaurant(resRes);
-      setBranches(resBranches ?? []);
-      setUsers(resUsers ?? []);
-    } catch (err: any) {
+
+      setRestaurant(restaurantResponse.data);
+      setBranches(branchResponse.data.map(mapBranchToDraft));
+      setUsers(userResponse.data.map(mapUserToDraft));
+    } catch (error) {
+      setRestaurant(null);
+      setBranches([]);
+      setUsers([]);
       pushToast({
-        title: "Failed to fetch data",
-        description: err?.message || "Please try again.",
+        title: "Failed to load account data",
+        description: getErrorMessage(error),
         variant: "error",
       });
     } finally {
       setLoading(false);
     }
-  }, [restaurantId, pushToast]);
+  }, [pushToast, restaurantId]);
 
   useEffect(() => {
-    fetchData();
+    setRestaurantId(user?.restroId ?? "");
+  }, [user?.restroId]);
+
+  useEffect(() => {
+    void fetchData();
   }, [fetchData]);
 
-  const filteredUsers = useMemo(() => {
-    const q = debouncedSearch.toLowerCase();
-    const list = users.filter((u) => {
-      const searchMatch =
-        !q ||
-        u.fullName.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        u.phone.toLowerCase().includes(q);
-      const roleMatch = !roleFilter || u.role === roleFilter;
-      const branchMatch = !branchFilter || u.branch === branchFilter;
-      const statusMatch = !statusFilter || u.status === statusFilter;
-      return searchMatch && roleMatch && branchMatch && statusMatch;
-    });
-
-    list.sort((a, b) => {
-      const dir = sortDir === "asc" ? 1 : -1;
-      if (sortBy === "name") return a.fullName.localeCompare(b.fullName) * dir;
-      if (sortBy === "role") return a.role.localeCompare(b.role) * dir;
-      return a.status.localeCompare(b.status) * dir;
-    });
-    return list;
-  }, [users, debouncedSearch, roleFilter, branchFilter, statusFilter, sortBy, sortDir]);
-
-  const filteredBranches = useMemo(() => {
-    const q = debouncedSearch.toLowerCase();
-    const list = branches.filter((b) => {
-      const searchMatch = !q || b.name.toLowerCase().includes(q);
-      const statusMatch = !statusFilter || b.status === statusFilter;
-      return searchMatch && statusMatch;
-    });
-    return list;
-  }, [branches, debouncedSearch, statusFilter]);
-
-  const userTotalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
-  const branchTotalPages = Math.max(1, Math.ceil(filteredBranches.length / PAGE_SIZE));
-
-  const pagedUsers = filteredUsers.slice(
-    (userPage - 1) * PAGE_SIZE,
-    userPage * PAGE_SIZE,
-  );
-  const pagedBranches = filteredBranches.slice(
-    (branchPage - 1) * PAGE_SIZE,
-    branchPage * PAGE_SIZE,
-  );
-
-  const toggleUserSelection = (id: string) => {
-    setSelectedUsers((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const updateBranchDraft = (
+    branchId: string,
+    updater: (branch: EditableBranch) => EditableBranch,
+  ) => {
+    setBranches((current) =>
+      current.map((branch) => (branch.id === branchId ? updater(branch) : branch)),
+    );
   };
 
-  const toggleBranchSelection = (id: string) => {
-    setSelectedBranches((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const toggleSelectAllUsers = () => {
-    if (selectedUsers.size === pagedUsers.length) {
-      setSelectedUsers(new Set());
-    } else {
-      setSelectedUsers(new Set(pagedUsers.map((u) => u.id)));
-    }
-  };
-
-  const toggleSelectAllBranches = () => {
-    if (selectedBranches.size === pagedBranches.length) {
-      setSelectedBranches(new Set());
-    } else {
-      setSelectedBranches(new Set(pagedBranches.map((b) => b.id)));
-    }
+  const updateUserDraft = (
+    userId: string,
+    updater: (managedUser: EditableUser) => EditableUser,
+  ) => {
+    setUsers((current) =>
+      current.map((managedUser) =>
+        managedUser.id === userId ? updater(managedUser) : managedUser,
+      ),
+    );
   };
 
   const handleRestaurantSave = async () => {
     if (!restaurant) return;
-    if (!restaurant.name.trim() || !restaurant.legalName.trim()) {
-      pushToast({ title: "Name and legal name are required", variant: "error" });
+
+    const normalizedRestaurant = {
+      ...restaurant,
+      name: restaurant.name.trim(),
+      legalName: restaurant.legalName.trim(),
+      gstNumber: restaurant.gstNumber.trim().toUpperCase(),
+      supportEmail: restaurant.supportEmail.trim(),
+      supportPhone: restaurant.supportPhone.trim(),
+    };
+
+    if (!normalizedRestaurant.name) {
+      pushToast({ title: "Restaurant name is required", variant: "error" });
       return;
     }
-    if (!isValidGst(restaurant.gstNumber)) {
+    if (!normalizedRestaurant.supportEmail || !isValidEmail(normalizedRestaurant.supportEmail)) {
+      pushToast({ title: "Valid support email is required", variant: "error" });
+      return;
+    }
+    if (!normalizedRestaurant.supportPhone || !isValidPhone(normalizedRestaurant.supportPhone)) {
+      pushToast({ title: "Valid support phone is required", variant: "error" });
+      return;
+    }
+    if (normalizedRestaurant.gstNumber && !isValidGst(normalizedRestaurant.gstNumber)) {
       pushToast({ title: "Invalid GST number", variant: "error" });
       return;
     }
-    if (!isValidEmail(restaurant.supportEmail)) {
-      pushToast({ title: "Invalid support email", variant: "error" });
-      return;
-    }
-    if (!isValidPhone(restaurant.supportPhone)) {
-      pushToast({ title: "Invalid support phone", variant: "error" });
-      return;
-    }
 
+    setRestaurantSaving(true);
     try {
-      await api.put(`/api/v1/restaurants/${restaurant.id}`, restaurant);
+      const { id, ...payload } = normalizedRestaurant;
+      await api.put<ApiResponse<Restaurant>>(`/api/v1/restaurants/${id}`, payload);
+      setRestaurant(normalizedRestaurant);
+      setConfirmRestaurantSave(false);
       pushToast({ title: "Restaurant updated", variant: "success" });
-    } catch (err: any) {
+    } catch (error) {
       pushToast({
-        title: "Update failed",
-        description: err?.message || "Please try again.",
+        title: "Unable to update restaurant",
+        description: getErrorMessage(error),
         variant: "error",
       });
+    } finally {
+      setRestaurantSaving(false);
     }
   };
-  const openUserModal = (target?: User) => {
-    setEditingUser(target ?? null);
-    setUserForm({
-      fullName: target?.fullName ?? "",
-      email: target?.email ?? "",
-      phone: target?.phone ?? "",
-      role: target?.role ?? "STAFF",
-      branch: target?.branch ?? "",
-      status: target?.status ?? "ACTIVE",
-      isVerified: target?.isVerified ?? false,
-      password: "",
-    });
-    setUserModalOpen(true);
-  };
 
-  const openBranchModal = (target?: Branch) => {
-    setEditingBranch(target ?? null);
-    setBranchForm({
-      name: target?.name ?? "",
-      address: target?.address ?? "",
-      city: target?.city ?? "",
-      status: target?.status ?? "OPEN",
-    });
-    setBranchModalOpen(true);
-  };
+  const handleCreateBranch = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-  const saveUser = async () => {
-    if (!userForm.fullName.trim()) {
-      pushToast({ title: "Name is required", variant: "error" });
+    const payload = {
+      ...branchForm,
+      name: branchForm.name.trim(),
+      address: branchForm.address.trim(),
+      city: branchForm.city.trim(),
+    };
+
+    if (!payload.name) {
+      pushToast({ title: "Branch name is required", variant: "error" });
       return;
     }
-    if (!isValidEmail(userForm.email)) {
+    if (!payload.address || !payload.city) {
+      pushToast({ title: "Address and city are required", variant: "error" });
+      return;
+    }
+    if (!payload.openingHours.open || !payload.openingHours.close) {
+      pushToast({ title: "Opening hours are required", variant: "error" });
+      return;
+    }
+
+    setCreatingBranch(true);
+    try {
+      await api.post<ApiResponse<BranchResponse>>("/api/v1/branches/create-branch", payload);
+      setBranchForm(createEmptyBranchForm());
+      pushToast({ title: "Branch created", variant: "success" });
+      await fetchData();
+    } catch (error) {
+      pushToast({
+        title: "Unable to create branch",
+        description: getErrorMessage(error),
+        variant: "error",
+      });
+    } finally {
+      setCreatingBranch(false);
+    }
+  };
+  const handleCreateUser = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const payload = {
+      name: userForm.name.trim(),
+      email: userForm.email.trim(),
+      phone: userForm.phone.trim(),
+      password: userForm.password,
+      role: userForm.role,
+      branchIds: userForm.branchIds,
+      restroId: restaurantId,
+      isActive: userForm.isActive,
+    };
+
+    if (!payload.name) {
+      pushToast({ title: "User name is required", variant: "error" });
+      return;
+    }
+    if (!isValidEmail(payload.email)) {
       pushToast({ title: "Valid email is required", variant: "error" });
       return;
     }
-    if (!isValidPhone(userForm.phone)) {
+    if (!isValidPhone(payload.phone)) {
       pushToast({ title: "Valid phone is required", variant: "error" });
       return;
     }
-    if (!editingUser && !isStrongPassword(userForm.password, 8)) {
-      pushToast({ title: "Password must be at least 8 characters", variant: "error" });
+    if (!isStrongPassword(payload.password, 6)) {
+      pushToast({
+        title: "Password must be at least 6 characters",
+        variant: "error",
+      });
       return;
     }
 
+    setCreatingUser(true);
     try {
-      if (editingUser) {
-        await api.put(`/api/v1/users/${editingUser.id}`, {
-          ...userForm,
-          restaurantId,
-        });
-        pushToast({ title: "User updated", variant: "success" });
-      } else {
-        await api.post("/api/v1/users", {
-          ...userForm,
-          restaurantId,
-        });
-        pushToast({ title: "User created", variant: "success" });
-      }
-      setUserModalOpen(false);
-      fetchData();
-    } catch (err: any) {
+      await api.post("/api/v1/auth/createuser", payload);
+      setUserForm(createEmptyUserForm());
+      pushToast({ title: "User created", variant: "success" });
+      await fetchData();
+    } catch (error) {
       pushToast({
-        title: "Save failed",
-        description: err?.message || "Please try again.",
+        title: "Unable to create user",
+        description: getErrorMessage(error),
         variant: "error",
       });
+    } finally {
+      setCreatingUser(false);
     }
   };
 
-  const saveBranch = async () => {
-    if (!branchForm.name.trim() || !branchForm.address.trim() || !branchForm.city.trim()) {
-      pushToast({ title: "Branch name, address and city are required", variant: "error" });
+  const handleSaveBranch = async (branch: EditableBranch) => {
+    const payload = {
+      name: branch.name.trim(),
+      address: branch.address.trim(),
+      city: branch.city.trim(),
+      status: branch.status,
+      openingHours: {
+        open: branch.openingHours.open,
+        close: branch.openingHours.close,
+      },
+      branchOwnerId: branch.branchOwnerId || null,
+      staffIds: branch.staffIds,
+    };
+
+    if (!payload.name) {
+      pushToast({ title: "Branch name is required", variant: "error" });
+      return;
+    }
+    if (!payload.address || !payload.city) {
+      pushToast({ title: "Address and city are required", variant: "error" });
+      return;
+    }
+    if (!payload.openingHours.open || !payload.openingHours.close) {
+      pushToast({ title: "Opening hours are required", variant: "error" });
+      return;
+    }
+    if (payload.branchOwnerId && payload.staffIds.includes(payload.branchOwnerId)) {
+      pushToast({
+        title: "The branch owner cannot also be assigned as staff",
+        variant: "error",
+      });
       return;
     }
 
+    setSavingBranchId(branch.id);
     try {
-      if (editingBranch) {
-        await api.put(`/api/v1/branches/${editingBranch.id}`, {
-          ...branchForm,
-          restaurantId,
-        });
-        pushToast({ title: "Branch updated", variant: "success" });
-      } else {
-        await api.post("/api/v1/branches", { ...branchForm, restaurantId });
-        pushToast({ title: "Branch created", variant: "success" });
-      }
-      setBranchModalOpen(false);
-      fetchData();
-    } catch (err: any) {
+      await api.put<ApiResponse<BranchResponse>>(`/api/v1/branches/${branch.id}`, payload);
+      pushToast({ title: "Branch updated", variant: "success" });
+      await fetchData();
+    } catch (error) {
       pushToast({
-        title: "Save failed",
-        description: err?.message || "Please try again.",
+        title: "Unable to update branch",
+        description: getErrorMessage(error),
         variant: "error",
       });
+    } finally {
+      setSavingBranchId(null);
     }
   };
 
-  const deleteUser = async (id: string) => {
-    if (!confirm("Delete this user?")) return;
-    try {
-      await api.delete(`/api/v1/users/${id}`);
-      setUsers((prev) => prev.filter((u) => u.id !== id));
-      pushToast({ title: "User deleted", variant: "success" });
-    } catch (err: any) {
-      pushToast({
-        title: "Delete failed",
-        description: err?.message || "Please try again.",
-        variant: "error",
-      });
+  const handleSaveUser = async (managedUser: EditableUser) => {
+    const payload = {
+      name: managedUser.name.trim(),
+      email: managedUser.email.trim(),
+      phone: managedUser.phone.trim(),
+      role: managedUser.role,
+      branchIds: managedUser.branchIds,
+      isActive: managedUser.isActive,
+      ...(managedUser.draftPassword.trim()
+        ? { password: managedUser.draftPassword }
+        : {}),
+    };
+
+    if (!payload.name) {
+      pushToast({ title: "User name is required", variant: "error" });
+      return;
     }
-  };
-
-  const deleteBranch = async (id: string) => {
-    if (!confirm("Delete this branch?")) return;
-    try {
-      await api.delete(`/api/v1/branches/${id}`);
-      setBranches((prev) => prev.filter((b) => b.id !== id));
-      pushToast({ title: "Branch deleted", variant: "success" });
-    } catch (err: any) {
-      pushToast({
-        title: "Delete failed",
-        description: err?.message || "Please try again.",
-        variant: "error",
-      });
+    if (!isValidEmail(payload.email)) {
+      pushToast({ title: "Valid email is required", variant: "error" });
+      return;
     }
-  };
-
-  const bulkUpdate = async (type: "users" | "branches", action: "activate" | "deactivate") => {
-    const ids = type === "users" ? Array.from(selectedUsers) : Array.from(selectedBranches);
-    if (ids.length === 0) return;
-
-    const payload = { status: action === "activate" ? "ACTIVE" : "INACTIVE" };
-    try {
-      await Promise.all(
-        ids.map((id) =>
-          api.patch(type === "users" ? `/api/v1/users/${id}` : `/api/v1/branches/${id}`, payload),
-        ),
-      );
-      pushToast({ title: "Bulk update completed", variant: "success" });
-      fetchData();
-    } catch (err: any) {
+    if (!isValidPhone(payload.phone)) {
+      pushToast({ title: "Valid phone is required", variant: "error" });
+      return;
+    }
+    if (
+      "password" in payload &&
+      typeof payload.password === "string" &&
+      !isStrongPassword(payload.password, 6)
+    ) {
       pushToast({
-        title: "Bulk update failed",
-        description: err?.message || "Please try again.",
+        title: "New password must be at least 6 characters",
         variant: "error",
       });
+      return;
+    }
+
+    setSavingUserId(managedUser.id);
+    try {
+      await api.put<ApiResponse<ManagedUser>>(`/api/v1/users/${managedUser.id}`, payload);
+      pushToast({ title: "User updated", variant: "success" });
+      await fetchData();
+    } catch (error) {
+      pushToast({
+        title: "Unable to update user",
+        description: getErrorMessage(error),
+        variant: "error",
+      });
+    } finally {
+      setSavingUserId(null);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8 space-y-10 text-left">
-      <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">
-        Restaurant Management
-      </h1>
+    <div className="min-h-screen space-y-8 bg-gray-50 text-left">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
+          Restaurant Accounts
+        </h1>
+        <p className="text-sm text-gray-600">
+          Manage restaurant details, branch assignments, and team access from one
+          place.
+        </p>
+      </div>
 
-      {/* RESTAURANT FORM */}
-      <div className="max-w-5xl mx-auto bg-white border border-gray-200 rounded-xl shadow-sm p-6 md:p-8 space-y-6">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <input
-            type="text"
-            placeholder="Restaurant ID"
-            value={restaurantId}
-            onChange={(e) => setRestaurantId(e.target.value)}
-            className="w-full sm:flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm shadow-sm focus:ring-2 focus:ring-orange-300 focus:border-orange-500"
-          />
-          <button
-            onClick={fetchData}
-            className="px-6 py-2 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition shadow-sm"
-          >
-            Load
-          </button>
+      {!restaurantId && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          No restaurant is linked to the current account yet.
+        </div>
+      )}
+
+      <section className="mx-auto max-w-6xl space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+        <div className="flex items-center justify-between gap-3 border-b pb-2">
+          <h2 className="text-lg font-semibold text-gray-800">Restaurant Info</h2>
+          {restaurant && (
+            <span className="text-xs text-gray-500">ID: {restaurant.id}</span>
+          )}
         </div>
 
-        {restaurant && (
+        {restaurant ? (
           <>
-            <h2 className="text-lg font-semibold text-gray-800 border-b pb-2">
-              Main Restaurant Info
-            </h2>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {[
-                ["Name", "name"],
-                ["Legal Name", "legalName"],
-                ["GST Number", "gstNumber"],
-                ["Support Email", "supportEmail"],
-              ].map(([label, key]) => (
-                <div key={key} className="flex flex-col gap-1">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              {RESTAURANT_FIELDS.map((field) => (
+                <div
+                  key={field.key}
+                  className={`flex flex-col gap-1 ${field.full ? "sm:col-span-2" : ""}`}
+                >
                   <label className="text-xs font-medium text-gray-500">
-                    {label}
+                    {field.label}
                   </label>
                   <input
-                    type="text"
-                    value={(restaurant as any)[key]}
-                    onChange={(e) =>
-                      setRestaurant({
-                        ...restaurant,
-                        [key]: e.target.value,
-                      })
+                    type={field.type}
+                    value={restaurant[field.key]}
+                    onChange={(event) =>
+                      setRestaurant((current) =>
+                        current
+                          ? {
+                            ...current,
+                            [field.key]: event.target.value,
+                          }
+                          : current,
+                      )
                     }
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
+                    className="w-full rounded-xl border border-[#e5d5c6] bg-[#fff9f2] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
                   />
                 </div>
               ))}
-
-              <div className="sm:col-span-2 flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-500">
-                  Support Phone
-                </label>
-                <input
-                  type="tel"
-                  value={restaurant.supportPhone}
-                  onChange={(e) =>
-                    setRestaurant({
-                      ...restaurant,
-                      supportPhone: e.target.value,
-                    })
-                  }
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:ring-2 focus:ring-orange-200 focus:border-orange-500"
-                />
-              </div>
             </div>
 
             <div className="flex flex-wrap gap-6 pt-2 text-sm">
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex cursor-pointer items-center gap-2">
                 <input
                   type="checkbox"
                   checked={restaurant.isActive}
-                  onChange={(e) =>
-                    setRestaurant({
-                      ...restaurant,
-                      isActive: e.target.checked,
-                    })
+                  onChange={(event) =>
+                    setRestaurant((current) =>
+                      current
+                        ? { ...current, isActive: event.target.checked }
+                        : current,
+                    )
                   }
                   className="h-4 w-4 accent-orange-500"
                 />
                 Active
               </label>
 
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex cursor-pointer items-center gap-2">
                 <input
                   type="checkbox"
                   checked={restaurant.isVerified}
-                  onChange={(e) =>
-                    setRestaurant({
-                      ...restaurant,
-                      isVerified: e.target.checked,
-                    })
+                  onChange={(event) =>
+                    setRestaurant((current) =>
+                      current
+                        ? { ...current, isVerified: event.target.checked }
+                        : current,
+                    )
                   }
                   className="h-4 w-4 accent-orange-500"
                 />
@@ -506,249 +598,926 @@ export default function Accounts() {
               </label>
             </div>
 
-            <button
-              onClick={handleRestaurantSave}
-              className="px-6 py-2 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition shadow-sm"
-            >
-              Save Restaurant
-            </button>
+            <div className="flex flex-wrap gap-3">
+              {!confirmRestaurantSave ? (
+                <button
+                  type="button"
+                  onClick={() => setConfirmRestaurantSave(true)}
+                  className="cursor-pointer rounded-lg bg-orange-500 px-6 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-orange-600"
+                >
+                  Save Restaurant
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    disabled={restaurantSaving}
+                    onClick={() => void handleRestaurantSave()}
+                    className="cursor-pointer rounded-lg bg-green-600 px-6 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {restaurantSaving ? "Saving..." : "Confirm Save"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmRestaurantSave(false)}
+                    className="cursor-pointer rounded-lg border px-6 py-2 text-sm transition hover:bg-gray-100"
+                  >
+                    Cancel
+                  </button>
+                </>
+              )}
+            </div>
           </>
-        )}
-      </div>
-
-      {/* BRANCHES */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <h2 className="text-xl font-semibold text-gray-800">Branches</h2>
-
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => openBranchModal()}
-              className="px-4 py-2 rounded-lg bg-orange-500 text-white flex items-center gap-2 text-sm hover:bg-orange-600"
-            >
-              <Plus size={16} /> Add Branch
-            </button>
-
-            <button
-              onClick={() => bulkUpdate("branches", "activate")}
-              className="px-4 py-2 rounded-lg border text-sm hover:bg-gray-50"
-            >
-              Activate
-            </button>
-
-            <button
-              onClick={() => bulkUpdate("branches", "deactivate")}
-              className="px-4 py-2 rounded-lg border text-sm hover:bg-gray-50"
-            >
-              Deactivate
-            </button>
+        ) : (
+          <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-600">
+            {loading
+              ? "Loading restaurant data..."
+              : "Restaurant information will appear here once a linked restaurant is available."}
           </div>
+        )}
+      </section>
+
+      <section className="mx-auto max-w-6xl space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+        <div className="flex flex-col gap-1 border-b pb-2">
+          <h2 className="text-lg font-semibold text-gray-800">Branch Management</h2>
+          <p className="text-sm text-gray-500">
+            Review every branch, edit its details, and assign one owner plus as many
+            staff members as needed.
+          </p>
         </div>
 
-        {/* DESKTOP TABLE */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
-            <thead className="bg-gray-50 text-gray-600">
-              <tr>
-                <th className="p-3">
-                  <input
-                    type="checkbox"
-                    checked={
-                      selectedBranches.size === pagedBranches.length &&
-                      pagedBranches.length > 0
-                    }
-                    onChange={toggleSelectAllBranches}
-                  />
-                </th>
-                {["Name", "Address", "City", "Status", "Owner", "Staff", "Actions"].map(
-                  (h) => (
-                    <th key={h} className="p-3 text-left font-medium">
-                      {h}
-                    </th>
-                  )
-                )}
-              </tr>
-            </thead>
+        <form onSubmit={handleCreateBranch} className="space-y-4 rounded-2xl border border-[#e5d5c6] bg-[#fff9f2] p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="font-semibold text-gray-900">Add Branch</h3>
+            <span className="text-xs text-gray-500">{branches.length} branches loaded</span>
+          </div>
 
-            <tbody className="divide-y">
-              {pagedBranches.map((b) => (
-                <tr key={b.id} className="hover:bg-gray-50">
-                  <td className="p-3">
-                    <input
-                      type="checkbox"
-                      checked={selectedBranches.has(b.id)}
-                      onChange={() => toggleBranchSelection(b.id)}
-                    />
-                  </td>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">Branch Name</label>
+              <input
+                type="text"
+                value={branchForm.name}
+                onChange={(event) =>
+                  setBranchForm((current) => ({ ...current, name: event.target.value }))
+                }
+                className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+              />
+            </div>
 
-                  <td className="p-3 font-medium">{b.name}</td>
-                  <td className="p-3">{b.address}</td>
-                  <td className="p-3">{b.city}</td>
-                  <td className="p-3">{b.status}</td>
-                  <td className="p-3">{b.owner || "Unassigned"}</td>
-                  <td className="p-3">{b.staffCount}</td>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">City</label>
+              <input
+                type="text"
+                value={branchForm.city}
+                onChange={(event) =>
+                  setBranchForm((current) => ({ ...current, city: event.target.value }))
+                }
+                className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+              />
+            </div>
+            <div className="flex flex-col gap-1 sm:col-span-2">
+              <label className="text-xs font-medium text-gray-500">Address</label>
+              <input
+                type="text"
+                value={branchForm.address}
+                onChange={(event) =>
+                  setBranchForm((current) => ({ ...current, address: event.target.value }))
+                }
+                className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+              />
+            </div>
 
-                  <td className="p-3 flex gap-3">
-                    <button onClick={() => openBranchModal(b)}>
-                      <Edit size={18} />
-                    </button>
 
-                    <button onClick={() => deleteBranch(b.id)}>
-                      <Trash2 size={18} className="text-red-500" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
 
-        {/* MOBILE CARDS */}
-        <div className="md:hidden space-y-4">
-          {pagedBranches.map((b) => (
-            <div
-              key={b.id}
-              className="border border-gray-200 rounded-lg p-4 space-y-3 shadow-sm bg-white"
-            >
-              <div className="flex justify-between">
-                <h3 className="font-semibold">{b.name}</h3>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">Status</label>
+
+              <Listbox
+                value={branchForm.status}
+                onChange={(value: BranchStatus) =>
+                  setBranchForm((current) => ({
+                    ...current,
+                    status: value,
+                  }))
+                }
+              >
+                <div className="relative">
+                  {/* Button */}
+                  <ListboxButton className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 text-left focus:outline-none focus:ring-2 focus:ring-orange-400 flex items-center justify-between">
+                    <span>{branchForm.status}</span>
+                    <ChevronDownIcon className="h-4 w-4 text-gray-500" />
+                  </ListboxButton>
+
+                  {/* Options */}
+                  <ListboxOptions className="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-xl border border-[#e5d5c6] bg-white shadow-lg focus:outline-none">
+                    {BRANCH_STATUS_OPTIONS.map((status) => (
+                      <ListboxOption
+                        key={status}
+                        value={status}
+                        className={({ active }) =>
+                          `cursor-pointer select-none px-4 py-2 flex items-center justify-between ${active ? "bg-orange-100 text-orange-700" : "text-gray-700"
+                          }`
+                        }
+                      >
+                        {({ selected }) => (
+                          <>
+                            <span>{status}</span>
+                            {selected && <CheckIcon className="h-4 w-4 text-orange-500" />}
+                          </>
+                        )}
+                      </ListboxOption>
+                    ))}
+                  </ListboxOptions>
+                </div>
+              </Listbox>
+            </div>
+
+
+
+
+
+
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-500">Open Time</label>
                 <input
-                  type="checkbox"
-                  checked={selectedBranches.has(b.id)}
-                  onChange={() => toggleBranchSelection(b.id)}
+                  type="time"
+                  value={branchForm.openingHours.open}
+                  onChange={(event) =>
+                    setBranchForm((current) => ({
+                      ...current,
+                      openingHours: {
+                        ...current.openingHours,
+                        open: event.target.value,
+                      },
+                    }))
+                  }
+                  className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
                 />
               </div>
 
-              <p className="text-sm text-gray-600">{b.address}</p>
-
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <p>
-                  <span className="font-medium">City:</span> {b.city}
-                </p>
-                <p>
-                  <span className="font-medium">Status:</span> {b.status}
-                </p>
-                <p>
-                  <span className="font-medium">Owner:</span>{" "}
-                  {b.owner || "Unassigned"}
-                </p>
-                <p>
-                  <span className="font-medium">Staff:</span> {b.staffCount}
-                </p>
-              </div>
-
-              <div className="flex gap-4 pt-2">
-                <button onClick={() => openBranchModal(b)}>
-                  <Edit size={18} />
-                </button>
-
-                <button onClick={() => deleteBranch(b.id)}>
-                  <Trash2 size={18} className="text-red-500" />
-                </button>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-gray-500">Close Time</label>
+                <input
+                  type="time"
+                  value={branchForm.openingHours.close}
+                  onChange={(event) =>
+                    setBranchForm((current) => ({
+                      ...current,
+                      openingHours: {
+                        ...current.openingHours,
+                        close: event.target.value,
+                      },
+                    }))
+                  }
+                  className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                />
               </div>
             </div>
-          ))}
-        </div>
-
-        {/* PAGINATION */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4">
-          <p className="text-sm text-gray-500">
-            Page {branchPage} of {branchTotalPages}
-          </p>
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => setBranchPage((prev) => Math.max(1, prev - 1))}
-              disabled={branchPage === 1}
-              className="px-4 py-1.5 rounded border text-sm hover:bg-gray-50 disabled:opacity-50"
-            >
-              Prev
-            </button>
-
-            <button
-              onClick={() =>
-                setBranchPage((prev) => Math.min(branchTotalPages, prev + 1))
-              }
-              disabled={branchPage === branchTotalPages}
-              className="px-4 py-1.5 rounded border text-sm hover:bg-gray-50 disabled:opacity-50"
-            >
-              Next
-            </button>
           </div>
+
+          <button
+            type="submit"
+            disabled={creatingBranch || !restaurantId}
+            className="cursor-pointer rounded-lg bg-orange-500 px-6 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {creatingBranch ? "Creating..." : "Create Branch"}
+          </button>
+        </form>
+
+        {branches.length ? (
+          <div className="space-y-4">
+            {branches.map((branch) => {
+              const owner = users.find((managedUser) => managedUser.id === branch.branchOwnerId);
+              const availableStaff = users.filter(
+                (managedUser) => managedUser.id !== branch.branchOwnerId,
+              );
+
+              return (
+                <article
+                  key={branch.id}
+                  className="rounded-2xl border border-[#e5d5c6] bg-[#fff9f2] p-5 shadow-sm"
+                >
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {branch.name || "Unnamed Branch"}
+                      </h3>
+                      <p className="text-xs text-gray-500">{branch.id}</p>
+                    </div>
+                    <span
+                      className={`w-fit rounded-full px-3 py-1 text-xs font-medium ${getStatusBadgeClass(
+                        branch.status,
+                      )}`}
+                    >
+                      {branch.status}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-medium text-gray-500">Branch Name</label>
+                      <input
+                        type="text"
+                        value={branch.name}
+                        onChange={(event) =>
+                          updateBranchDraft(branch.id, (current) => ({
+                            ...current,
+                            name: event.target.value,
+                          }))
+                        }
+                        className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-medium text-gray-500">City</label>
+                      <input
+                        type="text"
+                        value={branch.city}
+                        onChange={(event) =>
+                          updateBranchDraft(branch.id, (current) => ({
+                            ...current,
+                            city: event.target.value,
+                          }))
+                        }
+                        className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1 sm:col-span-2">
+                      <label className="text-xs font-medium text-gray-500">Address</label>
+                      <input
+                        type="text"
+                        value={branch.address}
+                        onChange={(event) =>
+                          updateBranchDraft(branch.id, (current) => ({
+                            ...current,
+                            address: event.target.value,
+                          }))
+                        }
+                        className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-medium text-gray-500">Status</label>
+
+                      <Listbox
+                        value={branch.status}
+                        onChange={(value: BranchStatus) =>
+                          updateBranchDraft(branch.id, (current) => ({
+                            ...current,
+                            status: value,
+                          }))
+                        }
+                      >
+                        <div className="relative">
+                          {/* Button */}
+                          <ListboxButton className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 text-left focus:outline-none focus:ring-2 focus:ring-orange-400 flex items-center justify-between">
+                            <span>{branch.status}</span>
+                            <ChevronDownIcon className="h-4 w-4 text-gray-500" />
+                          </ListboxButton>
+
+                          {/* Options */}
+                          <ListboxOptions className="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-xl border border-[#e5d5c6] bg-white shadow-lg focus:outline-none">
+                            {BRANCH_STATUS_OPTIONS.map((status) => (
+                              <ListboxOption
+                                key={status}
+                                value={status}
+                                className={({ active }) =>
+                                  `cursor-pointer select-none px-4 py-2 flex items-center justify-between ${active ? "bg-orange-100 text-orange-700" : "text-gray-700"
+                                  }`
+                                }
+                              >
+                                {({ selected }) => (
+                                  <>
+                                    <span>{status}</span>
+                                    {selected && <CheckIcon className="h-4 w-4 text-orange-500" />}
+                                  </>
+                                )}
+                              </ListboxOption>
+                            ))}
+                          </ListboxOptions>
+                        </div>
+                      </Listbox>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-medium text-gray-500">Open Time</label>
+                        <input
+                          type="time"
+                          value={branch.openingHours.open}
+                          onChange={(event) =>
+                            updateBranchDraft(branch.id, (current) => ({
+                              ...current,
+                              openingHours: {
+                                ...current.openingHours,
+                                open: event.target.value,
+                              },
+                            }))
+                          }
+                          className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-medium text-gray-500">Close Time</label>
+                        <input
+                          type="time"
+                          value={branch.openingHours.close}
+                          onChange={(event) =>
+                            updateBranchDraft(branch.id, (current) => ({
+                              ...current,
+                              openingHours: {
+                                ...current.openingHours,
+                                close: event.target.value,
+                              },
+                            }))
+                          }
+                          className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1 sm:col-span-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <label className="text-xs font-medium text-gray-500">Branch Owner</label>
+                        <span className="text-xs text-gray-500">
+                          {branch.branchOwnerId ? "Owner assigned" : "Unassigned"}
+                        </span>
+                      </div>
+
+                      <Listbox
+                        value={branch.branchOwnerId || ""}
+                        onChange={(value: string) =>
+                          updateBranchDraft(branch.id, (current) => ({
+                            ...current,
+                            branchOwnerId: value,
+                            staffIds: current.staffIds.filter((staffId) => staffId !== value),
+                          }))
+                        }
+                      >
+                        <div className="relative">
+                          {/* Button */}
+                          <ListboxButton className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 text-left focus:outline-none focus:ring-2 focus:ring-orange-400 flex items-center justify-between">
+                            <span>
+                              {branch.branchOwnerId
+                                ? (() => {
+                                  const selectedUser = users.find(
+                                    (u) => u.id === branch.branchOwnerId
+                                  );
+                                  return selectedUser
+                                    ? `${selectedUser.name} (${selectedUser.role})`
+                                    : "Unknown user";
+                                })()
+                                : "Unassigned"}
+                            </span>
+                            <ChevronDownIcon className="h-4 w-4 text-gray-500" />
+                          </ListboxButton>
+
+                          {/* Options */}
+                          <ListboxOptions className="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-xl border border-[#e5d5c6] bg-white shadow-lg focus:outline-none">
+                            {/* Unassigned option */}
+                            <ListboxOption
+                              value=""
+                              className={({ active }) =>
+                                `cursor-pointer select-none px-4 py-2 flex items-center justify-between ${active ? "bg-orange-100 text-orange-700" : "text-gray-700"
+                                }`
+                              }
+                            >
+                              {({ selected }) => (
+                                <>
+                                  <span>Unassigned</span>
+                                  {selected && <CheckIcon className="h-4 w-4 text-orange-500" />}
+                                </>
+                              )}
+                            </ListboxOption>
+
+                            {/* Users */}
+                            {users.map((managedUser) => (
+                              <ListboxOption
+                                key={managedUser.id}
+                                value={managedUser.id}
+                                className={({ active }) =>
+                                  `cursor-pointer select-none px-4 py-2 flex items-center justify-between ${active ? "bg-orange-100 text-orange-700" : "text-gray-700"
+                                  }`
+                                }
+                              >
+                                {({ selected }) => (
+                                  <>
+                                    <span>
+                                      {managedUser.name} ({managedUser.role})
+                                    </span>
+                                    {selected && (
+                                      <CheckIcon className="h-4 w-4 text-orange-500" />
+                                    )}
+                                  </>
+                                )}
+                              </ListboxOption>
+                            ))}
+                          </ListboxOptions>
+                        </div>
+                      </Listbox>
+
+                      <p className="text-xs text-gray-500">
+                        {owner
+                          ? `${owner.email}${owner.phone ? ` • ${owner.phone}` : ""}`
+                          : "Select a user to mark them as the branch owner."}
+                      </p>
+                    </div>
+
+                    <div className="space-y-2 sm:col-span-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <label className="text-xs font-medium text-gray-500">Assigned Staff</label>
+                        <span className="text-xs text-gray-500">{branch.staffIds.length} selected</span>
+                      </div>
+
+                      {availableStaff.length ? (
+                        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                          {availableStaff.map((managedUser) => (
+                            <label
+                              key={managedUser.id}
+                              className="flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-[#e5d5c6] bg-white px-4 py-3"
+                            >
+                              <div className="flex items-start gap-3">
+                                <input
+                                  type="checkbox"
+                                  checked={branch.staffIds.includes(managedUser.id)}
+                                  onChange={() =>
+                                    updateBranchDraft(branch.id, (current) => ({
+                                      ...current,
+                                      staffIds: toggleIdSelection(current.staffIds, managedUser.id),
+                                    }))
+                                  }
+                                  className="mt-1 h-4 w-4 accent-orange-500"
+                                />
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">
+                                    {managedUser.name}
+                                  </p>
+                                  <p className="text-xs text-gray-500">{managedUser.email}</p>
+                                </div>
+                              </div>
+                              <span
+                                className={`rounded-full px-2 py-1 text-[11px] font-medium ${getRoleBadgeClass(
+                                  managedUser.role,
+                                )}`}
+                              >
+                                {managedUser.role}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-5 text-sm text-gray-600">
+                          Create users first, then assign them here as staff.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-5 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      disabled={savingBranchId === branch.id}
+                      onClick={() => void handleSaveBranch(branch)}
+                      className="cursor-pointer rounded-lg bg-orange-500 px-6 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {savingBranchId === branch.id ? "Saving..." : "Save Branch"}
+                    </button>
+                    <span className="text-xs text-gray-500">
+                      {branch.branchOwnerId
+                        ? `Owner: ${owner?.name ?? "Assigned"}`
+                        : "No owner assigned"}
+                    </span>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-600">
+            {loading ? "Loading branches..." : "No branches found for this restaurant yet."}
+          </div>
+        )}
+      </section>
+
+      <section className="mx-auto max-w-6xl space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+        <div className="flex flex-col gap-1 border-b pb-2">
+          <h2 className="text-lg font-semibold text-gray-800">User Management</h2>
+          <p className="text-sm text-gray-500">
+            Create team members, update their information, change their role, and
+            control which branches they belong to.
+          </p>
         </div>
-      </div>
 
-      {/* USERS TABLE */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-6">
-        <h2 className="text-xl font-semibold text-gray-800">Users</h2>
+        <form onSubmit={handleCreateUser} className="space-y-4 rounded-2xl border border-[#e5d5c6] bg-[#fff9f2] p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="font-semibold text-gray-900">Add Team Member</h3>
+            <span className="text-xs text-gray-500">{users.length} users loaded</span>
+          </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
-            <thead className="bg-gray-50">
-              <tr>
-                {[
-                  "",
-                  "Name",
-                  "Email",
-                  "Phone",
-                  "Role",
-                  "Branch",
-                  "Status",
-                  "Verified",
-                  "Actions",
-                ].map((h) => (
-                  <th key={h} className="p-3 text-left font-medium">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">Full Name</label>
+              <input
+                type="text"
+                value={userForm.name}
+                onChange={(event) =>
+                  setUserForm((current) => ({ ...current, name: event.target.value }))
+                }
+                className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+              />
+            </div>
 
-            <tbody className="divide-y">
-              {pagedUsers.map((u) => (
-                <tr key={u.id} className="hover:bg-gray-50">
-                  <td className="p-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">Role</label>
+
+              <Listbox
+                value={userForm.role}
+                onChange={(value: RoleOption) =>
+                  setUserForm((current) => ({
+                    ...current,
+                    role: value,
+                  }))
+                }
+              >
+                <div className="relative">
+                  {/* Button */}
+                  <ListboxButton className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 text-left focus:outline-none focus:ring-2 focus:ring-orange-400 flex items-center justify-between">
+                    <span>
+                      {
+                        ROLE_OPTIONS.find((opt) => opt.value === userForm.role)?.label ??
+                        "Select role"
+                      }
+                    </span>
+                    <ChevronDownIcon className="h-4 w-4 text-gray-500" />
+                  </ListboxButton>
+
+                  {/* Options */}
+                  <ListboxOptions className="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-xl border border-[#e5d5c6] bg-white shadow-lg focus:outline-none">
+                    {ROLE_OPTIONS.map((option) => (
+                      <ListboxOption
+                        key={option.value}
+                        value={option.value}
+                        className={({ active }) =>
+                          `cursor-pointer select-none px-4 py-2 flex items-center justify-between ${active ? "bg-orange-100 text-orange-700" : "text-gray-700"
+                          }`
+                        }
+                      >
+                        {({ selected }) => (
+                          <>
+                            <span>{option.label}</span>
+                            {selected && (
+                              <CheckIcon className="h-4 w-4 text-orange-500" />
+                            )}
+                          </>
+                        )}
+                      </ListboxOption>
+                    ))}
+                  </ListboxOptions>
+                </div>
+              </Listbox>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">Email</label>
+              <input
+                type="email"
+                value={userForm.email}
+                onChange={(event) =>
+                  setUserForm((current) => ({ ...current, email: event.target.value }))
+                }
+                className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">Phone</label>
+              <input
+                type="tel"
+                value={userForm.phone}
+                onChange={(event) =>
+                  setUserForm((current) => ({ ...current, phone: event.target.value }))
+                }
+                className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">Password</label>
+              <input
+                type="password"
+                value={userForm.password}
+                onChange={(event) =>
+                  setUserForm((current) => ({ ...current, password: event.target.value }))
+                }
+                className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+              />
+            </div>
+
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={userForm.isActive}
+                onChange={(event) =>
+                  setUserForm((current) => ({
+                    ...current,
+                    isActive: event.target.checked,
+                  }))
+                }
+                className="h-4 w-4 accent-orange-500"
+              />
+              Make this user active immediately
+            </label>
+
+            <div className="space-y-2 sm:col-span-2">
+              <div className="flex items-center justify-between gap-3">
+                <label className="text-xs font-medium text-gray-500">Assigned Branches</label>
+                <span className="text-xs text-gray-500">{userForm.branchIds.length} selected</span>
+              </div>
+
+              {branches.length ? (
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                  {branches.map((branch) => (
+                    <label
+                      key={branch.id}
+                      className="flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-[#e5d5c6] bg-white px-4 py-3"
+                    >
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={userForm.branchIds.includes(branch.id)}
+                          onChange={() =>
+                            setUserForm((current) => ({
+                              ...current,
+                              branchIds: toggleIdSelection(current.branchIds, branch.id),
+                            }))
+                          }
+                          className="mt-1 h-4 w-4 accent-orange-500"
+                        />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{branch.name}</p>
+                          <p className="text-xs text-gray-500">{branch.city}</p>
+                        </div>
+                      </div>
+                      <span
+                        className={`rounded-full px-2 py-1 text-[11px] font-medium ${getStatusBadgeClass(
+                          branch.status,
+                        )}`}
+                      >
+                        {branch.status}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-5 text-sm text-gray-600">
+                  Create a branch before assigning one to a new user.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={creatingUser || !restaurantId}
+            className="cursor-pointer rounded-lg bg-orange-500 px-6 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {creatingUser ? "Creating..." : "Create User"}
+          </button>
+        </form>
+
+        {users.length ? (
+          <div className="space-y-4">
+            {users.map((managedUser) => (
+              <article
+                key={managedUser.id}
+                className="rounded-2xl border border-[#e5d5c6] bg-[#fff9f2] p-5 shadow-sm"
+              >
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {managedUser.name || "Unnamed User"}
+                    </h3>
+                    <p className="text-xs text-gray-500">{managedUser.email}</p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-medium ${getRoleBadgeClass(
+                        managedUser.role,
+                      )}`}
+                    >
+                      {managedUser.role}
+                    </span>
+                    <label className="flex cursor-pointer items-center gap-2 text-xs text-gray-600">
+                      <input
+                        type="checkbox"
+                        checked={managedUser.isActive}
+                        onChange={(event) =>
+                          updateUserDraft(managedUser.id, (current) => ({
+                            ...current,
+                            isActive: event.target.checked,
+                          }))
+                        }
+                        className="h-4 w-4 accent-orange-500"
+                      />
+                      Active
+                    </label>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-gray-500">Full Name</label>
                     <input
-                      type="checkbox"
-                      checked={selectedUsers.has(u.id)}
-                      onChange={() => toggleUserSelection(u.id)}
+                      type="text"
+                      value={managedUser.name}
+                      onChange={(event) =>
+                        updateUserDraft(managedUser.id, (current) => ({
+                          ...current,
+                          name: event.target.value,
+                        }))
+                      }
+                      className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
                     />
-                  </td>
-                  <td className="p-3 font-medium">{u.fullName}</td>
-                  <td className="p-3">{u.email}</td>
-                  <td className="p-3">{u.phone}</td>
-                  <td className="p-3">{u.role}</td>
-                  <td className="p-3">{u.branch || "Unassigned"}</td>
-                  <td className="p-3">{u.status}</td>
-                  <td className="p-3">
-                    {u.isVerified ? "Verified" : "Unverified"}
-                  </td>
+                  </div>
 
-                  <td className="p-3 flex gap-3">
-                    <button onClick={() => openUserModal(u)}>
-                      <Edit size={18} />
-                    </button>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-gray-500">Role</label>
 
-                    <button onClick={() => deleteUser(u.id)}>
-                      <Trash2 size={18} className="text-red-500" />
-                    </button>
+                    <Listbox
+                      value={managedUser.role}
+                      onChange={(value: RoleOption) =>
+                        updateUserDraft(managedUser.id, (current) => ({
+                          ...current,
+                          role: value,
+                        }))
+                      }
+                    >
+                      <div className="relative">
+                        {/* Button */}
+                        <ListboxButton className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 text-left focus:outline-none focus:ring-2 focus:ring-orange-400 flex items-center justify-between">
+                          <span>
+                            {
+                              ROLE_OPTIONS.find((opt) => opt.value === managedUser.role)?.label ??
+                              "Select role"
+                            }
+                          </span>
+                          <ChevronDownIcon className="h-4 w-4 text-gray-500" />
+                        </ListboxButton>
 
-                    <button onClick={() => openUserModal(u)}>
-                      <UserPlus size={18} className="text-green-500" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                        {/* Options */}
+                        <ListboxOptions className="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-xl border border-[#e5d5c6] bg-white shadow-lg focus:outline-none">
+                          {ROLE_OPTIONS.map((option) => (
+                            <ListboxOption
+                              key={option.value}
+                              value={option.value}
+                              className={({ active }) =>
+                                `cursor-pointer select-none px-4 py-2 flex items-center justify-between ${active ? "bg-orange-100 text-orange-700" : "text-gray-700"
+                                }`
+                              }
+                            >
+                              {({ selected }) => (
+                                <>
+                                  <span>{option.label}</span>
+                                  {selected && (
+                                    <CheckIcon className="h-4 w-4 text-orange-500" />
+                                  )}
+                                </>
+                              )}
+                            </ListboxOption>
+                          ))}
+                        </ListboxOptions>
+                      </div>
+                    </Listbox>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-gray-500">Email</label>
+                    <input
+                      type="email"
+                      value={managedUser.email}
+                      onChange={(event) =>
+                        updateUserDraft(managedUser.id, (current) => ({
+                          ...current,
+                          email: event.target.value,
+                        }))
+                      }
+                      className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-gray-500">Phone</label>
+                    <input
+                      type="tel"
+                      value={managedUser.phone}
+                      onChange={(event) =>
+                        updateUserDraft(managedUser.id, (current) => ({
+                          ...current,
+                          phone: event.target.value,
+                        }))
+                      }
+                      className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1 sm:col-span-2">
+                    <label className="text-xs font-medium text-gray-500">New Password</label>
+                    <input
+                      type="password"
+                      value={managedUser.draftPassword}
+                      onChange={(event) =>
+                        updateUserDraft(managedUser.id, (current) => ({
+                          ...current,
+                          draftPassword: event.target.value,
+                        }))
+                      }
+                      placeholder="Leave blank to keep the current password"
+                      className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    />
+                  </div>
+
+                  <div className="space-y-2 sm:col-span-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <label className="text-xs font-medium text-gray-500">Assigned Branches</label>
+                      <span className="text-xs text-gray-500">{managedUser.branchIds.length} selected</span>
+                    </div>
+
+                    {branches.length ? (
+                      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                        {branches.map((branch) => (
+                          <label
+                            key={branch.id}
+                            className="flex cursor-pointer items-start justify-between gap-3 rounded-xl border border-[#e5d5c6] bg-white px-4 py-3"
+                          >
+                            <div className="flex items-start gap-3">
+                              <input
+                                type="checkbox"
+                                checked={managedUser.branchIds.includes(branch.id)}
+                                onChange={() =>
+                                  updateUserDraft(managedUser.id, (current) => ({
+                                    ...current,
+                                    branchIds: toggleIdSelection(current.branchIds, branch.id),
+                                  }))
+                                }
+                                className="mt-1 h-4 w-4 accent-orange-500"
+                              />
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">{branch.name}</p>
+                                <p className="text-xs text-gray-500">{branch.city}</p>
+                              </div>
+                            </div>
+                            <span
+                              className={`rounded-full px-2 py-1 text-[11px] font-medium ${getStatusBadgeClass(
+                                branch.status,
+                              )}`}
+                            >
+                              {branch.status}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-5 text-sm text-gray-600">
+                        Create a branch before assigning one here.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-5 flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    disabled={savingUserId === managedUser.id}
+                    onClick={() => void handleSaveUser(managedUser)}
+                    className="cursor-pointer rounded-lg bg-orange-500 px-6 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {savingUserId === managedUser.id ? "Saving..." : "Save User"}
+                  </button>
+                  <span className="text-xs text-gray-500">
+                    {managedUser.branchIds.length
+                      ? `${managedUser.branchIds.length} branches assigned`
+                      : "No branches assigned"}
+                  </span>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-600">
+            {loading ? "Loading users..." : "No team members found for this restaurant yet."}
+          </div>
+        )}
+      </section>
 
       {loading && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center">
-          <div className="bg-white px-6 py-3 rounded-lg shadow text-sm">
-            Loading...
-          </div>
+        <div className="fixed inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+          <div className="rounded-lg bg-white px-6 py-3 text-sm shadow">Loading...</div>
         </div>
       )}
     </div>
