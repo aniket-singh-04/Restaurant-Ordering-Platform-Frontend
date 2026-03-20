@@ -13,7 +13,7 @@ export interface AuthUser {
   phone?: string;
   role: UserRole;
   restroId?: string;
-  branchId?: string;
+  branchIds?: { _id: string; name: string }[];
   gstNo?: string;
   imageUrl?: string;
 }

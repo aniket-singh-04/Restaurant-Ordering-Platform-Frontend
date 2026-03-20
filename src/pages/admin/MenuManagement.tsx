@@ -36,7 +36,7 @@ export default function MenuManagement() {
           ...rest,
           _id: id,
           restaurantId: "",
-          branchId: "",
+          branchIds: [],
           addOns: rest.addOns.map((addOn) => ({
             ...addOn,
             isAvailable: true,

@@ -30,7 +30,7 @@ export interface Menu {
   _id?: string;
 
   restaurantId: string;
-  branchId: string;
+  branchIds: string[];
 
   name: string;
   description?: string;

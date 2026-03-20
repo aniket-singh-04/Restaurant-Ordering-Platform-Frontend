@@ -153,7 +153,7 @@ export function AdminCheckboxField({
   ...props
 }: AdminCheckboxFieldProps) {
   return (
-    <label className={joinClasses("flex items-center gap-2", containerClassName)}>
+    <label className={joinClasses("flex items-center gap-2 cursor-pointer", containerClassName)}>
       <input type="checkbox" {...props} className={className} />
       {label}
     </label>
