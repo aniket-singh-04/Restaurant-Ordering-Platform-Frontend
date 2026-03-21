@@ -11,10 +11,10 @@ export default defineConfig({
     }),
     tailwindcss(),
   ],
-    // server: {
-    // port: 3001,      // Change to your desired port
-    // strictPort: true // Optional: fails if port is already in use0
-    // or 
-    // npm run dev -- --port 3001
-  // }
+  // server: {
+  //   host: 'ashish',   // <-- custom hostname (must be resolvable via /etc/hosts or DNS)
+  //   port: 5173,       // <-- custom port
+  //   strictPort: true, // fail if the port is taken
+  // },
+  // npm run dev -- --port 3001 // Without changing the config, you can override the port temporarily:
 })
