@@ -18,19 +18,55 @@ import {
 const MENU_ENDPOINT = "/api/v1/menu"
 
 type ImageType = "front" | "top" | "back" | "angled"
+type MenuFormState = Omit<Menu, "images"> & {
+  images: Record<ImageType, File | null>
+}
+type MenuImageRecord = {
+  url?: string
+  altText?: string
+  isPrimary?: boolean
+  displayOrder?: number
+}
 type BranchReference =
   | string
   | {
-      _id?: string
-      id?: string
-      name?: string
-    }
+    _id?: string
+    id?: string
+    name?: string
+  }
 type BranchSource = BranchReference | BranchReference[] | null | undefined
 type BranchOption = { _id: string; name: string }
+type MenuResponse = Partial<Omit<MenuFormState, "images">> & {
+  _id?: string
+  branchId?: BranchSource
+  branchIds?: BranchSource
+  images?: MenuImageRecord[]
+  rating?: {
+    average?: number
+    count?: number
+  }
+}
 
-const getErrorMessage = (error: any): string => {
-  if (error?.response?.data?.message) return error.response.data.message
-  if (error?.message) return error.message
+const imageTypes: ImageType[] = ["front", "top", "back", "angled"]
+const defaultPreviews: Record<ImageType, string> = {
+  front: "",
+  top: "",
+  back: "",
+  angled: "",
+}
+
+const getErrorMessage = (error: unknown): string => {
+  const maybeError = error as {
+    response?: {
+      data?: {
+        message?: string
+      }
+    }
+    message?: string
+  }
+
+  if (maybeError?.response?.data?.message) return maybeError.response.data.message
+  if (maybeError?.message) return maybeError.message
   return "Unexpected error occurred"
 }
 
@@ -82,7 +118,57 @@ const mergeBranchOptions = (...lists: BranchOption[][]): BranchOption[] => {
   return Array.from(branchMap.values())
 }
 
-const defaultForm: Menu = {
+const isRemotePreviewUrl = (url: string) => Boolean(url) && !url.startsWith("blob:")
+
+const revokePreviewUrl = (url: string) => {
+  if (url.startsWith("blob:")) {
+    URL.revokeObjectURL(url)
+  }
+}
+
+const normalizeImagePreviews = (
+  images: MenuImageRecord[] | undefined,
+): Record<ImageType, string> => {
+  const next = { ...defaultPreviews }
+
+  if (!Array.isArray(images)) {
+    return next
+  }
+
+  const sortedImages = [...images].sort(
+    (left, right) => (left.displayOrder ?? 0) - (right.displayOrder ?? 0),
+  )
+
+  sortedImages.slice(0, imageTypes.length).forEach((image, index) => {
+    if (image?.url) {
+      next[imageTypes[index]] = image.url
+    }
+  })
+
+  return next
+}
+
+const buildPersistedImages = (
+  name: string,
+  previews: Record<ImageType, string>,
+): MenuImageRecord[] =>
+  imageTypes.flatMap((type, index) => {
+    const url = previews[type]
+    if (!isRemotePreviewUrl(url)) {
+      return []
+    }
+
+    return [
+      {
+        url,
+        altText: `${name.trim() || "Menu"} ${type}`,
+        isPrimary: index === 0,
+        displayOrder: index,
+      },
+    ]
+  })
+
+const defaultForm: MenuFormState = {
   restaurantId: "",
   branchIds: [],
   name: "",
@@ -115,21 +201,15 @@ export default function MenuFormPage() {
 
   const isEditMode = Boolean(id && id !== "new")
 
-  const [form, setForm] = useState<Menu>(() => ({
+  const [form, setForm] = useState<MenuFormState>(() => ({
     ...defaultForm,
     restaurantId: user?.restroId ?? "",
     branchIds: normalizeBranchIds(user?.branchIds),
   }))
 
-  console.log(user)
   const [loading, setLoading] = useState(false)
   const [, setErrors] = useState<Record<string, string>>({})
-  const [previews, setPreviews] = useState<Record<ImageType, string>>({
-    front: "",
-    top: "",
-    back: "",
-    angled: "",
-  })
+  const [previews, setPreviews] = useState<Record<ImageType, string>>(defaultPreviews)
 
   const categories = ["Core Meal", "Protein-Based", "Cuisine", "Fast Food", "Desserts", "Beverages", "Health", "Breakfast", "Specials"]
 
@@ -167,11 +247,12 @@ export default function MenuFormPage() {
     const load = async () => {
       setLoading(true)
       try {
-        const data = await api.get<any>(`${MENU_ENDPOINT}/${id}`)
-        const payload = data?.data ?? data
+        const data = await api.get<{ data?: MenuResponse } & MenuResponse>(`${MENU_ENDPOINT}/${id}`)
+        const payload = (data?.data ?? data) as MenuResponse
         const nextBranchIds = normalizeBranchIds(
           payload?.branchIds ?? payload?.branchId ?? user?.branchIds,
         )
+        const nextPreviews = normalizeImagePreviews(payload?.images)
 
         setBranches(current =>
           mergeBranchOptions(
@@ -183,12 +264,21 @@ export default function MenuFormPage() {
 
         setForm({
           ...defaultForm,
-          ...payload,
           restaurantId: payload?.restaurantId ?? user?.restroId ?? "",
           branchIds: nextBranchIds,
+          name: payload?.name ?? "",
+          description: payload?.description ?? "",
+          price: Number(payload?.price ?? 0),
+          category: payload?.category ?? "",
           addOns: payload?.addOns ?? [],
+          isVeg: payload?.isVeg ?? true,
+          isSpicy: payload?.isSpicy ?? false,
+          has3DModel: payload?.has3DModel ?? false,
+          isAvailable: payload?.isAvailable ?? true,
+          preparationTimeMinutes: Number(payload?.preparationTimeMinutes ?? 10),
           rating: payload?.rating ?? { average: 0, count: 0 },
         })
+        setPreviews(nextPreviews)
       } catch (error) {
         console.error("Load Menu Error:", error)
         pushToast({
@@ -201,12 +291,18 @@ export default function MenuFormPage() {
       }
     }
     load()
-  }, [id, isEditMode, user])
+  }, [id, isEditMode, pushToast, user])
+
+  useEffect(() => () => {
+    Object.values(previews).forEach(revokePreviewUrl)
+  }, [previews])
 
   /* --------------------------- VALIDATION --------------------------- */
 
   const validate = () => {
     const next: Record<string, string> = {}
+    if (!form.restaurantId.trim()) next.restaurantId = "Restaurant required"
+    if (!form.branchIds.length) next.branchIds = "Select at least one branch"
     if (!form.name.trim()) next.name = "Name required"
     if (!form.category.trim()) next.category = "Category required"
     if (form.price <= 0) next.price = "Invalid price"
@@ -219,6 +315,7 @@ export default function MenuFormPage() {
 
   const uploadImage = (file: File, type: ImageType) => {
     const preview = URL.createObjectURL(file)
+    revokePreviewUrl(previews[type])
     setForm(prev => ({
       ...prev,
       images: { ...prev.images, [type]: file }
@@ -227,6 +324,7 @@ export default function MenuFormPage() {
   }
 
   const removeImage = (type: ImageType) => {
+    revokePreviewUrl(previews[type])
     setForm(prev => ({
       ...prev,
       images: { ...prev.images, [type]: null }
@@ -251,7 +349,7 @@ export default function MenuFormPage() {
     setForm(prev => ({ ...prev, addOns: prev.addOns.filter((_, i) => i !== index) }))
   }
 
-  const updateAddon = (index: number, field: keyof AddOn, value: any) => {
+  const updateAddon = (index: number, field: keyof AddOn, value: AddOn[keyof AddOn]) => {
     const updated = [...form.addOns]
     updated[index] = { ...updated[index], [field]: value }
     setForm(prev => ({ ...prev, addOns: updated }))
@@ -262,27 +360,53 @@ export default function MenuFormPage() {
   const handleSubmit = async () => {
     if (!validate()) return
     setLoading(true)
+
     try {
       const payload = {
-        ...form,
-        price: Number(form.price),
-        preparationTimeMinutes: Number(form.preparationTimeMinutes),
+        restaurantId: form.restaurantId,
+        branchIds: form.branchIds,
+        name: form.name.trim(),
+        description: form.description?.trim() || undefined,
+        price: Number(form.price ?? 0),
+        preparationTimeMinutes: Number(form.preparationTimeMinutes ?? 0),
+        category: form.category.trim(),
+        addOns: form.addOns
+          .filter(addon => addon.name.trim())
+          .map(addon => ({
+            name: addon.name.trim(),
+            price: Number(addon.price ?? 0),
+            isAvailable: addon.isAvailable ?? true,
+          })),
+        images: buildPersistedImages(form.name, previews),
+        isVeg: form.isVeg ?? true,
+        isSpicy: form.isSpicy ?? false,
+        has3DModel: form.has3DModel ?? false,
+        isAvailable: form.isAvailable ?? true,
+        rating: form.rating ?? { average: 0, count: 0 },
       }
+      const hasPendingImageUploads = imageTypes.some(type => Boolean(form.images[type]))
+
       if (isEditMode && id) {
-        await api.put(`${MENU_ENDPOINT}/${id}`, payload)
-        pushToast({ title: "Menu updated", variant: "success" })
+        await api.patch(`${MENU_ENDPOINT}/${id}`, payload)
       } else {
         await api.post(MENU_ENDPOINT, payload)
-        pushToast({ title: "Menu created", variant: "success" })
+      }
+
+      pushToast({
+        title: isEditMode ? "Menu updated successfully" : "Menu created successfully",
+        variant: "success",
+      })
+      if (hasPendingImageUploads) {
+        pushToast({
+          title: "Images were not uploaded",
+          description: "The current backend save flow only keeps existing image URLs.",
+          variant: "warning",
+        })
       }
       navigate("/admin/menu")
     } catch (error) {
-      console.error("Save Menu Error:", error)
-      pushToast({
-        title: "Save failed",
-        description: getErrorMessage(error),
-        variant: "error"
-      })
+      console.error(error)
+      pushToast({ title: "Save failed", description: getErrorMessage(error), variant: "error" })
     } finally {
       setLoading(false)
     }
@@ -290,11 +414,10 @@ export default function MenuFormPage() {
 
   /* --------------------------- UI --------------------------- */
 
-  const imageTypes: ImageType[] = ["front", "top", "back", "angled"]
   const selectedBranchLabel = form.branchIds.length
     ? form.branchIds
-        .map(branchId => branches.find(branch => branch._id === branchId)?.name ?? branchId)
-        .join(", ")
+      .map(branchId => branches.find(branch => branch._id === branchId)?.name ?? branchId)
+      .join(", ")
     : "Select Branch"
   const categoryLabel = form.category || "Select Category"
 
