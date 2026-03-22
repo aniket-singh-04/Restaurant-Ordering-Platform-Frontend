@@ -7,6 +7,8 @@ import { removeAuthToken } from "../features/auth/storage";
 import type { AuthUser, UserRole } from "../features/auth/types";
 import { mapAuthUser } from "../features/auth/user";
 import { api, ApiError } from "../utils/api";
+import { authStore, useAuthStore } from "../features/auth/store";
+import { connectSocket, disconnectSocket } from "../lib/socket";
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -20,14 +22,18 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(authStore.getState().user);
   const [loading, setLoading] = useState(true);
 
-  const fetchUser = async () => {
+  const storeUser = useAuthStore((state) => state.user);
+
+  const fetchUser = async (skipRefresh = false) => {
     try {
-      const data = await api.get<any>("/api/v1/auth/me");
+      const data = await api.get<any>("/api/v1/auth/me", { skipRefresh });
       const payload = data?.user ?? data?.data ?? data;
-      setUser(mapAuthUser(payload));
+      const mappedUser = mapAuthUser(payload);
+      setUser(mappedUser);
+      authStore.setUser(mappedUser);
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         setUser(null);
@@ -42,12 +48,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const refresh = async () => {
     setLoading(true);
-    await fetchUser();
+    try {
+      const refreshResponse = await api.post<any>("/api/v1/auth/refresh", undefined, {
+        skipRefresh: true,
+      });
+      const accessToken = refreshResponse?.data?.accessToken;
+      const refreshUser = mapAuthUser(refreshResponse?.data?.user);
+
+      if (accessToken) {
+        authStore.setAccessToken(accessToken);
+      }
+      if (refreshUser) {
+        authStore.setUser(refreshUser);
+        setUser(refreshUser);
+        setLoading(false);
+        return;
+      }
+    } catch {
+      authStore.clear();
+    }
+
+    await fetchUser(true);
   };
 
   useEffect(() => {
-    void fetchUser();
+    void refresh();
   }, []);
+
+  useEffect(() => {
+    if (storeUser) {
+      setUser(storeUser);
+    }
+  }, [storeUser]);
+
+  useEffect(() => {
+    if (user) {
+      connectSocket();
+      return;
+    }
+
+    disconnectSocket();
+  }, [user]);
 
   const logout = async (): Promise<void> => {
     const response = await api.post<any>("/api/v1/auth/logout");
@@ -55,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error(response?.message || "Logout failed");
     }
     setUser(null);
-    removeAuthToken();
+    authStore.clear();
   };
 
   const hasRole = (roles?: UserRole | UserRole[]) => userHasRole(user, roles);

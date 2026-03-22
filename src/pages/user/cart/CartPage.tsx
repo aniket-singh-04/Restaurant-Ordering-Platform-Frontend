@@ -5,6 +5,10 @@ import { useCart } from "../../../context/CartContext";
 import { formatPrice } from "../../../utils/formatPrice";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { useToast } from "../../../context/ToastContext";
+import { useMemo, useState } from "react";
+import { createOrder } from "../../../features/orders/api";
+import { useQrContextStore } from "../../../features/qr-context/store";
+import { useAuth } from "../../../context/AuthContext";
 
 const TAX_RATE = 0.05;
 
@@ -12,9 +16,19 @@ export default function CartPage() {
   const navigate = useNavigate();
   const { items, updateQuantity, removeItem, subtotal, clearCart } = useCart();
   const { pushToast } = useToast();
+  const qrContext = useQrContextStore((state) => state.context);
+  const { user } = useAuth();
+  const [placingOrder, setPlacingOrder] = useState(false);
+  const [paymentMode, setPaymentMode] = useState<"ONLINE_ADVANCE" | "CASH_CONFIRMED_BY_STAFF">(
+    "ONLINE_ADVANCE",
+  );
 
   const tax = Math.round(subtotal * TAX_RATE);
   const total = subtotal + tax;
+  const canCheckout = useMemo(
+    () => Boolean(qrContext?.restaurant.id && qrContext?.branch.id && qrContext?.table.id),
+    [qrContext],
+  );
 
   return (
     <>
@@ -112,14 +126,87 @@ export default function CartPage() {
               </div>
 
               <button
+                type="button"
+                className={`w-full py-2 rounded-xl font-medium border ${
+                  paymentMode === "ONLINE_ADVANCE"
+                    ? "border-orange-500 bg-orange-50 text-orange-600"
+                    : "border-gray-200 text-gray-600"
+                }`}
+                onClick={() => setPaymentMode("ONLINE_ADVANCE")}
+              >
+                Pay 50% Online
+              </button>
+              <button
+                type="button"
+                className={`w-full py-2 rounded-xl font-medium border ${
+                  paymentMode === "CASH_CONFIRMED_BY_STAFF"
+                    ? "border-orange-500 bg-orange-50 text-orange-600"
+                    : "border-gray-200 text-gray-600"
+                }`}
+                onClick={() => setPaymentMode("CASH_CONFIRMED_BY_STAFF")}
+              >
+                Cash via Staff
+              </button>
+
+              <button
                 className="w-full py-3 rounded-xl text-white font-semibold bg-linear-to-br from-[#f97415] via-[#f99e1f] to-[#fac938]"
-                onClick={() => {
-                  clearCart();
-                  pushToast({ title: "Order placed", variant: "success" });
+                disabled={placingOrder || !canCheckout}
+                onClick={async () => {
+                  if (!canCheckout || !qrContext) {
+                    pushToast({
+                      title: "QR context missing",
+                      description: "Scan the table QR before placing an order.",
+                      variant: "error",
+                    });
+                    return;
+                  }
+
+                  try {
+                    setPlacingOrder(true);
+                    const order = await createOrder({
+                      restaurantId: qrContext.restaurant.id,
+                      branchId: qrContext.branch.id,
+                      tableId: qrContext.table.id,
+                      orderType: "DINE_IN",
+                      paymentMode,
+                      items: items.map((item) => ({
+                        menuId: item.menuItemId,
+                        quantity: item.quantity,
+                        addOns: item.addOns.map((addOn) => ({
+                          name: addOn.name,
+                          price: addOn.price,
+                        })),
+                      })),
+                    });
+
+                    clearCart();
+                    pushToast({
+                      title: "Order created",
+                      description:
+                        paymentMode === "ONLINE_ADVANCE"
+                          ? "Complete the advance payment to place it."
+                          : "Ask staff to confirm the cash order.",
+                      variant: "success",
+                    });
+                    navigate(`/profile${order?._id ?? order?.id ? `?order=${order._id ?? order.id}` : ""}`);
+                  } catch (error: any) {
+                    pushToast({
+                      title: "Could not create order",
+                      description: error?.message ?? "Please try again.",
+                      variant: "error",
+                    });
+                  } finally {
+                    setPlacingOrder(false);
+                  }
                 }}
               >
-                Place Order
+                {placingOrder ? "Creating Order..." : `Create Order${user?.name ? ` as ${user.name}` : ""}`}
               </button>
+              {!canCheckout && (
+                <p className="text-xs text-red-500">
+                  Table context is required for dine-in checkout.
+                </p>
+              )}
             </div>
           </div>
         )}

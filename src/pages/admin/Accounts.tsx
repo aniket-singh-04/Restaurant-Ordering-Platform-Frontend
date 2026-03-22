@@ -219,7 +219,7 @@ export default function Accounts() {
     try {
       const [restaurantResponse, branchResponse, userResponse] = await Promise.all([
         api.get<ApiResponse<Restaurant>>(`/api/v1/restaurants/${restaurantId}`),
-        api.get<ApiResponse<BranchResponse[]>>(`/api/v1/branches/${restaurantId}`),
+        api.get<ApiResponse<BranchResponse[]>>(`/api/v1/branches/restaurant/${restaurantId}`),
         api.get<ApiResponse<ManagedUser[]>>(`/api/v1/users?restaurantId=${restaurantId}`),
       ]);
 

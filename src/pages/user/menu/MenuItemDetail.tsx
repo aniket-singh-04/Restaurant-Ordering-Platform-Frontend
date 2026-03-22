@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Star, Clock, Leaf, Flame } from "lucide-react";
-import { menuItems } from "../../../store/store";
 import Header from "./components/Header";
 import AddOnsSelector from "./components/AddOnsSelector";
 import SpecialInstructions from "./components/SpecialInstructions";
@@ -9,11 +8,17 @@ import QuantitySelector from "./components/QuantitySelector";
 import AddToCartButton from "./components/AddToCartButton";
 import { formatPrice } from "../../../utils/formatPrice";
 import { useCart } from "../../../context/CartContext";
+import { useMenuItem } from "../../../features/menu/api";
+import { useQrContextStore } from "../../../features/qr-context/store";
+import { useAuth } from "../../../context/AuthContext";
+import FullPageLoader from "../../../components/FullPageLoader";
 
 export default function MenuItemDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addItem } = useCart();
+  const { user } = useAuth();
+  const qrContext = useQrContextStore((state) => state.context);
 
   const [quantity, setQuantity] = useState(1);
   const [selectedAddOns, setSelectedAddOns] = useState<
@@ -21,11 +26,16 @@ export default function MenuItemDetail() {
   >([]);
   const [specialInstructions, setSpecialInstructions] = useState("");
 
-  const item = useMemo(() => menuItems.find((i) => i.id === id), [id]);
+  const menuItemQuery = useMenuItem(id);
+  const item = useMemo(() => menuItemQuery.data, [menuItemQuery.data]);
 
   useEffect(() => {
-    if (!item) navigate("/menu");
-  }, [item, navigate]);
+    if (!menuItemQuery.isLoading && !item) navigate("/menu");
+  }, [item, menuItemQuery.isLoading, navigate]);
+
+  if (menuItemQuery.isLoading) {
+    return <FullPageLoader label="Loading item..." />;
+  }
 
   if (!item) {
     return (
@@ -59,6 +69,9 @@ export default function MenuItemDetail() {
   const handleAddToCart = () => {
     addItem({
       menuItemId: item.id,
+      restaurantId: qrContext?.restaurant.id ?? user?.restroId,
+      branchId: qrContext?.branch.id ?? user?.branchId,
+      userId: user?.id,
       name: item.name,
       imageUrl: item.image,
       basePrice: item.price,

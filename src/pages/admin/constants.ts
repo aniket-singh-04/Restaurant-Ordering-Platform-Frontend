@@ -1,4 +1,4 @@
-import type { ElementType } from "react";
+import type { ComponentType } from "react";
 import {
   BarChart3,
   ClipboardList,
@@ -12,7 +12,7 @@ import type { UserRole } from "../../features/auth/types";
 
 export interface AdminNavItem {
   to: string;
-  icon: ElementType;
+  icon: ComponentType<{ className?: string }>;
   label: string;
   end?: boolean;
   roles?: UserRole[];
@@ -26,24 +26,24 @@ export const adminNavItems: AdminNavItem[] = [
     to: "/admin/analytics",
     icon: BarChart3,
     label: "Analytics",
-    roles: ["ADMIN", "SUPER_ADMIN", "RESTRO_OWNER"],
+    roles: ["ADMIN", "RESTRO_OWNER"],
   },
   {
     to: "/admin/settings",
     icon: Settings,
     label: "Settings",
-    roles: ["ADMIN", "SUPER_ADMIN", "RESTRO_OWNER"],
+    roles: ["ADMIN", "RESTRO_OWNER"],
   },
   {
     to: "/admin/addups",
     icon: User,
     label: "Add Ups",
-    roles: ["ADMIN", "SUPER_ADMIN", "RESTRO_OWNER"],
+    roles: ["ADMIN", "RESTRO_OWNER"],
   },
   {
     to: "/admin/accountmanagement",
     icon: MdManageAccounts,
     label: "Accounts",
-    roles: ["ADMIN", "SUPER_ADMIN", "RESTRO_OWNER"],
+    roles: ["ADMIN", "RESTRO_OWNER"],
   },
 ];

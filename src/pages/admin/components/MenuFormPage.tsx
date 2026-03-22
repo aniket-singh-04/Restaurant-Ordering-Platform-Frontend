@@ -23,10 +23,14 @@ type MenuFormState = Omit<Menu, "images"> & {
 }
 type MenuImageRecord = {
   url?: string
+  s3Key?: string
+  mimeType?: string
+  sizeBytes?: number
   altText?: string
   isPrimary?: boolean
   displayOrder?: number
 }
+type MenuImageSlots = Record<ImageType, MenuImageRecord | null>
 type BranchReference =
   | string
   | {
@@ -36,6 +40,10 @@ type BranchReference =
   }
 type BranchSource = BranchReference | BranchReference[] | null | undefined
 type BranchOption = { _id: string; name: string }
+type UploadTarget = {
+  uploadUrl?: string
+  key?: string
+}
 type MenuResponse = Partial<Omit<MenuFormState, "images">> & {
   _id?: string
   branchId?: BranchSource
@@ -53,6 +61,12 @@ const defaultPreviews: Record<ImageType, string> = {
   top: "",
   back: "",
   angled: "",
+}
+const defaultPersistedImages: MenuImageSlots = {
+  front: null,
+  top: null,
+  back: null,
+  angled: null,
 }
 
 const getErrorMessage = (error: unknown): string => {
@@ -118,11 +132,9 @@ const mergeBranchOptions = (...lists: BranchOption[][]): BranchOption[] => {
   return Array.from(branchMap.values())
 }
 
-const isRemotePreviewUrl = (url: string) => Boolean(url) && !url.startsWith("blob:")
-
 const revokePreviewUrl = (url: string) => {
   if (url.startsWith("blob:")) {
-    URL.revokeObjectURL(url)
+    URL.revokeObjectURL(url) // delete the blob url creatd by browser
   }
 }
 
@@ -148,24 +160,35 @@ const normalizeImagePreviews = (
   return next
 }
 
-const buildPersistedImages = (
-  name: string,
-  previews: Record<ImageType, string>,
-): MenuImageRecord[] =>
-  imageTypes.flatMap((type, index) => {
-    const url = previews[type]
-    if (!isRemotePreviewUrl(url)) {
-      return []
-    }
+const normalizePersistedImages = (
+  images: MenuImageRecord[] | undefined,
+): MenuImageSlots => {
+  const next = { ...defaultPersistedImages }
 
-    return [
-      {
-        url,
-        altText: `${name.trim() || "Menu"} ${type}`,
-        isPrimary: index === 0,
-        displayOrder: index,
-      },
-    ]
+  if (!Array.isArray(images)) {
+    return next
+  }
+
+  const sortedImages = [...images].sort(
+    (left, right) => (left.displayOrder ?? 0) - (right.displayOrder ?? 0),
+  )
+
+  sortedImages.slice(0, imageTypes.length).forEach((image, index) => {
+    next[imageTypes[index]] = image
+  })
+
+  return next
+}
+
+const isAbsoluteHttpUrl = (value: string) =>
+  value.startsWith("http://") || value.startsWith("https://")
+
+const fileToDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result ?? ""))
+    reader.onerror = () => reject(new Error(`Unable to read ${file.name}`))
+    reader.readAsDataURL(file)
   })
 
 const defaultForm: MenuFormState = {
@@ -210,6 +233,7 @@ export default function MenuFormPage() {
   const [loading, setLoading] = useState(false)
   const [, setErrors] = useState<Record<string, string>>({})
   const [previews, setPreviews] = useState<Record<ImageType, string>>(defaultPreviews)
+  const [persistedImages, setPersistedImages] = useState<MenuImageSlots>(defaultPersistedImages)
 
   const categories = ["Core Meal", "Protein-Based", "Cuisine", "Fast Food", "Desserts", "Beverages", "Health", "Breakfast", "Specials"]
 
@@ -253,6 +277,7 @@ export default function MenuFormPage() {
           payload?.branchIds ?? payload?.branchId ?? user?.branchIds,
         )
         const nextPreviews = normalizeImagePreviews(payload?.images)
+        const nextPersistedImages = normalizePersistedImages(payload?.images)
 
         setBranches(current =>
           mergeBranchOptions(
@@ -279,6 +304,7 @@ export default function MenuFormPage() {
           rating: payload?.rating ?? { average: 0, count: 0 },
         })
         setPreviews(nextPreviews)
+        setPersistedImages(nextPersistedImages)
       } catch (error) {
         console.error("Load Menu Error:", error)
         pushToast({
@@ -313,9 +339,99 @@ export default function MenuFormPage() {
 
   /* --------------------------- IMAGE HANDLING --------------------------- */
 
+  const buildAltText = (type: ImageType) => `${form.name.trim() || "Menu"} ${type}`
+
+  const uploadMenuImage = async (file: File, type: ImageType, displayOrder: number): Promise<MenuImageRecord> => {
+    const branchId = form.branchIds[0]
+    if (!form.restaurantId.trim() || !branchId) {
+      throw new Error("Restaurant and branch are required before uploading images")
+    }
+
+    const contentType = file.type || "application/octet-stream"
+    const response = await api.post<{ data?: UploadTarget } & UploadTarget>(
+      `${MENU_ENDPOINT}/uploads/presign`,
+      {
+        restaurantId: form.restaurantId,
+        branchId,
+        fileName: file.name,
+        contentType,
+      },
+    )
+    const uploadTarget = response?.data ?? response
+    const uploadUrl = uploadTarget?.uploadUrl ?? ""
+    const key = uploadTarget?.key ?? ""
+
+    if (!uploadUrl || !key) {
+      throw new Error("Unable to prepare menu image upload")
+    }
+
+    if (!isAbsoluteHttpUrl(uploadUrl)) {
+      return {
+        url: await fileToDataUrl(file),
+        mimeType: contentType,
+        sizeBytes: file.size,
+        altText: buildAltText(type),
+        isPrimary: displayOrder === 0,
+        displayOrder,
+      }
+    }
+
+    const uploadResponse = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": contentType,
+      },
+      body: file,
+    })
+
+    if (!uploadResponse.ok) {
+      throw new Error(`Unable to upload ${file.name}`)
+    }
+
+    return {
+      s3Key: key,
+      mimeType: contentType,
+      sizeBytes: file.size,
+      altText: buildAltText(type),
+      isPrimary: displayOrder === 0,
+      displayOrder,
+    }
+  }
+
+  const buildImagesPayload = async (): Promise<MenuImageRecord[]> => {
+    const nextImages: MenuImageRecord[] = []
+
+    for (const [displayOrder, type] of imageTypes.entries()) {
+      const file = form.images[type]
+
+      if (file) {
+        nextImages.push(await uploadMenuImage(file, type, displayOrder))
+        continue
+      }
+
+      const image = persistedImages[type]
+      if (!image?.s3Key?.trim() && !image?.url?.trim()) {
+        continue
+      }
+
+      nextImages.push({
+        ...(image.s3Key?.trim() ? { s3Key: image.s3Key.trim() } : {}),
+        ...(image.url?.trim() ? { url: image.url.trim() } : {}),
+        mimeType: image.mimeType?.trim(),
+        sizeBytes: image.sizeBytes,
+        altText: image.altText?.trim() || buildAltText(type),
+        isPrimary: displayOrder === 0,
+        displayOrder,
+      })
+    }
+
+    return nextImages
+  }
+
   const uploadImage = (file: File, type: ImageType) => {
     const preview = URL.createObjectURL(file)
     revokePreviewUrl(previews[type])
+    setPersistedImages(prev => ({ ...prev, [type]: null }))
     setForm(prev => ({
       ...prev,
       images: { ...prev.images, [type]: file }
@@ -325,6 +441,7 @@ export default function MenuFormPage() {
 
   const removeImage = (type: ImageType) => {
     revokePreviewUrl(previews[type])
+    setPersistedImages(prev => ({ ...prev, [type]: null }))
     setForm(prev => ({
       ...prev,
       images: { ...prev.images, [type]: null }
@@ -360,8 +477,8 @@ export default function MenuFormPage() {
   const handleSubmit = async () => {
     if (!validate()) return
     setLoading(true)
-
     try {
+      const images = await buildImagesPayload()
       const payload = {
         restaurantId: form.restaurantId,
         branchIds: form.branchIds,
@@ -377,15 +494,13 @@ export default function MenuFormPage() {
             price: Number(addon.price ?? 0),
             isAvailable: addon.isAvailable ?? true,
           })),
-        images: buildPersistedImages(form.name, previews),
+        images,
         isVeg: form.isVeg ?? true,
         isSpicy: form.isSpicy ?? false,
         has3DModel: form.has3DModel ?? false,
         isAvailable: form.isAvailable ?? true,
         rating: form.rating ?? { average: 0, count: 0 },
       }
-      const hasPendingImageUploads = imageTypes.some(type => Boolean(form.images[type]))
-
       if (isEditMode && id) {
         await api.patch(`${MENU_ENDPOINT}/${id}`, payload)
       } else {
@@ -396,13 +511,6 @@ export default function MenuFormPage() {
         title: isEditMode ? "Menu updated successfully" : "Menu created successfully",
         variant: "success",
       })
-      if (hasPendingImageUploads) {
-        pushToast({
-          title: "Images were not uploaded",
-          description: "The current backend save flow only keeps existing image URLs.",
-          variant: "warning",
-        })
-      }
       navigate("/admin/menu")
     } catch (error) {
       console.error(error)

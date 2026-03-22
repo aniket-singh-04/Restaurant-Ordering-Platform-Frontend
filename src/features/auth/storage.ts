@@ -1,13 +1,7 @@
-import { STORAGE_KEYS } from "../../constants/storageKeys";
-import {
-  getStorageItem,
-  removeStorageItem,
-  setStorageItem,
-} from "../../utils/storage";
+import { authStore } from "./store";
 
-export const getAuthToken = () => getStorageItem(STORAGE_KEYS.token);
+export const getAuthToken = () => authStore.getState().accessToken;
 
-export const setAuthToken = (token: string) =>
-  setStorageItem(STORAGE_KEYS.token, token);
+export const setAuthToken = (token: string) => authStore.setAccessToken(token);
 
-export const removeAuthToken = () => removeStorageItem(STORAGE_KEYS.token);
+export const removeAuthToken = () => authStore.clear();

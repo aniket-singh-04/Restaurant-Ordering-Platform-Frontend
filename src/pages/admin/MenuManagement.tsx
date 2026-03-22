@@ -7,6 +7,7 @@ import { api } from "../../utils/api";
 import { formatPrice } from "../../utils/formatPrice";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useToast } from "../../context/ToastContext";
+import { useAuth } from "../../context/AuthContext";
 
 const MENU_ENDPOINT = "/api/v1/menu";
 const PAGE_SIZE = 9;
@@ -15,6 +16,7 @@ type MenuRecord = Menu & { image?: string };
 export default function MenuManagement() {
   const navigate = useNavigate();
   const { pushToast } = useToast();
+  const { user, loading: authLoading } = useAuth();
 
   const [items, setItems] = useState<MenuRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -22,11 +24,27 @@ export default function MenuManagement() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(searchQuery, 250);
+  const branchId = user?.branchIds?.[0]?._id ?? user?.branchId ?? "";
+  const restaurantId = user?.restroId ?? "";
 
   const fetchMenus = useCallback(async () => {
+    if (authLoading) return;
+
+    const endpoint = restaurantId
+      ? `${MENU_ENDPOINT}?restaurantId=${encodeURIComponent(restaurantId)}`
+      : branchId
+        ? `${MENU_ENDPOINT}/branch/${branchId}`
+        : "";
+
+    if (!endpoint) {
+      setItems([]);
+      return;
+    }
+
     try {
       setLoading(true);
-      const data = await api.get<any>(MENU_ENDPOINT);
+      const data = await api.get<any>(endpoint);
+
       const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
       const filtered = list.filter((item: MenuRecord) => !item.isDeleted);
       setItems(filtered.length ? filtered : []);
@@ -61,11 +79,12 @@ export default function MenuManagement() {
     } finally {
       setLoading(false);
     }
-  }, [pushToast]);
+  }, [authLoading, branchId, pushToast, restaurantId]);
 
   useEffect(() => {
-    fetchMenus();
-  }, [fetchMenus]);
+    if (authLoading) return;
+    void fetchMenus();
+  }, [authLoading, fetchMenus]);
 
   const normalizedSearch = debouncedSearch.trim().toLowerCase();
 
@@ -110,6 +129,8 @@ export default function MenuManagement() {
     const unique = new Set(items.map((item) => item.category).filter(Boolean));
     return ["all", ...Array.from(unique)];
   }, [items]);
+
+  const isPageLoading = authLoading || loading;
 
   return (
     <div className="min-h-screen bg-[#fff9f2] space-y-8 text-left">
@@ -159,11 +180,10 @@ export default function MenuManagement() {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-lg whitespace-nowrap border text-sm transition cursor-pointer ${
-                selectedCategory === cat
+              className={`px-4 py-2 rounded-lg whitespace-nowrap border text-sm transition cursor-pointer ${selectedCategory === cat
                   ? "bg-orange-500 text-white border-orange-500"
                   : "bg-white hover:bg-orange-50"
-              }`}
+                }`}
             >
               {cat}
             </button>
@@ -171,7 +191,7 @@ export default function MenuManagement() {
         </div>
       </div>
 
-      {loading ? (
+      {isPageLoading ? (
         <div className="text-center py-20 text-gray-500">Loading menu...</div>
       ) : pagedItems.length ? (
         <>

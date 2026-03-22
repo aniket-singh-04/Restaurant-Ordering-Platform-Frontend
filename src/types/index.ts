@@ -7,12 +7,15 @@ export interface Category {
 
 export const categories: Category[] = [
   { id: "all", name: "All", icon: "ALL", itemCount: 12 },
-  { id: "starters", name: "Starters", icon: "S", itemCount: 3 },
-  { id: "main-course", name: "Main Course", icon: "M", itemCount: 4 },
-  { id: "pizza", name: "Pizza", icon: "P", itemCount: 2 },
-  { id: "burgers", name: "Burgers", icon: "B", itemCount: 2 },
-  { id: "desserts", name: "Desserts", icon: "D", itemCount: 2 },
-  { id: "beverages", name: "Beverages", icon: "BV", itemCount: 2 },
+  { id: "core-meal", name: "Core Meal", icon: "CM", itemCount: 0 },
+  { id: "protein-based", name: "Protein-Based", icon: "PB", itemCount: 0 },
+  { id: "cuisine", name: "Cuisine", icon: "C", itemCount: 0 },
+  { id: "fast-food", name: "Fast Food", icon: "FF", itemCount: 0 },
+  { id: "desserts", name: "Desserts", icon: "D", itemCount: 0 },
+  { id: "beverages", name: "Beverages", icon: "BV", itemCount: 0 },
+  { id: "health", name: "Health", icon: "H", itemCount: 0 },
+  { id: "breakfast", name: "Breakfast", icon: "B", itemCount: 0 },
+  { id: "specials", name: "Specials", icon: "S", itemCount: 0 },
 ];
 
 export interface AddOn {

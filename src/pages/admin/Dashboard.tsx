@@ -10,6 +10,9 @@ import {
   Clock,
   Bell,
 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { useRestaurantOverview } from "../../features/analytics/api";
+import { useBranchOrders } from "../../features/orders/api";
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -30,41 +33,6 @@ type Stat = {
   icon: LucideIcon;
 };
 
-const stats: Stat[] = [
-  {
-    label: "Today's Revenue",
-    value: 12450,
-    format: "currency",
-    change: "+12%",
-    isPositive: true,
-    icon: DollarSign,
-  },
-  {
-    label: "Total Orders",
-    value: 48,
-    format: "number",
-    change: "+8%",
-    isPositive: true,
-    icon: ShoppingBag,
-  },
-  {
-    label: "Active Tables",
-    value: 12,
-    format: "number",
-    change: "-2",
-    isPositive: false,
-    icon: Users,
-  },
-  {
-    label: "Avg. Prep Time",
-    value: "18 min",
-    format: "text",
-    change: "-3 min",
-    isPositive: true,
-    icon: Clock,
-  },
-];
-
 const formatStatValue = (stat: Stat) => {
   if (stat.format === "currency" && typeof stat.value === "number") {
     return formatCurrency(stat.value);
@@ -75,42 +43,57 @@ const formatStatValue = (stat: Stat) => {
   return String(stat.value);
 };
 
-const recentOrders = [
-  {
-    id: "ORD-001",
-    table: "5",
-    items: 3,
-    total: 850,
-    status: "preparing",
-    time: "2 min ago",
-  },
-  {
-    id: "ORD-002",
-    table: "12",
-    items: 5,
-    total: 1250,
-    status: "pending",
-    time: "5 min ago",
-  },
-  {
-    id: "ORD-003",
-    table: "3",
-    items: 2,
-    total: 480,
-    status: "ready",
-    time: "8 min ago",
-  },
-  {
-    id: "ORD-004",
-    table: "8",
-    items: 4,
-    total: 960,
-    status: "preparing",
-    time: "12 min ago",
-  },
-];
-
 export default function AdminDashboard() {
+  const { user } = useAuth();
+  const overview = useRestaurantOverview(user?.restroId);
+  const branchOrders = useBranchOrders(user?.branchIds?.[0]?._id);
+
+  const stats: Stat[] = [
+    {
+      label: "Revenue",
+      value: (overview.data?.revenueMinor ?? 0) / 100,
+      format: "currency",
+      change: "Live",
+      isPositive: true,
+      icon: DollarSign,
+    },
+    {
+      label: "Orders",
+      value: overview.data?.orders ?? 0,
+      format: "number",
+      change: "Live",
+      isPositive: true,
+      icon: ShoppingBag,
+    },
+    {
+      label: "Active Orders",
+      value:
+        branchOrders.data?.filter((order) => !["COMPLETED", "CANCELLED"].includes(order.OrderStatus)).length ?? 0,
+      format: "number",
+      change: "Live",
+      isPositive: true,
+      icon: Users,
+    },
+    {
+      label: "Avg. Order Value",
+      value: ((overview.data?.avgOrderValueMinor ?? 0) / 100).toFixed(0),
+      format: "text",
+      change: "Live",
+      isPositive: true,
+      icon: Clock,
+    },
+  ];
+
+  const recentOrders =
+    branchOrders.data?.slice(0, 4).map((order) => ({
+      id: order._id ?? order.id,
+      table: order.tableId ?? "--",
+      items: order.itemsSnapshot?.length ?? 0,
+      total: (order.totalsSnapshot?.grandTotal ?? 0) / 100,
+      status: (order.OrderStatus ?? "pending").toLowerCase(),
+      time: new Date(order.createdAt).toLocaleTimeString(),
+    })) ?? [];
+
   return (
     <div className="text-left space-y-8 bg-[#fff9f2] min-h-screen">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

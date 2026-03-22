@@ -2,7 +2,6 @@ import type { AuthUser, UserRole } from "./types";
 
 export const ADMIN_PANEL_ROLES: UserRole[] = [
   "ADMIN",
-  "SUPER_ADMIN",
   "RESTRO_OWNER",
   "BRANCH_OWNER",
   "STAFF",

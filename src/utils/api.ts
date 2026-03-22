@@ -1,4 +1,5 @@
-import { getAuthToken } from "../features/auth/storage";
+import { authStore } from "../features/auth/store";
+import { mapAuthUser } from "../features/auth/user";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -48,9 +49,51 @@ const safeParseJson = async <T,>(response: Response): Promise<T | null> => {
 };
 
 const getAuthHeader = () => {
-  const token = getAuthToken();
+  const token = authStore.getState().accessToken;
   if (!token) return undefined;
   return `Bearer ${token}`;
+};
+
+let refreshPromise: Promise<string | null> | null = null;
+
+const refreshAccessToken = async () => {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch(buildUrl("/api/v1/auth/refresh"), {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!res.ok) {
+        authStore.clear();
+        return null;
+      }
+
+      const data = await safeParseJson<any>(res);
+      const accessToken = data?.data?.accessToken ?? null;
+      const user = data?.data?.user ? mapAuthUser(data.data.user) : null;
+
+      if (accessToken) {
+        authStore.setAccessToken(accessToken);
+      }
+      if (user) {
+        authStore.setUser(user);
+      }
+
+      return accessToken;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 };
 
 export type ApiRequestOptions = {
@@ -60,6 +103,7 @@ export type ApiRequestOptions = {
   credentials?: RequestCredentials;
   signal?: AbortSignal;
   timeoutMs?: number;
+  skipRefresh?: boolean;
 };
 
 export async function apiRequest<T>(
@@ -73,6 +117,7 @@ export async function apiRequest<T>(
     credentials = "include",
     signal,
     timeoutMs = DEFAULT_TIMEOUT_MS,
+    skipRefresh = false,
   } = options;
 
   const controller = new AbortController();
@@ -80,7 +125,7 @@ export async function apiRequest<T>(
 
   try {
     const authHeader = getAuthHeader();
-    const res = await fetch(buildUrl(path), {
+    let res = await fetch(buildUrl(path), {
       method,
       credentials,
       headers: {
@@ -91,6 +136,24 @@ export async function apiRequest<T>(
       body: body ? JSON.stringify(body) : undefined,
       signal: signal ?? controller.signal,
     });
+
+    if (res.status === 401 && !skipRefresh && path !== "/api/v1/auth/refresh") {
+      const nextToken = await refreshAccessToken();
+
+      if (nextToken) {
+        res = await fetch(buildUrl(path), {
+          method,
+          credentials,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${nextToken}`,
+            ...headers,
+          },
+          body: body ? JSON.stringify(body) : undefined,
+          signal: signal ?? controller.signal,
+        });
+      }
+    }
 
     const data = await safeParseJson<T & ApiErrorShape>(res);
 

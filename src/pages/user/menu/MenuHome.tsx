@@ -1,10 +1,9 @@
 import CategoryPills from "../../../components/CategoryPills/CategoryPills";
 import { ArrowRight, Sparkles, TrendingUp } from "lucide-react";
 import { categories } from "../../../types/index";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from 'framer-motion';
-import { useMemo, useState } from "react";
-import { menuItems } from "../../../store/store";
+import { useEffect, useMemo, useState } from "react";
 import { useDebounce } from "../../../hooks/useDebounce";
 import MenuItemsGrid from "./components/MenuItemsGrid";
 import MenuPageLayout from "./components/MenuPageLayout";
@@ -14,22 +13,47 @@ import {
   getActiveCategoryTitle,
   getFeaturedMenuItems,
 } from "./menu.utils";
+import FullPageLoader from "../../../components/FullPageLoader";
+import { useQrContext } from "../../../features/qr-context/api";
+import { useQrContextStore } from "../../../features/qr-context/store";
+import { useBranchMenu } from "../../../features/menu/api";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function MenuHome() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 250);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const qrId = searchParams.get("qr") ?? undefined;
+  const { user } = useAuth();
+  const qrContext = useQrContext(qrId);
+  const context = useQrContextStore((state) => state.context);
+  const setContext = useQrContextStore((state) => state.setContext);
+  const activeContext = qrContext.data ?? context;
+  const menuQuery = useBranchMenu(
+    activeContext?.branch.id ?? user?.branchId,
+    activeContext?.restaurant.id ?? user?.restroId,
+  );
+
+  useEffect(() => {
+    if (qrContext.data) {
+      setContext(qrContext.data);
+    }
+  }, [qrContext.data, setContext]);
 
   const filteredItems = useMemo(() => {
-    return filterMenuItems(menuItems, {
+    return filterMenuItems(menuQuery.data ?? [], {
       activeCategory,
       searchQuery: debouncedSearch,
     });
-  }, [activeCategory, debouncedSearch]);
+  }, [activeCategory, debouncedSearch, menuQuery.data]);
 
-  const featuredItems = useMemo(() => getFeaturedMenuItems(menuItems), []);
+  const featuredItems = useMemo(() => getFeaturedMenuItems(menuQuery.data ?? []), [menuQuery.data]);
 
-  const navigate = useNavigate();
+  if (qrContext.isLoading || menuQuery.isLoading) {
+    return <FullPageLoader label="Loading menu..." />;
+  }
 
   return (
     <MenuPageLayout>
@@ -45,7 +69,9 @@ export default function MenuHome() {
               </h1>
 
               <p className="text-white/80 mb-4 text-sm sm:text-base max-w-sm">
-                Experience your food before ordering with our interactive 3D menu.
+                {activeContext
+                  ? `${activeContext.restaurant.name}, ${activeContext.branch.name} · Table ${activeContext.table.tableNumber}`
+                  : "Experience your food before ordering with our interactive menu."}
               </p>
 
               <button
@@ -128,7 +154,9 @@ export default function MenuHome() {
               items={filteredItems}
               emptyState={
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground">No items found</p>
+                  <p className="text-muted-foreground">
+                    {menuQuery.isError ? "Could not load menu" : "No items found"}
+                  </p>
                 </div>
               }
             />

@@ -9,6 +9,8 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell,
 } from 'recharts';
+import { useAuth } from '../../context/AuthContext';
+import { useBranchTrends, useRestaurantOverview } from '../../features/analytics/api';
 
 // --------------------
 // Local Button component
@@ -61,16 +63,6 @@ const formatNumber = (value: number) => numberFormatter.format(value);
 // --------------------
 // Demo data
 // --------------------
-const revenueData = [
-  { name: 'Mon', revenue: 4200, orders: 28 },
-  { name: 'Tue', revenue: 3800, orders: 24 },
-  { name: 'Wed', revenue: 5200, orders: 35 },
-  { name: 'Thu', revenue: 4800, orders: 32 },
-  { name: 'Fri', revenue: 6500, orders: 45 },
-  { name: 'Sat', revenue: 8200, orders: 58 },
-  { name: 'Sun', revenue: 7100, orders: 48 },
-];
-
 const categoryData = [
   { name: 'Main Course', value: 35, color: 'hsl(25, 95%, 53%)' },
   { name: 'Pizza', value: 25, color: 'hsl(35, 95%, 55%)' },
@@ -96,13 +88,6 @@ type Stat = {
   icon: LucideIcon;
 };
 
-const stats: Stat[] = [
-  { label: 'Total Revenue', value: 39800, format: 'currency', change: '+18%', isPositive: true, icon: DollarSign },
-  { label: 'Total Orders', value: 270, format: 'number', change: '+12%', isPositive: true, icon: ShoppingBag },
-  { label: 'Avg Order Value', value: 147, format: 'currency', change: '+5%', isPositive: true, icon: TrendingUp },
-  { label: 'Avg Prep Time', value: '18 min', format: 'text', change: '-2 min', isPositive: false, icon: Clock },
-];
-
 const formatStatValue = (stat: Stat) => {
   if (stat.format === 'currency' && typeof stat.value === 'number') {
     return formatCurrency(stat.value);
@@ -117,6 +102,45 @@ const formatStatValue = (stat: Stat) => {
 // Analytics Component
 // --------------------
 export default function Analytics() {
+  const { user } = useAuth();
+  const overview = useRestaurantOverview(user?.restroId);
+  const branchTrends = useBranchTrends(user?.branchIds?.[0]?._id);
+
+  const revenueData =
+    branchTrends.data?.map((entry) => ({
+      name: `${entry._id.day}/${entry._id.month}`,
+      revenue: entry.revenueMinor / 100,
+      orders: entry.orders,
+    })) ?? [];
+
+  const stats: Stat[] = [
+    {
+      label: 'Total Revenue',
+      value: (overview.data?.revenueMinor ?? 0) / 100,
+      format: 'currency',
+      change: 'Live',
+      isPositive: true,
+      icon: DollarSign,
+    },
+    {
+      label: 'Total Orders',
+      value: overview.data?.orders ?? 0,
+      format: 'number',
+      change: 'Live',
+      isPositive: true,
+      icon: ShoppingBag,
+    },
+    {
+      label: 'Avg Order Value',
+      value: (overview.data?.avgOrderValueMinor ?? 0) / 100,
+      format: 'currency',
+      change: 'Live',
+      isPositive: true,
+      icon: TrendingUp,
+    },
+    { label: 'Tracked Days', value: revenueData.length, format: 'number', change: 'Live', isPositive: true, icon: Clock },
+  ];
+
   return (
     <div className="text-left space-y-6">
       {/* Header */}

@@ -1,28 +1,54 @@
 import CategoryPills from "../../../components/CategoryPills/CategoryPills";
-import { menuItems } from "../../../store/store";
 import { Filter, Search } from "lucide-react";
 import { categories } from "../../../types";
 import { motion } from "framer-motion";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useDebounce } from "../../../hooks/useDebounce";
 import MenuItemsGrid from "./components/MenuItemsGrid";
 import MenuPageLayout from "./components/MenuPageLayout";
 import MenuSearchBar from "./components/MenuSearchBar";
 import { filterMenuItems } from "./menu.utils";
+import FullPageLoader from "../../../components/FullPageLoader";
+import { useQrContext } from "../../../features/qr-context/api";
+import { useQrContextStore } from "../../../features/qr-context/store";
+import { useBranchMenu } from "../../../features/menu/api";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function MenuList() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showVegOnly, setShowVegOnly] = useState(false);
   const debouncedSearch = useDebounce(searchQuery, 250);
+  const [searchParams] = useSearchParams();
+  const qrId = searchParams.get("qr") ?? undefined;
+  const { user } = useAuth();
+  const qrContext = useQrContext(qrId);
+  const context = useQrContextStore((state) => state.context);
+  const setContext = useQrContextStore((state) => state.setContext);
+  const activeContext = qrContext.data ?? context;
+  const menuQuery = useBranchMenu(
+    activeContext?.branch.id ?? user?.branchId,
+    activeContext?.restaurant.id ?? user?.restroId,
+  );
+
+  useEffect(() => {
+    if (qrContext.data) {
+      setContext(qrContext.data);
+    }
+  }, [qrContext.data, setContext]);
 
   const filteredItems = useMemo(() => {
-    return filterMenuItems(menuItems, {
+    return filterMenuItems(menuQuery.data ?? [], {
       activeCategory,
       searchQuery: debouncedSearch,
       showVegOnly,
     });
-  }, [activeCategory, debouncedSearch, showVegOnly]);
+  }, [activeCategory, debouncedSearch, menuQuery.data, showVegOnly]);
+
+  if (qrContext.isLoading || menuQuery.isLoading) {
+    return <FullPageLoader label="Loading menu..." />;
+  }
 
   return (
     <MenuPageLayout>
@@ -35,6 +61,9 @@ export default function MenuList() {
             <h1 className="font-display text-3xl font-bold">Our Menu</h1>
             <p className="text-muted-foreground mt-1">
               {filteredItems.length} delicious items to explore
+              {activeContext
+                ? ` · ${activeContext.branch.name} table ${activeContext.table.tableNumber}`
+                : ""}
             </p>
           </motion.div>
 
@@ -93,7 +122,7 @@ export default function MenuList() {
                   </div>
                   <h3 className="font-display text-xl mb-2">No dishes found</h3>
                   <p className="text-muted-foreground">
-                    Try adjusting your filters or search
+                    {menuQuery.isError ? "We could not load this menu." : "Try adjusting your filters or search"}
                   </p>
                 </div>
               }

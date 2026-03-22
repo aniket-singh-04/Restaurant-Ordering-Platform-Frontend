@@ -1,5 +1,4 @@
 export type UserRole =
-  | "SUPER_ADMIN"
   | "ADMIN"
   | "RESTRO_OWNER"
   | "BRANCH_OWNER"
@@ -14,6 +13,9 @@ export interface AuthUser {
   role: UserRole;
   restroId?: string;
   branchIds?: { _id: string; name: string }[];
+  branchId?: string;
   gstNo?: string;
   imageUrl?: string;
+  emailVerifiedAt?: string | null;
+  status?: string;
 }

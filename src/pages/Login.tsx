@@ -64,13 +64,14 @@ export default function Login() {
         ...(normalizedPhone ? { phone: normalizedPhone } : {}),
       };
 
-      const data = await api.post<any>("/api/v1/auth/login", payload);
-      const userData = data?.data ?? data?.user ?? data;
+      const data = await api.post<any>("/api/v1/auth/login", payload, {
+        skipRefresh: true,
+      });
+      const accessToken = data?.data?.accessToken;
+      const userData = data?.data?.user ?? data?.user ?? data;
 
-      if (userData?.token) {
-        setAuthToken(userData.token);
-      } else if (data?.token) {
-        setAuthToken(data.token);
+      if (accessToken) {
+        setAuthToken(accessToken);
       }
 
       setUser(mapAuthUser(userData));
