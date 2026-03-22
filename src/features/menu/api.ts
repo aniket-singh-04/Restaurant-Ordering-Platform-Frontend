@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../utils/api";
-import type { MenuItem } from "../../components/MenuCard/types";
+import type { MenuItem, multiImage } from "../../components/MenuCard/types";
 
 type MenuApiItem = {
   _id?: string;
@@ -10,7 +10,7 @@ type MenuApiItem = {
   price?: number;
   priceMinor?: number;
   image?: string;
-  images?: Array<{ url?: string }>;
+  images?: multiImage[];
   category: string;
   isVeg?: boolean;
   isSpicy?: boolean;
@@ -32,6 +32,14 @@ const mapMenuItem = (item: MenuApiItem): MenuItem => ({
   description: item.description ?? "",
   price: toMajorPrice(item),
   image: item.image ?? item.images?.[0]?.url ?? "",
+  images: item.images?.map((img): multiImage => ({
+    altText: img.altText ?? "",
+    isPrimary: img.isPrimary ?? false,
+    mimeType: img.mimeType ?? "",
+    s3Key: img.s3Key ?? "",
+    sizeBytes: img.sizeBytes ?? 0,
+    url: img.url ?? ""
+  })) ?? [],
   category: item.category,
   isVeg: item.isVeg ?? false,
   isSpicy: item.isSpicy ?? false,

@@ -12,6 +12,7 @@ import { useMenuItem } from "../../../features/menu/api";
 import { useQrContextStore } from "../../../features/qr-context/store";
 import { useAuth } from "../../../context/AuthContext";
 import FullPageLoader from "../../../components/FullPageLoader";
+import MenuImageToggle from "../../../pages/MenuImageToggle";
 
 export default function MenuItemDetail() {
   const { id } = useParams();
@@ -28,7 +29,7 @@ export default function MenuItemDetail() {
 
   const menuItemQuery = useMenuItem(id);
   const item = useMemo(() => menuItemQuery.data, [menuItemQuery.data]);
-
+  console.log(item)
   useEffect(() => {
     if (!menuItemQuery.isLoading && !item) navigate("/menu");
   }, [item, menuItemQuery.isLoading, navigate]);
@@ -93,11 +94,18 @@ export default function MenuItemDetail() {
           <div className="grid grid-cols-1 md:grid-cols-2">
             {/* IMAGE SECTION */}
             <div className="relative bg-orange-50 rounded-3xl">
-              <img
+              {/* <img
                 src={item.image}
                 alt={item.name}
                 loading="lazy"
                 className="w-full object-cover rounded-3xl"
+              /> */}
+              <MenuImageToggle
+                items={{
+                  name: item.name,
+                  image: item.image,
+                  images: item.images
+                }}
               />
               {item.has3DModel && (
                 <button

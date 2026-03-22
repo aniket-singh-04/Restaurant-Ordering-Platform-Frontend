@@ -1,3 +1,4 @@
+
 export interface Category {
   id: string;
   name: string;
@@ -28,6 +29,14 @@ export interface Rating {
   average: number;
   count: number;
 }
+export interface multiImage {
+  altText: string;
+  isPrimary: boolean;
+  mimeType: string;
+  s3Key: string;
+  sizeBytes: number;
+  url: string;
+}
 
 export interface Menu {
   _id?: string;
@@ -42,12 +51,8 @@ export interface Menu {
   addOns: AddOn[];
 
   category: string;
-  images: {
-    front?: File | null
-    top?: File | null
-    back?: File | null
-    angled?: File | null
-  }
+  image: string;
+  images: multiImage[];
 
   isVeg: boolean;
   isSpicy: boolean;

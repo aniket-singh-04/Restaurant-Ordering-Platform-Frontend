@@ -15,7 +15,7 @@ export const filterMenuItems = (
 
   return items.filter((item) => {
     const matchesCategory =
-      activeCategory === "all" || item.category === activeCategory;
+      activeCategory === "all" || item.category.toLowerCase() === activeCategory;
     const matchesSearch = item.name.toLowerCase().includes(query);
     const matchesVeg = showVegOnly ? item.isVeg : true;
 

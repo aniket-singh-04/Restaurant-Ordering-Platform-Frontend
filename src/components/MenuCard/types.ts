@@ -4,15 +4,22 @@ export interface AddOn {
   price: number;
 }
 
+export interface multiImage{
+  altText: string;
+  isPrimary: boolean;
+  mimeType: string;
+  s3Key: string;
+  sizeBytes: number;
+  url: string;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
   description: string;
   price: number;
   image: string;
-  topView?: string;
-  frontView?: string;
-  angleView?: string;
+  images: multiImage[];
   category: string;
   isVeg: boolean;
   isSpicy: boolean;

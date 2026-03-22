@@ -3,6 +3,7 @@ import { Star, Clock, Flame, Leaf } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { MenuCardProps } from "./types";
 import { formatPrice } from "../../utils/formatPrice";
+import MenuImageToggle from "../../pages/MenuImageToggle";
 
 export default function MenuCard({ item, index }: MenuCardProps) {
   const navigate = useNavigate();
@@ -18,12 +19,19 @@ export default function MenuCard({ item, index }: MenuCardProps) {
     >
       {/* Image */}
       <div className="relative h-44 overflow-hidden">
-        <img
+        {/* <img
           src={item.image}
           alt={item.name}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
           loading="lazy"
           decoding="async"
+        /> */}
+        <MenuImageToggle
+          items={{
+            name: item.name,
+            image: item.image,
+            images: item.images
+          }}
         />
 
         {/* 3D Badge */}

@@ -8,6 +8,7 @@ import { formatPrice } from "../../utils/formatPrice";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useToast } from "../../context/ToastContext";
 import { useAuth } from "../../context/AuthContext";
+import MenuImageToggle from "../MenuImageToggle";
 
 const MENU_ENDPOINT = "/api/v1/menu";
 const PAGE_SIZE = 9;
@@ -126,7 +127,7 @@ export default function MenuManagement() {
   }, [items]);
 
   const isPageLoading = authLoading || loading;
-
+console.log(pagedItems)
   return (
     <div className="min-h-screen bg-[#fff9f2] space-y-8 text-left">
       <div className="flex flex-col md:flex-row justify-between gap-4">
@@ -182,8 +183,8 @@ export default function MenuManagement() {
               key={cat}
               onClick={() => setSelectedCategory(cat)}
               className={`px-4 py-2 rounded-lg whitespace-nowrap border text-sm transition cursor-pointer ${selectedCategory === cat
-                  ? "bg-orange-500 text-white border-orange-500"
-                  : "bg-white hover:bg-orange-50"
+                ? "bg-orange-500 text-white border-orange-500"
+                : "bg-white hover:bg-orange-50"
                 }`}
             >
               {cat}
@@ -199,16 +200,23 @@ export default function MenuManagement() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {pagedItems.map((item) => (
               <div
-                key={item._id ?? item.name}
-                className="bg-white rounded-xl shadow-sm hover:shadow-lg transition border border-orange-100 overflow-hidden"
+              key={item._id ?? item.name}
+              className="bg-white rounded-xl shadow-sm hover:shadow-lg transition border border-orange-100 overflow-hidden"
               >
                 <div className="h-44 overflow-hidden">
-                  <img
+                  {/* <img
                     src={item.image || "/placeholder.png"}
                     alt={item.name}
                     className="w-full h-full object-cover"
                     loading="lazy"
                     decoding="async"
+                  /> */}
+                  <MenuImageToggle
+                    items={{
+                      name: item.name,
+                      image: item.image,
+                      images: item.images
+                    }}
                   />
                 </div>
 
