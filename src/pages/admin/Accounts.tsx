@@ -6,6 +6,11 @@ import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { api } from "../../utils/api";
 import {
+  getApiErrorMessage,
+  getApiFieldErrors,
+  getApiRequestId,
+} from "../../utils/apiErrorHelpers";
+import {
   isStrongPassword,
   isValidEmail,
   isValidGst,
@@ -106,6 +111,9 @@ interface UserForm {
   isActive: boolean;
 }
 
+type BranchFormFieldKey = "name" | "address" | "city" | "open" | "close";
+type UserFormFieldKey = "name" | "email" | "phone" | "password" | "branchIds";
+
 type RestaurantFieldKey =
   | "name"
   | "legalName"
@@ -156,9 +164,6 @@ const createEmptyUserForm = (): UserForm => ({
   isActive: true,
 });
 
-const getErrorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : "Please try again.";
-
 const toggleIdSelection = (ids: string[], id: string) =>
   ids.includes(id) ? ids.filter((currentId) => currentId !== id) : [...ids, id];
 
@@ -189,6 +194,12 @@ const mapUserToDraft = (managedUser: ManagedUser): EditableUser => ({
   draftPassword: "",
 });
 
+const withRequestId = (error: unknown, fallback: string) => {
+  const message = getApiErrorMessage(error, fallback);
+  const requestId = getApiRequestId(error);
+  return requestId ? `${message} Request ID: ${requestId}` : message;
+};
+
 export default function Accounts() {
   const { user } = useAuth();
   const { pushToast } = useToast();
@@ -206,6 +217,107 @@ export default function Accounts() {
   const [confirmRestaurantSave, setConfirmRestaurantSave] = useState(false);
   const [branchForm, setBranchForm] = useState<BranchForm>(createEmptyBranchForm);
   const [userForm, setUserForm] = useState<UserForm>(createEmptyUserForm);
+  const [restaurantErrors, setRestaurantErrors] = useState<
+    Partial<Record<RestaurantFieldKey, string>>
+  >({});
+  const [restaurantMessage, setRestaurantMessage] = useState("");
+  const [branchFormErrors, setBranchFormErrors] = useState<
+    Partial<Record<BranchFormFieldKey, string>>
+  >({});
+  const [branchFormMessage, setBranchFormMessage] = useState("");
+  const [userFormErrors, setUserFormErrors] = useState<
+    Partial<Record<UserFormFieldKey, string>>
+  >({});
+  const [userFormMessage, setUserFormMessage] = useState("");
+  const [branchSaveMessages, setBranchSaveMessages] = useState<Record<string, string>>({});
+  const [userSaveMessages, setUserSaveMessages] = useState<Record<string, string>>({});
+
+  const clearBranchSaveMessage = (branchId: string) => {
+    setBranchSaveMessages((current) => {
+      if (!current[branchId]) return current;
+      const next = { ...current };
+      delete next[branchId];
+      return next;
+    });
+  };
+
+  const clearUserSaveMessage = (userId: string) => {
+    setUserSaveMessages((current) => {
+      if (!current[userId]) return current;
+      const next = { ...current };
+      delete next[userId];
+      return next;
+    });
+  };
+
+  const validateRestaurantForm = (value: Restaurant | null) => {
+    const nextErrors: Partial<Record<RestaurantFieldKey, string>> = {};
+
+    if (!value) {
+      return nextErrors;
+    }
+
+    if (!value.name.trim()) {
+      nextErrors.name = "Restaurant name is required.";
+    }
+
+    if (!value.supportEmail.trim()) {
+      nextErrors.supportEmail = "Support email is required.";
+    } else if (!isValidEmail(value.supportEmail)) {
+      nextErrors.supportEmail = "Enter a valid support email.";
+    }
+
+    if (!value.supportPhone.trim()) {
+      nextErrors.supportPhone = "Support phone is required.";
+    } else if (!isValidPhone(value.supportPhone)) {
+      nextErrors.supportPhone = "Support phone must be exactly 10 digits.";
+    }
+
+    if (value.gstNumber.trim() && !isValidGst(value.gstNumber)) {
+      nextErrors.gstNumber = "Enter a valid GST number.";
+    }
+
+    return nextErrors;
+  };
+
+  const validateBranchCreateForm = (value: BranchForm) => {
+    const nextErrors: Partial<Record<BranchFormFieldKey, string>> = {};
+
+    if (!value.name.trim()) nextErrors.name = "Branch name is required.";
+    if (!value.city.trim()) nextErrors.city = "City is required.";
+    if (!value.address.trim()) nextErrors.address = "Address is required.";
+    if (!value.openingHours.open.trim()) nextErrors.open = "Open time is required.";
+    if (!value.openingHours.close.trim()) nextErrors.close = "Close time is required.";
+
+    return nextErrors;
+  };
+
+  const validateUserCreateForm = (value: UserForm) => {
+    const nextErrors: Partial<Record<UserFormFieldKey, string>> = {};
+
+    if (!value.name.trim()) nextErrors.name = "User name is required.";
+    if (!value.email.trim()) {
+      nextErrors.email = "Email is required.";
+    } else if (!isValidEmail(value.email)) {
+      nextErrors.email = "Enter a valid email address.";
+    }
+
+    if (!value.phone.trim()) {
+      nextErrors.phone = "Phone number is required.";
+    } else if (!isValidPhone(value.phone)) {
+      nextErrors.phone = "Phone number must be exactly 10 digits.";
+    }
+
+    if (!isStrongPassword(value.password, 6)) {
+      nextErrors.password = "Password must be at least 6 characters.";
+    }
+
+    if (!value.branchIds.length) {
+      nextErrors.branchIds = "Select at least one branch.";
+    }
+
+    return nextErrors;
+  };
 
   const fetchData = useCallback(async () => {
     if (!restaurantId) {
@@ -232,7 +344,7 @@ export default function Accounts() {
       setUsers([]);
       pushToast({
         title: "Failed to load account data",
-        description: getErrorMessage(error),
+        description: withRequestId(error, "Unable to load account data."),
         variant: "error",
       });
     } finally {
@@ -252,6 +364,7 @@ export default function Accounts() {
     branchId: string,
     updater: (branch: EditableBranch) => EditableBranch,
   ) => {
+    clearBranchSaveMessage(branchId);
     setBranches((current) =>
       current.map((branch) => (branch.id === branchId ? updater(branch) : branch)),
     );
@@ -261,6 +374,7 @@ export default function Accounts() {
     userId: string,
     updater: (managedUser: EditableUser) => EditableUser,
   ) => {
+    clearUserSaveMessage(userId);
     setUsers((current) =>
       current.map((managedUser) =>
         managedUser.id === userId ? updater(managedUser) : managedUser,
@@ -280,34 +394,38 @@ export default function Accounts() {
       supportPhone: restaurant.supportPhone.trim(),
     };
 
-    if (!normalizedRestaurant.name) {
-      pushToast({ title: "Restaurant name is required", variant: "error" });
-      return;
-    }
-    if (!normalizedRestaurant.supportEmail || !isValidEmail(normalizedRestaurant.supportEmail)) {
-      pushToast({ title: "Valid support email is required", variant: "error" });
-      return;
-    }
-    if (!normalizedRestaurant.supportPhone || !isValidPhone(normalizedRestaurant.supportPhone)) {
-      pushToast({ title: "Valid support phone is required", variant: "error" });
-      return;
-    }
-    if (normalizedRestaurant.gstNumber && !isValidGst(normalizedRestaurant.gstNumber)) {
-      pushToast({ title: "Invalid GST number", variant: "error" });
+    const nextErrors = validateRestaurantForm(normalizedRestaurant);
+    setRestaurantErrors(nextErrors);
+    setRestaurantMessage("");
+
+    if (Object.keys(nextErrors).length) {
+      pushToast({ title: "Please fix the restaurant form errors", variant: "error" });
       return;
     }
 
     setRestaurantSaving(true);
     try {
       const { id, ...payload } = normalizedRestaurant;
-      await api.put<ApiResponse<Restaurant>>(`/api/v1/restaurants/${id}`, payload);
-      setRestaurant(normalizedRestaurant);
+      const response = await api.put<ApiResponse<Restaurant>>(`/api/v1/restaurants/${id}`, payload);
+      setRestaurant(response.data);
+      setRestaurantErrors({});
+      setRestaurantMessage("");
       setConfirmRestaurantSave(false);
       pushToast({ title: "Restaurant updated", variant: "success" });
     } catch (error) {
+      const fieldErrors = getApiFieldErrors(error);
+      setRestaurantErrors((current) => ({
+        ...current,
+        ...(fieldErrors.name ? { name: fieldErrors.name } : {}),
+        ...(fieldErrors.legalName ? { legalName: fieldErrors.legalName } : {}),
+        ...(fieldErrors.gstNumber ? { gstNumber: fieldErrors.gstNumber } : {}),
+        ...(fieldErrors.supportEmail ? { supportEmail: fieldErrors.supportEmail } : {}),
+        ...(fieldErrors.supportPhone ? { supportPhone: fieldErrors.supportPhone } : {}),
+      }));
+      setRestaurantMessage(withRequestId(error, "Unable to update restaurant."));
       pushToast({
         title: "Unable to update restaurant",
-        description: getErrorMessage(error),
+        description: withRequestId(error, "Unable to update restaurant."),
         variant: "error",
       });
     } finally {
@@ -325,16 +443,12 @@ export default function Accounts() {
       city: branchForm.city.trim(),
     };
 
-    if (!payload.name) {
-      pushToast({ title: "Branch name is required", variant: "error" });
-      return;
-    }
-    if (!payload.address || !payload.city) {
-      pushToast({ title: "Address and city are required", variant: "error" });
-      return;
-    }
-    if (!payload.openingHours.open || !payload.openingHours.close) {
-      pushToast({ title: "Opening hours are required", variant: "error" });
+    const nextErrors = validateBranchCreateForm(payload);
+    setBranchFormErrors(nextErrors);
+    setBranchFormMessage("");
+
+    if (Object.keys(nextErrors).length) {
+      pushToast({ title: "Please fix the branch form errors", variant: "error" });
       return;
     }
 
@@ -342,12 +456,24 @@ export default function Accounts() {
     try {
       await api.post<ApiResponse<BranchResponse>>("/api/v1/branches/create-branch", payload);
       setBranchForm(createEmptyBranchForm());
+      setBranchFormErrors({});
+      setBranchFormMessage("");
       pushToast({ title: "Branch created", variant: "success" });
       await fetchData();
     } catch (error) {
+      const fieldErrors = getApiFieldErrors(error);
+      setBranchFormErrors((current) => ({
+        ...current,
+        ...(fieldErrors.name ? { name: fieldErrors.name } : {}),
+        ...(fieldErrors.address ? { address: fieldErrors.address } : {}),
+        ...(fieldErrors.city ? { city: fieldErrors.city } : {}),
+        ...(fieldErrors["openingHours.open"] ? { open: fieldErrors["openingHours.open"] } : {}),
+        ...(fieldErrors["openingHours.close"] ? { close: fieldErrors["openingHours.close"] } : {}),
+      }));
+      setBranchFormMessage(withRequestId(error, "Unable to create branch."));
       pushToast({
         title: "Unable to create branch",
-        description: getErrorMessage(error),
+        description: withRequestId(error, "Unable to create branch."),
         variant: "error",
       });
     } finally {
@@ -368,23 +494,12 @@ export default function Accounts() {
       isActive: userForm.isActive,
     };
 
-    if (!payload.name) {
-      pushToast({ title: "User name is required", variant: "error" });
-      return;
-    }
-    if (!isValidEmail(payload.email)) {
-      pushToast({ title: "Valid email is required", variant: "error" });
-      return;
-    }
-    if (!isValidPhone(payload.phone)) {
-      pushToast({ title: "Valid phone is required", variant: "error" });
-      return;
-    }
-    if (!isStrongPassword(payload.password, 6)) {
-      pushToast({
-        title: "Password must be at least 6 characters",
-        variant: "error",
-      });
+    const nextErrors = validateUserCreateForm(userForm);
+    setUserFormErrors(nextErrors);
+    setUserFormMessage("");
+
+    if (Object.keys(nextErrors).length) {
+      pushToast({ title: "Please fix the user form errors", variant: "error" });
       return;
     }
 
@@ -392,12 +507,24 @@ export default function Accounts() {
     try {
       await api.post("/api/v1/auth/createuser", payload);
       setUserForm(createEmptyUserForm());
+      setUserFormErrors({});
+      setUserFormMessage("");
       pushToast({ title: "User created", variant: "success" });
       await fetchData();
     } catch (error) {
+      const fieldErrors = getApiFieldErrors(error);
+      setUserFormErrors((current) => ({
+        ...current,
+        ...(fieldErrors.name ? { name: fieldErrors.name } : {}),
+        ...(fieldErrors.email ? { email: fieldErrors.email } : {}),
+        ...(fieldErrors.phone ? { phone: fieldErrors.phone } : {}),
+        ...(fieldErrors.password ? { password: fieldErrors.password } : {}),
+        ...(fieldErrors.branchIds ? { branchIds: fieldErrors.branchIds } : {}),
+      }));
+      setUserFormMessage(withRequestId(error, "Unable to create user."));
       pushToast({
         title: "Unable to create user",
-        description: getErrorMessage(error),
+        description: withRequestId(error, "Unable to create user."),
         variant: "error",
       });
     } finally {
@@ -420,34 +547,45 @@ export default function Accounts() {
     };
 
     if (!payload.name) {
-      pushToast({ title: "Branch name is required", variant: "error" });
+      const message = "Branch name is required.";
+      setBranchSaveMessages((current) => ({ ...current, [branch.id]: message }));
+      pushToast({ title: message, variant: "error" });
       return;
     }
     if (!payload.address || !payload.city) {
-      pushToast({ title: "Address and city are required", variant: "error" });
+      const message = "Address and city are required.";
+      setBranchSaveMessages((current) => ({ ...current, [branch.id]: message }));
+      pushToast({ title: message, variant: "error" });
       return;
     }
     if (!payload.openingHours.open || !payload.openingHours.close) {
-      pushToast({ title: "Opening hours are required", variant: "error" });
+      const message = "Opening hours are required.";
+      setBranchSaveMessages((current) => ({ ...current, [branch.id]: message }));
+      pushToast({ title: message, variant: "error" });
       return;
     }
     if (payload.branchOwnerId && payload.staffIds.includes(payload.branchOwnerId)) {
+      const message = "The branch owner cannot also be assigned as staff.";
+      setBranchSaveMessages((current) => ({ ...current, [branch.id]: message }));
       pushToast({
-        title: "The branch owner cannot also be assigned as staff",
+        title: message,
         variant: "error",
       });
       return;
     }
 
     setSavingBranchId(branch.id);
+    clearBranchSaveMessage(branch.id);
     try {
       await api.put<ApiResponse<BranchResponse>>(`/api/v1/branches/${branch.id}`, payload);
       pushToast({ title: "Branch updated", variant: "success" });
       await fetchData();
     } catch (error) {
+      const message = withRequestId(error, "Unable to update branch.");
+      setBranchSaveMessages((current) => ({ ...current, [branch.id]: message }));
       pushToast({
         title: "Unable to update branch",
-        description: getErrorMessage(error),
+        description: message,
         variant: "error",
       });
     } finally {
@@ -469,15 +607,21 @@ export default function Accounts() {
     };
 
     if (!payload.name) {
-      pushToast({ title: "User name is required", variant: "error" });
+      const message = "User name is required.";
+      setUserSaveMessages((current) => ({ ...current, [managedUser.id]: message }));
+      pushToast({ title: message, variant: "error" });
       return;
     }
     if (!isValidEmail(payload.email)) {
-      pushToast({ title: "Valid email is required", variant: "error" });
+      const message = "Enter a valid email address.";
+      setUserSaveMessages((current) => ({ ...current, [managedUser.id]: message }));
+      pushToast({ title: message, variant: "error" });
       return;
     }
     if (!isValidPhone(payload.phone)) {
-      pushToast({ title: "Valid phone is required", variant: "error" });
+      const message = "Phone number must be exactly 10 digits.";
+      setUserSaveMessages((current) => ({ ...current, [managedUser.id]: message }));
+      pushToast({ title: message, variant: "error" });
       return;
     }
     if (
@@ -485,22 +629,27 @@ export default function Accounts() {
       typeof payload.password === "string" &&
       !isStrongPassword(payload.password, 6)
     ) {
+      const message = "New password must be at least 6 characters.";
+      setUserSaveMessages((current) => ({ ...current, [managedUser.id]: message }));
       pushToast({
-        title: "New password must be at least 6 characters",
+        title: message,
         variant: "error",
       });
       return;
     }
 
     setSavingUserId(managedUser.id);
+    clearUserSaveMessage(managedUser.id);
     try {
       await api.put<ApiResponse<ManagedUser>>(`/api/v1/users/${managedUser.id}`, payload);
       pushToast({ title: "User updated", variant: "success" });
       await fetchData();
     } catch (error) {
+      const message = withRequestId(error, "Unable to update user.");
+      setUserSaveMessages((current) => ({ ...current, [managedUser.id]: message }));
       pushToast({
         title: "Unable to update user",
-        description: getErrorMessage(error),
+        description: message,
         variant: "error",
       });
     } finally {
@@ -536,6 +685,12 @@ export default function Accounts() {
 
         {restaurant ? (
           <>
+            {restaurantMessage ? (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {restaurantMessage}
+              </div>
+            ) : null}
+
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               {RESTAURANT_FIELDS.map((field) => (
                 <div
@@ -548,18 +703,23 @@ export default function Accounts() {
                   <input
                     type={field.type}
                     value={restaurant[field.key]}
-                    onChange={(event) =>
+                    onChange={(event) => {
+                      setRestaurantErrors((current) => ({ ...current, [field.key]: undefined }));
+                      setRestaurantMessage("");
                       setRestaurant((current) =>
                         current
                           ? {
-                            ...current,
-                            [field.key]: event.target.value,
-                          }
+                              ...current,
+                              [field.key]: event.target.value,
+                            }
                           : current,
-                      )
-                    }
+                      );
+                    }}
                     className="w-full rounded-xl border border-[#e5d5c6] bg-[#fff9f2] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
                   />
+                  {restaurantErrors[field.key] ? (
+                    <p className="text-sm text-red-600">{restaurantErrors[field.key]}</p>
+                  ) : null}
                 </div>
               ))}
             </div>
@@ -652,17 +812,28 @@ export default function Accounts() {
             <span className="text-xs text-gray-500">{branches.length} branches loaded</span>
           </div>
 
+          {branchFormMessage ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {branchFormMessage}
+            </div>
+          ) : null}
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-gray-500">Branch Name</label>
               <input
                 type="text"
                 value={branchForm.name}
-                onChange={(event) =>
-                  setBranchForm((current) => ({ ...current, name: event.target.value }))
-                }
+                onChange={(event) => {
+                  setBranchFormErrors((current) => ({ ...current, name: undefined }));
+                  setBranchFormMessage("");
+                  setBranchForm((current) => ({ ...current, name: event.target.value }));
+                }}
                 className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
+              {branchFormErrors.name ? (
+                <p className="text-sm text-red-600">{branchFormErrors.name}</p>
+              ) : null}
             </div>
 
             <div className="flex flex-col gap-1">
@@ -670,22 +841,32 @@ export default function Accounts() {
               <input
                 type="text"
                 value={branchForm.city}
-                onChange={(event) =>
-                  setBranchForm((current) => ({ ...current, city: event.target.value }))
-                }
+                onChange={(event) => {
+                  setBranchFormErrors((current) => ({ ...current, city: undefined }));
+                  setBranchFormMessage("");
+                  setBranchForm((current) => ({ ...current, city: event.target.value }));
+                }}
                 className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
+              {branchFormErrors.city ? (
+                <p className="text-sm text-red-600">{branchFormErrors.city}</p>
+              ) : null}
             </div>
             <div className="flex flex-col gap-1 sm:col-span-2">
               <label className="text-xs font-medium text-gray-500">Address</label>
               <input
                 type="text"
                 value={branchForm.address}
-                onChange={(event) =>
-                  setBranchForm((current) => ({ ...current, address: event.target.value }))
-                }
+                onChange={(event) => {
+                  setBranchFormErrors((current) => ({ ...current, address: undefined }));
+                  setBranchFormMessage("");
+                  setBranchForm((current) => ({ ...current, address: event.target.value }));
+                }}
                 className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
+              {branchFormErrors.address ? (
+                <p className="text-sm text-red-600">{branchFormErrors.address}</p>
+              ) : null}
             </div>
 
 
@@ -746,17 +927,22 @@ export default function Accounts() {
                 <input
                   type="time"
                   value={branchForm.openingHours.open}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    setBranchFormErrors((current) => ({ ...current, open: undefined }));
+                    setBranchFormMessage("");
                     setBranchForm((current) => ({
                       ...current,
                       openingHours: {
                         ...current.openingHours,
                         open: event.target.value,
                       },
-                    }))
-                  }
+                    }));
+                  }}
                   className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
                 />
+                {branchFormErrors.open ? (
+                  <p className="text-sm text-red-600">{branchFormErrors.open}</p>
+                ) : null}
               </div>
 
               <div className="flex flex-col gap-1">
@@ -764,17 +950,22 @@ export default function Accounts() {
                 <input
                   type="time"
                   value={branchForm.openingHours.close}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    setBranchFormErrors((current) => ({ ...current, close: undefined }));
+                    setBranchFormMessage("");
                     setBranchForm((current) => ({
                       ...current,
                       openingHours: {
                         ...current.openingHours,
                         close: event.target.value,
                       },
-                    }))
-                  }
+                    }));
+                  }}
                   className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
                 />
+                {branchFormErrors.close ? (
+                  <p className="text-sm text-red-600">{branchFormErrors.close}</p>
+                ) : null}
               </div>
             </div>
           </div>
@@ -1081,10 +1272,15 @@ export default function Accounts() {
                     </div>
                   </div>
 
-                  <div className="mt-5 flex flex-wrap items-center gap-3">
-                    <button
-                      type="button"
-                      disabled={savingBranchId === branch.id}
+                <div className="mt-5 flex flex-wrap items-center gap-3">
+                  {branchSaveMessages[branch.id] ? (
+                    <div className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                      {branchSaveMessages[branch.id]}
+                    </div>
+                  ) : null}
+                  <button
+                    type="button"
+                    disabled={savingBranchId === branch.id}
                       onClick={() => void handleSaveBranch(branch)}
                       className="cursor-pointer rounded-lg bg-orange-500 px-6 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
                     >
@@ -1122,17 +1318,28 @@ export default function Accounts() {
             <span className="text-xs text-gray-500">{users.length} users loaded</span>
           </div>
 
+          {userFormMessage ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {userFormMessage}
+            </div>
+          ) : null}
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-gray-500">Full Name</label>
               <input
                 type="text"
                 value={userForm.name}
-                onChange={(event) =>
-                  setUserForm((current) => ({ ...current, name: event.target.value }))
-                }
+                onChange={(event) => {
+                  setUserFormErrors((current) => ({ ...current, name: undefined }));
+                  setUserFormMessage("");
+                  setUserForm((current) => ({ ...current, name: event.target.value }));
+                }}
                 className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
+              {userFormErrors.name ? (
+                <p className="text-sm text-red-600">{userFormErrors.name}</p>
+              ) : null}
             </div>
 
             <div className="flex flex-col gap-1">
@@ -1140,12 +1347,13 @@ export default function Accounts() {
 
               <Listbox
                 value={userForm.role}
-                onChange={(value: RoleOption) =>
+                onChange={(value: RoleOption) => {
+                  setUserFormMessage("");
                   setUserForm((current) => ({
                     ...current,
                     role: value,
-                  }))
-                }
+                  }));
+                }}
               >
                 <div className="relative">
                   {/* Button */}
@@ -1189,11 +1397,16 @@ export default function Accounts() {
               <input
                 type="email"
                 value={userForm.email}
-                onChange={(event) =>
-                  setUserForm((current) => ({ ...current, email: event.target.value }))
-                }
+                onChange={(event) => {
+                  setUserFormErrors((current) => ({ ...current, email: undefined }));
+                  setUserFormMessage("");
+                  setUserForm((current) => ({ ...current, email: event.target.value }));
+                }}
                 className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
+              {userFormErrors.email ? (
+                <p className="text-sm text-red-600">{userFormErrors.email}</p>
+              ) : null}
             </div>
 
             <div className="flex flex-col gap-1">
@@ -1201,11 +1414,16 @@ export default function Accounts() {
               <input
                 type="tel"
                 value={userForm.phone}
-                onChange={(event) =>
-                  setUserForm((current) => ({ ...current, phone: event.target.value }))
-                }
+                onChange={(event) => {
+                  setUserFormErrors((current) => ({ ...current, phone: undefined }));
+                  setUserFormMessage("");
+                  setUserForm((current) => ({ ...current, phone: event.target.value }));
+                }}
                 className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
+              {userFormErrors.phone ? (
+                <p className="text-sm text-red-600">{userFormErrors.phone}</p>
+              ) : null}
             </div>
 
             <div className="flex flex-col gap-1">
@@ -1213,11 +1431,16 @@ export default function Accounts() {
               <input
                 type="password"
                 value={userForm.password}
-                onChange={(event) =>
-                  setUserForm((current) => ({ ...current, password: event.target.value }))
-                }
+                onChange={(event) => {
+                  setUserFormErrors((current) => ({ ...current, password: undefined }));
+                  setUserFormMessage("");
+                  setUserForm((current) => ({ ...current, password: event.target.value }));
+                }}
                 className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
+              {userFormErrors.password ? (
+                <p className="text-sm text-red-600">{userFormErrors.password}</p>
+              ) : null}
             </div>
 
             <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 text-sm text-gray-700">
@@ -1252,12 +1475,14 @@ export default function Accounts() {
                         <input
                           type="checkbox"
                           checked={userForm.branchIds.includes(branch.id)}
-                          onChange={() =>
+                          onChange={() => {
+                            setUserFormErrors((current) => ({ ...current, branchIds: undefined }));
+                            setUserFormMessage("");
                             setUserForm((current) => ({
                               ...current,
                               branchIds: toggleIdSelection(current.branchIds, branch.id),
-                            }))
-                          }
+                            }));
+                          }}
                           className="mt-1 h-4 w-4 accent-orange-500"
                         />
                         <div>
@@ -1280,6 +1505,9 @@ export default function Accounts() {
                   Create a branch before assigning one to a new user.
                 </div>
               )}
+              {userFormErrors.branchIds ? (
+                <p className="text-sm text-red-600">{userFormErrors.branchIds}</p>
+              ) : null}
             </div>
           </div>
 
@@ -1491,6 +1719,11 @@ export default function Accounts() {
                 </div>
 
                 <div className="mt-5 flex flex-wrap items-center gap-3">
+                  {userSaveMessages[managedUser.id] ? (
+                    <div className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                      {userSaveMessages[managedUser.id]}
+                    </div>
+                  ) : null}
                   <button
                     type="button"
                     disabled={savingUserId === managedUser.id}

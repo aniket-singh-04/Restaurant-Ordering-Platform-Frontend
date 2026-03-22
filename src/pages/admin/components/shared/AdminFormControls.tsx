@@ -72,6 +72,7 @@ export function AdminField({
 
 type AdminInputFieldProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
+  error?: string;
   containerClassName?: string;
   labelClassName?: string;
   inputClassName?: string;
@@ -79,6 +80,7 @@ type AdminInputFieldProps = InputHTMLAttributes<HTMLInputElement> & {
 
 export function AdminInputField({
   label,
+  error,
   id,
   containerClassName,
   labelClassName,
@@ -100,12 +102,14 @@ export function AdminInputField({
         {...props}
         className={joinClasses(ADMIN_INPUT_CLASS, inputClassName)}
       />
+      {error ? <p className="mt-1 text-sm text-red-600">{error}</p> : null}
     </AdminField>
   );
 }
 
 type AdminTextareaFieldProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
   label: string;
+  error?: string;
   containerClassName?: string;
   labelClassName?: string;
   textareaClassName?: string;
@@ -113,6 +117,7 @@ type AdminTextareaFieldProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
 
 export function AdminTextareaField({
   label,
+  error,
   id,
   containerClassName,
   labelClassName,
@@ -134,6 +139,7 @@ export function AdminTextareaField({
         {...props}
         className={joinClasses(ADMIN_INPUT_CLASS, textareaClassName)}
       />
+      {error ? <p className="mt-1 text-sm text-red-600">{error}</p> : null}
     </AdminField>
   );
 }

@@ -13,6 +13,7 @@ import Register from "../pages/Register";
 import Login from "../pages/Login";
 import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
+import VerifyEmail from "../pages/VerifyEmail";
 import ProtectedRoute from "../routes/ProtectedRoute";
 import PublicRoute from "../routes/PublicRoute";
 import ProfileLayout from "../pages/ProfileLayout";
@@ -53,6 +54,10 @@ export const router = createBrowserRouter([
   {
     path: "/reset-password",
     element: withPublicRoute(<ResetPassword />),
+  },
+  {
+    path: "/verify-email",
+    element: <VerifyEmail />,
   },
   {
     path: "/register",

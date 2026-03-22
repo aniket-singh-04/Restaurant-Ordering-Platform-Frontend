@@ -5,6 +5,7 @@ import { CheckIcon, ChevronDownIcon, Plus, Trash2 } from "lucide-react"
 
 import { type Menu, type AddOn } from "../../../types"
 import { api } from "../../../utils/api"
+import { getApiErrorMessage, getApiFieldErrors } from "../../../utils/apiErrorHelpers"
 import { useToast } from "../../../context/ToastContext"
 import { useAuth } from "../../../context/AuthContext"
 import {
@@ -44,6 +45,10 @@ type UploadTarget = {
   uploadUrl?: string
   key?: string
 }
+type MenuSaveResponse = {
+  success?: boolean
+  warning?: string
+}
 type MenuResponse = Partial<Omit<MenuFormState, "images">> & {
   _id?: string
   branchId?: BranchSource
@@ -67,21 +72,6 @@ const defaultPersistedImages: MenuImageSlots = {
   top: null,
   back: null,
   angled: null,
-}
-
-const getErrorMessage = (error: unknown): string => {
-  const maybeError = error as {
-    response?: {
-      data?: {
-        message?: string
-      }
-    }
-    message?: string
-  }
-
-  if (maybeError?.response?.data?.message) return maybeError.response.data.message
-  if (maybeError?.message) return maybeError.message
-  return "Unexpected error occurred"
 }
 
 const toBranchArray = (value: BranchSource): BranchReference[] => {
@@ -231,11 +221,24 @@ export default function MenuFormPage() {
   }))
 
   const [loading, setLoading] = useState(false)
-  const [, setErrors] = useState<Record<string, string>>({})
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [submitError, setSubmitError] = useState("")
   const [previews, setPreviews] = useState<Record<ImageType, string>>(defaultPreviews)
   const [persistedImages, setPersistedImages] = useState<MenuImageSlots>(defaultPersistedImages)
 
   const categories = ["Core Meal", "Protein-Based", "Cuisine", "Fast Food", "Desserts", "Beverages", "Health", "Breakfast", "Specials"]
+
+  const clearError = (field: string) => {
+    setErrors(current => {
+      if (!current[field]) {
+        return current
+      }
+
+      const next = { ...current }
+      delete next[field]
+      return next
+    })
+  }
 
   /* --------------------------- LOAD DATA --------------------------- */
   useEffect(() => {
@@ -309,7 +312,7 @@ export default function MenuFormPage() {
         console.error("Load Menu Error:", error)
         pushToast({
           title: "Unable to load menu item",
-          description: getErrorMessage(error),
+          description: getApiErrorMessage(error, "Unable to load menu item."),
           variant: "error"
         })
       } finally {
@@ -327,13 +330,17 @@ export default function MenuFormPage() {
 
   const validate = () => {
     const next: Record<string, string> = {}
-    if (!form.restaurantId.trim()) next.restaurantId = "Restaurant required"
-    if (!form.branchIds.length) next.branchIds = "Select at least one branch"
-    if (!form.name.trim()) next.name = "Name required"
-    if (!form.category.trim()) next.category = "Category required"
-    if (form.price <= 0) next.price = "Invalid price"
-    if (form.preparationTimeMinutes <= 0) next.preparationTimeMinutes = "Invalid time"
+    if (!form.restaurantId.trim()) next.restaurantId = "Restaurant is required."
+    if (!form.branchIds.length) next.branchIds = "Select at least one branch."
+    if (!form.name.trim()) next.name = "Menu item name is required."
+    if (!form.category.trim()) next.category = "Category is required."
+    if (form.price <= 0) next.price = "Price must be greater than 0."
+    if (form.preparationTimeMinutes <= 0) {
+      next.preparationTimeMinutes = "Preparation time must be greater than 0."
+    }
+
     setErrors(next)
+    setSubmitError("")
     return Object.keys(next).length === 0
   }
 
@@ -429,8 +436,19 @@ export default function MenuFormPage() {
   }
 
   const uploadImage = (file: File, type: ImageType) => {
+    if (!file.type.startsWith("image/")) {
+      pushToast({
+        title: "Invalid image",
+        description: "Please choose an image file.",
+        variant: "error",
+      })
+      return
+    }
+
     const preview = URL.createObjectURL(file)
     revokePreviewUrl(previews[type])
+    clearError("images")
+    setSubmitError("")
     setPersistedImages(prev => ({ ...prev, [type]: null }))
     setForm(prev => ({
       ...prev,
@@ -441,6 +459,7 @@ export default function MenuFormPage() {
 
   const removeImage = (type: ImageType) => {
     revokePreviewUrl(previews[type])
+    clearError("images")
     setPersistedImages(prev => ({ ...prev, [type]: null }))
     setForm(prev => ({
       ...prev,
@@ -477,6 +496,7 @@ export default function MenuFormPage() {
   const handleSubmit = async () => {
     if (!validate()) return
     setLoading(true)
+    setSubmitError("")
     try {
       const images = await buildImagesPayload()
       const payload = {
@@ -501,20 +521,37 @@ export default function MenuFormPage() {
         isAvailable: form.isAvailable ?? true,
         rating: form.rating ?? { average: 0, count: 0 },
       }
+      let response: MenuSaveResponse | undefined
       if (isEditMode && id) {
-        await api.patch(`${MENU_ENDPOINT}/${id}`, payload)
+        response = await api.patch<MenuSaveResponse>(`${MENU_ENDPOINT}/${id}`, payload)
       } else {
-        await api.post(MENU_ENDPOINT, payload)
+        response = await api.post<MenuSaveResponse>(MENU_ENDPOINT, payload)
       }
 
       pushToast({
         title: isEditMode ? "Menu updated successfully" : "Menu created successfully",
         variant: "success",
       })
+      if (response?.warning) {
+        pushToast({
+          title: "Storage cleanup warning",
+          description: response.warning,
+          variant: "warning",
+        })
+      }
       navigate("/admin/menu")
     } catch (error) {
       console.error(error)
-      pushToast({ title: "Save failed", description: getErrorMessage(error), variant: "error" })
+      const message = getApiErrorMessage(error, "Unable to save this menu item.")
+      const fieldErrors = getApiFieldErrors(error)
+      if (Object.keys(fieldErrors).length) {
+        setErrors(current => ({
+          ...current,
+          ...fieldErrors,
+        }))
+      }
+      setSubmitError(message)
+      pushToast({ title: "Save failed", description: message, variant: "error" })
     } finally {
       setLoading(false)
     }
@@ -536,6 +573,12 @@ export default function MenuFormPage() {
         {isEditMode ? "Edit Menu Item" : "Create Menu Item"}
       </h1>
 
+      {submitError ? (
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {submitError}
+        </div>
+      ) : null}
+
       {/* BASIC INFO */}
       <AdminSection className="shadow space-y-6 p-6 rounded-2xl">
 
@@ -546,6 +589,8 @@ export default function MenuFormPage() {
           <Listbox
             value={form.branchIds}
             onChange={(vals: string[]) => {
+              clearError("branchIds")
+              setSubmitError("")
               setForm(prev => ({ ...prev, branchIds: vals }))
             }}
             multiple
@@ -582,6 +627,11 @@ export default function MenuFormPage() {
               </ListboxOptions>
             </div>
           </Listbox>
+          {errors.branchIds || errors.restaurantId ? (
+            <p className="text-sm text-red-600">
+              {errors.branchIds ?? errors.restaurantId}
+            </p>
+          ) : null}
         </div>
 
         {/* Name, Price, Time, Category */}
@@ -591,7 +641,12 @@ export default function MenuFormPage() {
             label="Name"
             placeholder="Name"
             value={form.name}
-            onChange={e => setForm({ ...form, name: e.target.value })}
+            error={errors.name}
+            onChange={e => {
+              clearError("name")
+              setSubmitError("")
+              setForm({ ...form, name: e.target.value })
+            }}
           />
 
           <AdminInputField
@@ -600,7 +655,12 @@ export default function MenuFormPage() {
             type="number"
             placeholder="Price"
             value={form.price}
-            onChange={e => setForm({ ...form, price: Number(e.target.value) })}
+            error={errors.price}
+            onChange={e => {
+              clearError("price")
+              setSubmitError("")
+              setForm({ ...form, price: Number(e.target.value) })
+            }}
           />
 
           <AdminInputField
@@ -609,8 +669,13 @@ export default function MenuFormPage() {
             type="number"
             placeholder="Preparation Time"
             value={form.preparationTimeMinutes}
+            error={errors.preparationTimeMinutes}
             onChange={e =>
-              setForm({ ...form, preparationTimeMinutes: Number(e.target.value) })
+              {
+                clearError("preparationTimeMinutes")
+                setSubmitError("")
+                setForm({ ...form, preparationTimeMinutes: Number(e.target.value) })
+              }
             }
           />
 
@@ -621,6 +686,8 @@ export default function MenuFormPage() {
             <Listbox
               value={form.category}
               onChange={(val) => {
+                clearError("category")
+                setSubmitError("")
                 setForm(prev => ({ ...prev, category: val }))
               }}
             >
@@ -650,6 +717,9 @@ export default function MenuFormPage() {
                 </ListboxOptions>
               </div>
             </Listbox>
+            {errors.category ? (
+              <p className="text-sm text-red-600">{errors.category}</p>
+            ) : null}
           </div>
         </div>
 
@@ -658,7 +728,12 @@ export default function MenuFormPage() {
           label="Description"
           placeholder="Description"
           value={form.description}
-          onChange={e => setForm({ ...form, description: e.target.value })}
+          error={errors.description}
+          onChange={e => {
+            clearError("description")
+            setSubmitError("")
+            setForm({ ...form, description: e.target.value })
+          }}
         />
 
       </AdminSection>

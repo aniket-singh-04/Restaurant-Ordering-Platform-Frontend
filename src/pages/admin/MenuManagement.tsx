@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Search, Pencil, Trash2, Eye, RefreshCw } from "lucide-react";
 import type { Menu } from "../../types/index";
-import { menuItems as fallbackMenuItems } from "../../store/store";
 import { api } from "../../utils/api";
+import { getApiErrorMessage } from "../../utils/apiErrorHelpers";
 import { formatPrice } from "../../utils/formatPrice";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useToast } from "../../context/ToastContext";
@@ -20,6 +20,8 @@ export default function MenuManagement() {
 
   const [items, setItems] = useState<MenuRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [page, setPage] = useState(1);
@@ -30,51 +32,34 @@ export default function MenuManagement() {
   const fetchMenus = useCallback(async () => {
     if (authLoading) return;
 
-    const endpoint = restaurantId
-      ? `${MENU_ENDPOINT}?restaurantId=${encodeURIComponent(restaurantId)}`
-      : branchId
-        ? `${MENU_ENDPOINT}/branch/${branchId}`
+    const endpoint = branchId
+      ? `${MENU_ENDPOINT}/branch/${encodeURIComponent(branchId)}`
+      : restaurantId
+        ? `${MENU_ENDPOINT}?restaurantId=${encodeURIComponent(restaurantId)}`
         : "";
 
     if (!endpoint) {
       setItems([]);
+      setLoadError("No branch is linked to this account yet.");
       return;
     }
 
     try {
       setLoading(true);
+      setLoadError("");
       const data = await api.get<any>(endpoint);
 
       const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
       const filtered = list.filter((item: MenuRecord) => !item.isDeleted);
       setItems(filtered.length ? filtered : []);
     } catch (error) {
-      setItems(
-        fallbackMenuItems.map(({ id, ...rest }) => ({
-          ...rest,
-          _id: id,
-          restaurantId: "",
-          branchIds: [],
-          addOns: rest.addOns.map((addOn) => ({
-            ...addOn,
-            isAvailable: true,
-          })),
-          images: {
-            front: null,
-            top: null,
-            back: null,
-            angled: null,
-          },
-          isAvailable: true,
-          isDeleted: false,
-          preparationTimeMinutes: Number(rest.prepTime.replace(/\D/g, "")) || 10,
-          rating: { average: rest.rating, count: 0 },
-        })),
-      );
+      setItems([]);
+      const message = getApiErrorMessage(error, "Unable to load menu items.");
+      setLoadError(message);
       pushToast({
-        title: "Using sample menu data",
-        description: "API request failed. Showing local sample items.",
-        variant: "warning",
+        title: "Failed to load menu",
+        description: message,
+        variant: "error",
       });
     } finally {
       setLoading(false);
@@ -113,15 +98,25 @@ export default function MenuManagement() {
     if (!confirm("Are you sure you want to delete this menu item?")) return;
 
     try {
-      await api.delete(`${MENU_ENDPOINT}/${id}`);
+      setDeletingId(id);
+      const response = await api.delete<{ message?: string }>(`${MENU_ENDPOINT}/${id}`);
       setItems((prev) => prev.filter((item) => item._id !== id));
-      pushToast({ title: "Menu item deleted", variant: "success" });
+      pushToast({
+        title: "Menu item deleted",
+        description: response?.message || "The menu item and its related assets were removed.",
+        variant: "success",
+      });
     } catch (error) {
       pushToast({
         title: "Delete failed",
-        description: "Unable to delete item. Please try again.",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Unable to delete item. Please try again.",
         variant: "error",
       });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -159,6 +154,12 @@ export default function MenuManagement() {
           </button>
         </div>
       </div>
+
+      {loadError ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {loadError}
+        </div>
+      ) : null}
 
       <div className="flex flex-col lg:flex-row gap-4">
         <div className="relative flex-1">
@@ -243,11 +244,12 @@ export default function MenuManagement() {
                     </button>
 
                     <button
-                      className="flex items-center gap-1 hover:text-red-500 cursor-pointer"
+                      className="flex items-center gap-1 hover:text-red-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       onClick={() => handleDelete(item._id)}
+                      disabled={deletingId === item._id}
                     >
                       <Trash2 size={14} />
-                      Delete
+                      {deletingId === item._id ? "Deleting..." : "Delete"}
                     </button>
 
                     <button className="flex items-center gap-1 hover:text-orange-500 cursor-pointer">
