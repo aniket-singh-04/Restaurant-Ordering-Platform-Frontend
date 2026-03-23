@@ -60,6 +60,7 @@ interface BranchResponse {
   openingHours: BranchOpeningHours;
   branchOwner: BranchOwner | null;
   branchStaffId: BranchStaff[];
+  tableCount: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -93,12 +94,13 @@ interface ApiResponse<T> {
   message?: string;
 }
 
-interface BranchForm {
+interface  BranchForm {
   name: string;
   address: string;
   city: string;
   status: BranchStatus;
   openingHours: BranchOpeningHours;
+  tableCount: number;
 }
 
 interface UserForm {
@@ -111,7 +113,7 @@ interface UserForm {
   isActive: boolean;
 }
 
-type BranchFormFieldKey = "name" | "address" | "city" | "open" | "close";
+type BranchFormFieldKey = "name" | "address" | "city" | "open" | "close" | "tableCount";
 type UserFormFieldKey = "name" | "email" | "phone" | "password" | "branchIds";
 
 type RestaurantFieldKey =
@@ -152,6 +154,7 @@ const createEmptyBranchForm = (): BranchForm => ({
   city: "",
   status: "OPEN",
   openingHours: { ...DEFAULT_OPENING_HOURS },
+  tableCount: 1
 });
 
 const createEmptyUserForm = (): UserForm => ({
@@ -288,7 +291,9 @@ export default function Accounts() {
     if (!value.address.trim()) nextErrors.address = "Address is required.";
     if (!value.openingHours.open.trim()) nextErrors.open = "Open time is required.";
     if (!value.openingHours.close.trim()) nextErrors.close = "Close time is required.";
-
+    if (typeof value.tableCount !== "number" || value.tableCount <= 0) {
+      nextErrors.tableCount = "Please enter a valid table count.";
+    }
     return nextErrors;
   };
 
@@ -334,7 +339,7 @@ export default function Accounts() {
         api.get<ApiResponse<BranchResponse[]>>(`/api/v1/branches/restaurant/${restaurantId}`),
         api.get<ApiResponse<ManagedUser[]>>(`/api/v1/users?restaurantId=${restaurantId}`),
       ]);
-
+console.log(branchResponse)
       setRestaurant(restaurantResponse.data);
       setBranches(branchResponse.data.map(mapBranchToDraft));
       setUsers(userResponse.data.map(mapUserToDraft));
@@ -433,6 +438,7 @@ export default function Accounts() {
     }
   };
 
+  console.log(typeof (branchForm.tableCount))
   const handleCreateBranch = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -469,6 +475,7 @@ export default function Accounts() {
         ...(fieldErrors.city ? { city: fieldErrors.city } : {}),
         ...(fieldErrors["openingHours.open"] ? { open: fieldErrors["openingHours.open"] } : {}),
         ...(fieldErrors["openingHours.close"] ? { close: fieldErrors["openingHours.close"] } : {}),
+        ...(fieldErrors.tableCount ? { tableCount: fieldErrors.tableCount } : {}),
       }));
       setBranchFormMessage(withRequestId(error, "Unable to create branch."));
       pushToast({
@@ -542,6 +549,7 @@ export default function Accounts() {
         open: branch.openingHours.open,
         close: branch.openingHours.close,
       },
+      tableCount: branch.tableCount,
       branchOwnerId: branch.branchOwnerId || null,
       staffIds: branch.staffIds,
     };
@@ -560,6 +568,12 @@ export default function Accounts() {
     }
     if (!payload.openingHours.open || !payload.openingHours.close) {
       const message = "Opening hours are required.";
+      setBranchSaveMessages((current) => ({ ...current, [branch.id]: message }));
+      pushToast({ title: message, variant: "error" });
+      return;
+    }
+    if (!payload.tableCount) {
+      const message = "Branch name is required.";
       setBranchSaveMessages((current) => ({ ...current, [branch.id]: message }));
       pushToast({ title: message, variant: "error" });
       return;
@@ -709,9 +723,9 @@ export default function Accounts() {
                       setRestaurant((current) =>
                         current
                           ? {
-                              ...current,
-                              [field.key]: event.target.value,
-                            }
+                            ...current,
+                            [field.key]: event.target.value,
+                          }
                           : current,
                       );
                     }}
@@ -852,7 +866,7 @@ export default function Accounts() {
                 <p className="text-sm text-red-600">{branchFormErrors.city}</p>
               ) : null}
             </div>
-            <div className="flex flex-col gap-1 sm:col-span-2">
+            <div className="flex flex-col gap-1">
               <label className="text-xs font-medium text-gray-500">Address</label>
               <input
                 type="text"
@@ -866,6 +880,22 @@ export default function Accounts() {
               />
               {branchFormErrors.address ? (
                 <p className="text-sm text-red-600">{branchFormErrors.address}</p>
+              ) : null}
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">Table Count</label>
+              <input
+                type="number"
+                value={branchForm.tableCount}
+                onChange={(event) => {
+                  setBranchFormErrors((current) => ({ ...current, tableCount: undefined }));
+                  setBranchFormMessage("");
+                  setBranchForm((current) => ({ ...current, tableCount: parseInt(event.target.value, 10) || 0 }));
+                }}
+                className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+              />
+              {branchFormErrors.tableCount ? (
+                <p className="text-sm text-red-600">{branchFormErrors.tableCount}</p>
               ) : null}
             </div>
 
@@ -1039,7 +1069,7 @@ export default function Accounts() {
                       />
                     </div>
 
-                    <div className="flex flex-col gap-1 sm:col-span-2">
+                    <div className="flex flex-col gap-1">
                       <label className="text-xs font-medium text-gray-500">Address</label>
                       <input
                         type="text"
@@ -1048,6 +1078,20 @@ export default function Accounts() {
                           updateBranchDraft(branch.id, (current) => ({
                             ...current,
                             address: event.target.value,
+                          }))
+                        }
+                        className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-medium text-gray-500">Table</label>
+                      <input
+                        type="number"
+                        value={branch.tableCount}
+                        onChange={(event) =>
+                          updateBranchDraft(branch.id, (current) => ({
+                            ...current,
+                            tableCount: parseInt(event.target.value, 10),
                           }))
                         }
                         className="w-full rounded-xl border border-[#e5d5c6] bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
@@ -1494,6 +1538,7 @@ export default function Accounts() {
                         className={`rounded-full px-2 py-1 text-[11px] font-medium ${getStatusBadgeClass(
                           branch.status,
                         )}`}
+                        title={branch.status}
                       >
                         {branch.status}
                       </span>
