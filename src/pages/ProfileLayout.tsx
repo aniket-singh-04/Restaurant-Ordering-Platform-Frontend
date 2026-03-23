@@ -126,7 +126,7 @@ export default function ProfileLayout() {
       if (response.verificationRequired) {
         setPendingVerificationMessage(
           response.message ||
-            "Check your email and confirm the link to finish updating your account.",
+          "Check your email and confirm the link to finish updating your account.",
         );
         pushToast({
           title: "Verification required",
@@ -262,11 +262,10 @@ export default function ProfileLayout() {
                   {user.role}
                 </span>
                 <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${
-                    user.emailVerifiedAt
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-amber-100 text-amber-700"
-                  }`}
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${user.emailVerifiedAt
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-amber-100 text-amber-700"
+                    }`}
                 >
                   {user.emailVerifiedAt ? "Email Verified" : "Email Not Verified"}
                 </span>
@@ -288,11 +287,17 @@ export default function ProfileLayout() {
                   {user.restroId || "-"}
                 </span>
               </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-gray-500">Primary Branch</span>
-                <span className="break-all font-medium text-gray-800">
-                  {user.branchId || "-"}
-                </span>
+              <div className="flex flex-col gap-3">
+                {user.branchIds?.map((branch, index) => (
+                  <div key={branch._id} className="flex justify-between gap-3">
+                    <span className="text-gray-500">
+                      {index === 0? "Primary Branch":`Branch ${index + 1}`}
+                    </span>
+                    <span className="break-all font-medium text-gray-800">
+                      {branch.name}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
 

@@ -189,6 +189,7 @@ const defaultForm: MenuFormState = {
   price: 0,
   category: "",
   addOns: [],
+  image:"",
   images: {
     front: null,
     top: null,

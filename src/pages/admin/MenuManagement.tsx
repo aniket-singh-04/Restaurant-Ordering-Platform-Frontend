@@ -1,6 +1,7 @@
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Pencil, Trash2, Eye, RefreshCw } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Eye, RefreshCw, ChevronDownIcon, CheckIcon, } from "lucide-react";
 import type { Menu } from "../../types/index";
 import { api } from "../../utils/api";
 import { getApiErrorMessage } from "../../utils/apiErrorHelpers";
@@ -25,6 +26,7 @@ export default function MenuManagement() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedBranches, setSelectedBranches] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(searchQuery, 250);
   const branchId = user?.branchIds?.[0]?._id ?? user?.branchId ?? "";
@@ -33,11 +35,13 @@ export default function MenuManagement() {
   const fetchMenus = useCallback(async () => {
     if (authLoading) return;
 
-    const endpoint = branchId
-      ? `${MENU_ENDPOINT}/branch/${encodeURIComponent(branchId)}`
+    const endpoint = selectedBranches.length
+      ? `${MENU_ENDPOINT}?branchIds=${selectedBranches.join(",")}`
       : restaurantId
         ? `${MENU_ENDPOINT}?restaurantId=${encodeURIComponent(restaurantId)}`
-        : "";
+        : branchId
+          ? `${MENU_ENDPOINT}/branch/${encodeURIComponent(branchId)}`
+          : "";
 
     if (!endpoint) {
       setItems([]);
@@ -49,9 +53,10 @@ export default function MenuManagement() {
       setLoading(true);
       setLoadError("");
       const data = await api.get<any>(endpoint);
-
+      console.log(data)
       const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
       const filtered = list.filter((item: MenuRecord) => !item.isDeleted);
+      console.log(filtered)
       setItems(filtered.length ? filtered : []);
     } catch (error) {
       setItems([]);
@@ -70,7 +75,7 @@ export default function MenuManagement() {
   useEffect(() => {
     if (authLoading) return;
     void fetchMenus();
-  }, [authLoading, fetchMenus]);
+  }, [authLoading, fetchMenus, selectedBranches]);
 
   const normalizedSearch = debouncedSearch.trim().toLowerCase();
 
@@ -80,7 +85,11 @@ export default function MenuManagement() {
       const searchMatch = !normalizedSearch || searchTarget.includes(normalizedSearch);
       const categoryMatch =
         selectedCategory === "all" || item.category === selectedCategory;
-      return searchMatch && categoryMatch;
+      const branchMatch =
+        selectedBranches.length === 0 ||
+        item.branchIds?.some((id: string) => selectedBranches.includes(id));
+
+      return searchMatch && categoryMatch && branchMatch;
     });
   }, [items, normalizedSearch, selectedCategory]);
 
@@ -92,7 +101,7 @@ export default function MenuManagement() {
 
   useEffect(() => {
     setPage(1);
-  }, [selectedCategory, normalizedSearch]);
+  }, [selectedCategory, normalizedSearch, selectedBranches]);
 
   const handleDelete = async (id?: string) => {
     if (!id) return;
@@ -127,7 +136,7 @@ export default function MenuManagement() {
   }, [items]);
 
   const isPageLoading = authLoading || loading;
-console.log(pagedItems)
+
   return (
     <div className="min-h-screen bg-[#fff9f2] space-y-8 text-left">
       <div className="flex flex-col md:flex-row justify-between gap-4">
@@ -176,6 +185,53 @@ console.log(pagedItems)
             className="w-full pl-10 pr-4 h-11 rounded-lg border border-gray-300 focus:ring-2 focus:ring-orange-400 focus:outline-none"
           />
         </div>
+        <div className="relative flex-1">
+          <Listbox
+            value={selectedBranches}
+            onChange={(vals: string[]) => setSelectedBranches(vals)}
+            multiple
+          >
+            <div className="relative">
+              <ListboxButton className="cursor-pointer w-full rounded-xl border border-[#e5d5c6] bg-[#fff9f2] px-4 py-3 text-left focus:outline-none flex items-center justify-between">
+                <span className="truncate text-gray-600">
+                  {selectedBranches.length > 0
+                    ? user?.branchIds
+                      ?.filter((b) => selectedBranches.includes(b._id))
+                      .map((b) => b.name)
+                      .join(", ")
+                    : "Filter By Branch"}
+                </span>
+                <ChevronDownIcon className="h-4 w-4 text-gray-500 shrink-0" />
+              </ListboxButton>
+
+              <ListboxOptions className="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-xl border border-[#e5d5c6] bg-white shadow-lg focus:outline-none">
+                {user?.branchIds && user.branchIds.length > 0 ? (
+                  user.branchIds.map(({ _id, name }) => (
+                    <ListboxOption
+                      key={_id}
+                      value={_id} 
+                      className={({ focus }) =>
+                        `cursor-pointer select-none px-4 py-2 flex items-center justify-between ${focus ? "bg-orange-100 text-orange-700" : "text-gray-700"
+                        }`
+                      }
+                    >
+                      {({ selected }) => (
+                        <>
+                          <span>{name}</span>
+                          {selected && <CheckIcon className="h-4 w-4 text-orange-500" />}
+                        </>
+                      )}
+                    </ListboxOption>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-sm text-gray-500">
+                    No branches available
+                  </div>
+                )}
+              </ListboxOptions>
+            </div>
+          </Listbox>
+        </div>
 
         <div className="flex gap-2 overflow-x-auto pb-1">
           {categories.map((cat) => (
@@ -193,110 +249,106 @@ console.log(pagedItems)
         </div>
       </div>
 
-      {isPageLoading ? (
-        <div className="text-center py-20 text-gray-500">Loading menu...</div>
-      ) : pagedItems.length ? (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {pagedItems.map((item) => (
-              <div
-              key={item._id ?? item.name}
-              className="bg-white rounded-xl shadow-sm hover:shadow-lg transition border border-orange-100 overflow-hidden"
-              >
-                <div className="h-44 overflow-hidden">
-                  {/* <img
-                    src={item.image || "/placeholder.png"}
-                    alt={item.name}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    decoding="async"
-                  /> */}
-                  <MenuImageToggle
-                    items={{
-                      name: item.name,
-                      image: item.image,
-                      images: item.images
-                    }}
-                  />
-                </div>
-
-                <div className="p-4 space-y-3">
-                  <div className="flex justify-between">
-                    <h3 className="font-semibold text-[#3b2f2f]">
-                      {item.name}
-                    </h3>
-                    <span className="text-orange-500 font-bold">
-                      {formatPrice(item.price)}
-                    </span>
+      {
+        isPageLoading ? (
+          <div className="text-center py-20 text-gray-500">Loading menu...</div>
+        ) : pagedItems.length ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {pagedItems.map((item) => (
+                <div
+                  key={item._id ?? item.name}
+                  className="bg-white rounded-xl shadow-sm hover:shadow-lg transition border border-orange-100 overflow-hidden"
+                >
+                  <div className="h-44 overflow-hidden">
+                    
+                    <MenuImageToggle
+                      items={{
+                        name: item.name,
+                        image: item.image,
+                        images: item.images
+                      }}
+                    />
                   </div>
 
-                  <p className="text-sm text-gray-500 line-clamp-2">
-                    {item.description}
-                  </p>
+                  <div className="p-4 space-y-3">
+                    <div className="flex justify-between">
+                      <h3 className="font-semibold text-[#3b2f2f]">
+                        {item.name}
+                      </h3>
+                      <span className="text-orange-500 font-bold">
+                        {formatPrice(item.price)}
+                      </span>
+                    </div>
 
-                  <div className="flex justify-between text-xs text-gray-400">
-                    <span>{item.isVeg ? "Veg" : "Non-Veg"}</span>
-                    <span>{item.preparationTimeMinutes} mins</span>
-                    <span>Rating {item.rating?.average ?? 0}</span>
-                  </div>
+                    <p className="text-sm text-gray-500 line-clamp-2">
+                      {item.description}
+                    </p>
 
-                  <div className="flex justify-between text-sm pt-3 border-t">
-                    <button
-                      className="flex items-center gap-1 hover:text-blue-500 cursor-pointer"
-                      onClick={() =>
-                        item._id && navigate(`/admin/menu/edit/${item._id}`)
-                      }
-                    >
-                      <Pencil size={14} />
-                      Edit
-                    </button>
+                    <div className="flex justify-between text-xs text-gray-400">
+                      <span>{item.isVeg ? "Veg" : "Non-Veg"}</span>
+                      <span>{item.preparationTimeMinutes} mins</span>
+                      <span>Rating {item.rating?.average ?? 0}</span>
+                    </div>
 
-                    <button
-                      className="flex items-center gap-1 hover:text-red-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                      onClick={() => handleDelete(item._id)}
-                      disabled={deletingId === item._id}
-                    >
-                      <Trash2 size={14} />
-                      {deletingId === item._id ? "Deleting..." : "Delete"}
-                    </button>
+                    <div className="flex justify-between text-sm pt-3 border-t">
+                      <button
+                        className="flex items-center gap-1 hover:text-blue-500 cursor-pointer"
+                        onClick={() =>
+                          item._id && navigate(`/admin/menu/edit/${item._id}`)
+                        }
+                      >
+                        <Pencil size={14} />
+                        Edit
+                      </button>
 
-                    <button className="flex items-center gap-1 hover:text-orange-500 cursor-pointer">
-                      <Eye size={14} />
-                      3D View
-                    </button>
+                      <button
+                        className="flex items-center gap-1 hover:text-red-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => handleDelete(item._id)}
+                        disabled={deletingId === item._id}
+                      >
+                        <Trash2 size={14} />
+                        {deletingId === item._id ? "Deleting..." : "Delete"}
+                      </button>
+
+                      <button className="flex items-center gap-1 hover:text-orange-500 cursor-pointer">
+                        <Eye size={14} />
+                        3D View
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex items-center justify-between pt-4">
-            <p className="text-sm text-gray-500">
-              Page {page} of {totalPages}
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
-                disabled={page === 1}
-                className="px-3 py-1 rounded border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Prev
-              </button>
-              <button
-                onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
-                disabled={page === totalPages}
-                className="px-3 py-1 rounded border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
+              ))}
             </div>
+
+            <div className="flex items-center justify-between pt-4">
+              <p className="text-sm text-gray-500">
+                Page {page} of {totalPages}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                  disabled={page === 1}
+                  className="px-3 py-1 rounded border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Prev
+                </button>
+                <button
+                  onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={page === totalPages}
+                  className="px-3 py-1 rounded border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-20 text-gray-500">
+            No menu items found
           </div>
-        </>
-      ) : (
-        <div className="text-center py-20 text-gray-500">
-          No menu items found
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }
