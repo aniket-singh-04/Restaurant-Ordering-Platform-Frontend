@@ -28,6 +28,7 @@ import {
   AUTHENTICATED_APP_ROLES,
 } from "../features/auth/access";
 import type { UserRole } from "../features/auth/types";
+import TableManagement from "../pages/admin/TableManagement";
 
 const withProtectedRoute = (
   element: ReactElement,
@@ -122,6 +123,10 @@ export const router = createBrowserRouter([
       {
         path: "accountmanagement",
         element: <Accounts />,
+      },
+      {
+        path: "tables",
+        element: <TableManagement />,
       },
     ],
   },

@@ -4,6 +4,7 @@ import {
   ClipboardList,
   LayoutDashboard,
   Settings,
+  Table2Icon,
   User,
   UtensilsCrossed,
 } from "lucide-react";
@@ -45,5 +46,11 @@ export const adminNavItems: AdminNavItem[] = [
     icon: MdManageAccounts,
     label: "Accounts",
     roles: ["ADMIN", "RESTRO_OWNER"],
+  },
+  {
+    to: "/admin/tables",
+    icon: Table2Icon,
+    label: "Tables",
+    roles: ["ADMIN", "RESTRO_OWNER", "BRANCH_OWNER"],
   },
 ];
