@@ -4,7 +4,9 @@ import { FaPhone } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, type FormEvent } from "react";
 import { useAuth } from "../context/AuthContext";
+import { isAdminPanelRole } from "../features/auth/access";
 import { setAuthToken } from "../features/auth/storage";
+import { authStore } from "../features/auth/store";
 import { mapAuthUser } from "../features/auth/user";
 import { api } from "../utils/api";
 import { isStrongPassword, isValidEmail, isValidPhone } from "../utils/validators";
@@ -74,10 +76,14 @@ export default function Login() {
         setAuthToken(accessToken);
       }
 
-      setUser(mapAuthUser(userData));
+      const mappedUser = mapAuthUser(userData);
+      authStore.setUser(mappedUser);
+      setUser(mappedUser);
 
       pushToast({ title: "Login successful", variant: "success" });
-      const redirectTo = (location.state as { from?: string } | undefined)?.from ?? "/";
+      const redirectTo =
+        (location.state as { from?: string } | undefined)?.from ??
+        (mappedUser && isAdminPanelRole(mappedUser.role) ? "/admin" : "/");
       navigate(redirectTo, { replace: true });
     } catch (err: any) {
       setError(err?.message || "Something went wrong");

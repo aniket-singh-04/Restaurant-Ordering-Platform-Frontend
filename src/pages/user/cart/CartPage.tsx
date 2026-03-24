@@ -1,23 +1,34 @@
 import { Minus, Plus, Trash2 } from "lucide-react";
 import Header from "../../../components/Header/Header";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useCart } from "../../../context/CartContext";
 import { formatPrice } from "../../../utils/formatPrice";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { useToast } from "../../../context/ToastContext";
 import { useMemo, useState } from "react";
 import { createOrder } from "../../../features/orders/api";
-import { useQrContextStore } from "../../../features/qr-context/store";
+import { isAdminPanelRole } from "../../../features/auth/access";
 import { useAuth } from "../../../context/AuthContext";
+import { useActiveQrContext } from "../../../features/qr-context/useActiveQrContext";
+import {
+  buildQrMenuPath,
+  useResolvedQrId,
+} from "../../../features/qr-context/navigation";
+import FullPageLoader from "../../../components/FullPageLoader";
+import { goBackOrNavigate } from "../../../utils/navigation";
 
 const TAX_RATE = 0.05;
 
 export default function CartPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { items, updateQuantity, removeItem, subtotal, clearCart } = useCart();
   const { pushToast } = useToast();
-  const qrContext = useQrContextStore((state) => state.context);
+  const qrId = useResolvedQrId();
+  const qrContextQuery = useActiveQrContext(qrId);
+  const qrContext = qrContextQuery.data;
   const { user } = useAuth();
+  const shouldBlockCustomerMenu = Boolean(!qrId && user && isAdminPanelRole(user.role));
   const [placingOrder, setPlacingOrder] = useState(false);
   const [paymentMode, setPaymentMode] = useState<"ONLINE_ADVANCE" | "CASH_CONFIRMED_BY_STAFF">(
     "ONLINE_ADVANCE",
@@ -25,10 +36,36 @@ export default function CartPage() {
 
   const tax = Math.round(subtotal * TAX_RATE);
   const total = subtotal + tax;
-  const canCheckout = useMemo(
+  const hasTableContext = useMemo(
     () => Boolean(qrContext?.restaurant.id && qrContext?.branch.id && qrContext?.table.id),
     [qrContext],
   );
+
+  if (shouldBlockCustomerMenu) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  if (qrId && qrContextQuery.isLoading) {
+    return <FullPageLoader label="Loading cart..." />;
+  }
+
+  if (qrId && qrContextQuery.isError) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-gray-50 px-4 pt-11">
+          <div className="mx-auto max-w-3xl rounded-3xl border border-red-200 bg-red-50 p-6 text-left text-red-800">
+            <h1 className="text-2xl font-semibold">This QR code is not available.</h1>
+            <p className="mt-2 text-sm text-red-700">
+              {qrContextQuery.error instanceof Error
+                ? qrContextQuery.error.message
+                : "Please ask the restaurant team for a fresh table QR code."}
+            </p>
+          </div>
+        </main>
+      </>
+    );
+  }
 
   return (
     <>
@@ -38,7 +75,7 @@ export default function CartPage() {
         <div className="max-w-4xl mx-auto space-y-5">
           <div className="flex items-center gap-2 pt-4">
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => goBackOrNavigate(navigate, buildQrMenuPath(qrId), location.key)}
               className="flex items-center justify-center cursor-pointer w-8 h-8 rounded-full bg-linear-to-br from-amber-400 to-orange-500 text-white shadow-lg hover:from-amber-500 hover:to-orange-600 hover:shadow-xl transition-all duration-300 active:scale-95"
             >
               <IoMdArrowRoundBack size={22} />
@@ -150,13 +187,22 @@ export default function CartPage() {
 
               <button
                 className="w-full py-3 rounded-xl text-white font-semibold bg-linear-to-br from-[#f97415] via-[#f99e1f] to-[#fac938]"
-                disabled={placingOrder || !canCheckout}
+                disabled={placingOrder || !hasTableContext}
                 onClick={async () => {
-                  if (!canCheckout || !qrContext) {
+                  if (!hasTableContext || !qrContext) {
                     pushToast({
                       title: "QR context missing",
                       description: "Scan the table QR before placing an order.",
                       variant: "error",
+                    });
+                    return;
+                  }
+
+                  if (!user) {
+                    navigate("/login", {
+                      state: {
+                        from: `${location.pathname}${location.search}`,
+                      },
                     });
                     return;
                   }
@@ -200,9 +246,13 @@ export default function CartPage() {
                   }
                 }}
               >
-                {placingOrder ? "Creating Order..." : `Create Order${user?.name ? ` as ${user.name}` : ""}`}
+                {placingOrder
+                  ? "Creating Order..."
+                  : !user
+                    ? "Login to Place Order"
+                    : `Create Order${user.name ? ` as ${user.name}` : ""}`}
               </button>
-              {!canCheckout && (
+              {!hasTableContext && (
                 <p className="text-xs text-red-500">
                   Table context is required for dine-in checkout.
                 </p>

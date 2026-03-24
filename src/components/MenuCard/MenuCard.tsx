@@ -4,9 +4,14 @@ import { useNavigate } from "react-router-dom";
 import type { MenuCardProps } from "./types";
 import { formatPrice } from "../../utils/formatPrice";
 import MenuImageToggle from "../../pages/MenuImageToggle";
+import {
+  buildQrMenuItemPath,
+  useResolvedQrId,
+} from "../../features/qr-context/navigation";
 
 export default function MenuCard({ item, index }: MenuCardProps) {
   const navigate = useNavigate();
+  const qrId = useResolvedQrId();
 
   return (
     <motion.div
@@ -14,7 +19,7 @@ export default function MenuCard({ item, index }: MenuCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05, duration: 0.3 }}
       whileHover={{ y: -4 }}
-      onClick={() => navigate(`/menu/${item.id}`)}
+      onClick={() => navigate(buildQrMenuItemPath(item.id, qrId))}
       className="group cursor-pointer overflow-hidden rounded-2xl bg-card shadow-warm transition-all duration-300 hover:shadow-warm-lg"
     >
       {/* Image */}

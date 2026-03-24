@@ -1,7 +1,13 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { isAdminPanelRole } from "../../features/auth/access";
+import { goBackOrNavigate } from "../../utils/navigation";
 
 export default function NotAuthorized() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  const fallbackPath = user && isAdminPanelRole(user.role) ? "/admin" : "/";
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#fff9f0] text-center px-6">
@@ -14,7 +20,7 @@ export default function NotAuthorized() {
 
       <div className="flex flex-col sm:flex-row gap-3">
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => goBackOrNavigate(navigate, fallbackPath, location.key)}
           className="px-6 py-3 rounded-xl border border-orange-500 text-orange-500 font-semibold hover:bg-orange-50"
         >
           Go Back
@@ -29,4 +35,3 @@ export default function NotAuthorized() {
     </div>
   );
 }
-

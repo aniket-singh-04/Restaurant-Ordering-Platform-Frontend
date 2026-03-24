@@ -2,41 +2,34 @@ import CategoryPills from "../../../components/CategoryPills/CategoryPills";
 import { Filter, Search } from "lucide-react";
 import { categories } from "../../../types";
 import { motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { useDebounce } from "../../../hooks/useDebounce";
 import MenuItemsGrid from "./components/MenuItemsGrid";
 import MenuPageLayout from "./components/MenuPageLayout";
 import MenuSearchBar from "./components/MenuSearchBar";
 import { filterMenuItems } from "./menu.utils";
 import FullPageLoader from "../../../components/FullPageLoader";
-import { useQrContext } from "../../../features/qr-context/api";
-import { useQrContextStore } from "../../../features/qr-context/store";
+import { isAdminPanelRole } from "../../../features/auth/access";
 import { useBranchMenu } from "../../../features/menu/api";
 import { useAuth } from "../../../context/AuthContext";
+import { useResolvedQrId } from "../../../features/qr-context/navigation";
+import { useActiveQrContext } from "../../../features/qr-context/useActiveQrContext";
 
 export default function MenuList() {
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showVegOnly, setShowVegOnly] = useState(false);
   const debouncedSearch = useDebounce(searchQuery, 250);
-  const [searchParams] = useSearchParams();
-  const qrId = searchParams.get("qr") ?? undefined;
+  const qrId = useResolvedQrId();
   const { user } = useAuth();
-  const qrContext = useQrContext(qrId);
-  const context = useQrContextStore((state) => state.context);
-  const setContext = useQrContextStore((state) => state.setContext);
-  const activeContext = qrContext.data ?? context;
+  const shouldBlockCustomerMenu = Boolean(!qrId && user && isAdminPanelRole(user.role));
+  const qrContext = useActiveQrContext(qrId);
+  const activeContext = qrContext.data;
   const menuQuery = useBranchMenu(
-    activeContext?.branch.id ?? user?.branchId,
-    activeContext?.restaurant.id ?? user?.restroId,
+    shouldBlockCustomerMenu ? undefined : activeContext?.branch.id ?? user?.branchId,
+    shouldBlockCustomerMenu ? undefined : activeContext?.restaurant.id ?? user?.restroId,
   );
-
-  useEffect(() => {
-    if (qrContext.data) {
-      setContext(qrContext.data);
-    }
-  }, [qrContext.data, setContext]);
 
   const filteredItems = useMemo(() => {
     return filterMenuItems(menuQuery.data ?? [], {
@@ -48,6 +41,25 @@ export default function MenuList() {
 
   if (qrContext.isLoading || menuQuery.isLoading) {
     return <FullPageLoader label="Loading menu..." />;
+  }
+
+  if (qrId && qrContext.isError) {
+    return (
+      <MenuPageLayout>
+        <section className="mt-6 rounded-3xl border border-red-200 bg-red-50 p-6 text-left text-red-800">
+          <h1 className="text-2xl font-semibold">This QR code is not available.</h1>
+          <p className="mt-2 text-sm text-red-700">
+            {qrContext.error instanceof Error
+              ? qrContext.error.message
+              : "Please ask the restaurant team for a fresh table QR code."}
+          </p>
+        </section>
+      </MenuPageLayout>
+    );
+  }
+
+  if (shouldBlockCustomerMenu) {
+    return <Navigate to="/admin" replace />;
   }
 
   return (
@@ -62,7 +74,7 @@ export default function MenuList() {
             <p className="text-muted-foreground mt-1">
               {filteredItems.length} delicious items to explore
               {activeContext
-                ? ` · ${activeContext.branch.name} table ${activeContext.table.tableNumber}`
+                ? ` - ${activeContext.branch.name} table ${activeContext.table.tableNumber}`
                 : ""}
             </p>
           </motion.div>

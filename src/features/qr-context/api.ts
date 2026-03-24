@@ -1,25 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+import type { QrContext } from "../../types/table";
 import { api } from "../../utils/api";
 
-export type QrContext = {
-  restaurant: {
-    id: string;
-    name: string;
-    slug?: string;
-  };
-  branch: {
-    id: string;
-    name: string;
-    city?: string;
-    status?: string;
-  };
-  table: {
-    id: string;
-    tableNumber: string;
-    capacity?: number;
-  };
-  menuVersion: number;
-};
+export type { QrContext } from "../../types/table";
 
 export const useQrContext = (publicQrId?: string) =>
   useQuery({

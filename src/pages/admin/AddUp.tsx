@@ -190,7 +190,7 @@ export default function AddUp() {
               <button
                 type="button"
                 onClick={() => setConfirmCreate(true)}
-                className="flex-1 rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600"
+                className="cursor-pointer flex-1 rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600"
               >
                 Create Restaurant
               </button>
@@ -200,7 +200,7 @@ export default function AddUp() {
                   type="button"
                   onClick={handleCreateRestaurant}
                   disabled={restaurantLoading}
-                  className="flex-1 rounded-xl bg-green-600 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 disabled:opacity-60"
+                  className="cursor-pointer flex-1 rounded-xl bg-green-600 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 disabled:opacity-60"
                 >
                   {restaurantLoading ? "Creating..." : "Confirm Create"}
                 </button>
@@ -208,7 +208,7 @@ export default function AddUp() {
                 <button
                   type="button"
                   onClick={() => setConfirmCreate(false)}
-                  className="flex-1 rounded-xl border border-gray-300 py-3 text-sm font-medium transition hover:bg-gray-100"
+                  className="cursor-pointer flex-1 rounded-xl border border-gray-300 py-3 text-sm font-medium transition hover:bg-gray-100"
                 >
                   Cancel
                 </button>

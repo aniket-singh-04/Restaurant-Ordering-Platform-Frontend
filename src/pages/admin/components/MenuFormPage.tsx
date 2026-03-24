@@ -310,7 +310,6 @@ export default function MenuFormPage() {
         setPreviews(nextPreviews)
         setPersistedImages(nextPersistedImages)
       } catch (error) {
-        console.error("Load Menu Error:", error)
         pushToast({
           title: "Unable to load menu item",
           description: getApiErrorMessage(error, "Unable to load menu item."),
@@ -542,7 +541,6 @@ export default function MenuFormPage() {
       }
       navigate("/admin/menu")
     } catch (error) {
-      console.error(error)
       const message = getApiErrorMessage(error, "Unable to save this menu item.")
       const fieldErrors = getApiFieldErrors(error)
       if (Object.keys(fieldErrors).length) {

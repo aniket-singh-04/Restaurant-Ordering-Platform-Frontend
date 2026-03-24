@@ -64,12 +64,13 @@ export const useBranchMenu = (branchId?: string, restaurantId?: string) =>
     queryKey: ["menu", branchId, restaurantId],
     enabled: Boolean(branchId || restaurantId),
     queryFn: async () => {
-      const searchParams = new URLSearchParams();
-      if (branchId) searchParams.set("branchId", branchId);
-      if (restaurantId) searchParams.set("restaurantId", restaurantId);
-      const response = await api.get<{ data: MenuApiItem[] }>(
-        `/api/v1/menu?${searchParams.toString()}`,
-      );
+      const response = branchId
+        ? await api.get<{ data: MenuApiItem[] }>(
+            `/api/v1/menu/branch/${encodeURIComponent(branchId)}`,
+          )
+        : await api.get<{ data: MenuApiItem[] }>(
+            `/api/v1/menu?restaurantId=${encodeURIComponent(restaurantId ?? "")}`,
+          );
       return response.data.map(mapMenuItem);
     },
   });

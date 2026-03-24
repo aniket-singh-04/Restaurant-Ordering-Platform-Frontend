@@ -16,6 +16,7 @@ import ResetPassword from "../pages/ResetPassword";
 import VerifyEmail from "../pages/VerifyEmail";
 import ProtectedRoute from "../routes/ProtectedRoute";
 import PublicRoute from "../routes/PublicRoute";
+import QrRouteGuard from "../routes/QrRouteGuard";
 import ProfileLayout from "../pages/ProfileLayout";
 import OrdersManagement from "../pages/admin/OrdersManagement";
 import Analytics from "../pages/admin/Analytics";
@@ -40,6 +41,38 @@ const withPublicRoute = (element: ReactElement) => (
 );
 
 export const router = createBrowserRouter([
+  {
+    path: "/qr/:publicQrId",
+    element: (
+      <QrRouteGuard>
+        <MenuList />
+      </QrRouteGuard>
+    ),
+  },
+  {
+    path: "/qr/:publicQrId/menu",
+    element: (
+      <QrRouteGuard>
+        <MenuList />
+      </QrRouteGuard>
+    ),
+  },
+  {
+    path: "/qr/:publicQrId/menu/:id",
+    element: (
+      <QrRouteGuard>
+        <MenuItemDetail />
+      </QrRouteGuard>
+    ),
+  },
+  {
+    path: "/qr/:publicQrId/cart",
+    element: (
+      <QrRouteGuard>
+        <CartPage />
+      </QrRouteGuard>
+    ),
+  },
   {
     path: "/",
     element: withProtectedRoute(<MenuHome />, AUTHENTICATED_APP_ROLES),

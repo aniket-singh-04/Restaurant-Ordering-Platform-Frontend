@@ -1,8 +1,8 @@
 # Restaurant Ordering Platform Frontend
 
-React + TypeScript frontend for a restaurant ordering platform built with Vite. The app includes customer-facing menu browsing and cart flows, plus an admin area for dashboard, menu, orders, analytics, settings, and account management.
+React + TypeScript frontend for the restaurant ordering platform. It supports the customer menu flow, QR-based table sessions, cart and order entry, and the protected admin dashboard for menu, account, analytics, and table management.
 
-## Tech Stack
+## Stack
 
 - React 19
 - TypeScript
@@ -10,46 +10,31 @@ React + TypeScript frontend for a restaurant ordering platform built with Vite. 
 - React Router
 - Tailwind CSS
 - Framer Motion
-- Headless UI
-- Lucide React
+- TanStack Query
+- Zustand
+- Socket.IO client
+- QR code utilities
 
-## Getting Started
-
-### 1. Install dependencies
+## Scripts
 
 ```bash
 npm install
-```
-
-### 2. Start the development server
-
-```bash
 npm run dev
-```
-
-### 3. Run the production build
-
-```bash
+npx tsc -b
 npm run build
 ```
 
-## Available Scripts
+## Main Routes
 
-- `npm run dev` starts the Vite dev server.
-- `npm run build` runs `tsc -b` and then creates the production bundle with Vite.
-- `npm run lint` runs ESLint.
-- `npm run preview` previews the built app locally.
-
-## Route Overview
-
-Public routes:
+Public auth routes:
 
 - `/login`
 - `/register`
 - `/forgot-password`
 - `/reset-password`
+- `/verify-email`
 
-Protected customer routes:
+Customer app routes:
 
 - `/`
 - `/menu`
@@ -57,7 +42,14 @@ Protected customer routes:
 - `/cart`
 - `/profile`
 
-Protected admin routes:
+QR session routes:
+
+- `/qr/:publicQrId`
+- `/qr/:publicQrId/menu`
+- `/qr/:publicQrId/menu/:id`
+- `/qr/:publicQrId/cart`
+
+Admin routes:
 
 - `/admin`
 - `/admin/menu`
@@ -68,130 +60,69 @@ Protected admin routes:
 - `/admin/settings`
 - `/admin/addups`
 - `/admin/accountmanagement`
+- `/admin/tables`
 
-Supporting routes:
-
-- `/not-authorized`
-- `*` -> not found
-
-## Project Structure
+## Current `src` Structure
 
 ```text
 src/
   app/
     AppProviders.tsx
     router.tsx
+  assets/
+    fonts/
+    icons/
+    images/
   components/
     Header/
-      Header.tsx
-      RestaurantSelector.tsx
-      storage.ts
+    MenuCard/
+    ui/
   constants/
-    storageKeys.ts
   context/
-    AuthContext.tsx
-    CartContext.tsx
-    ThemeContext.tsx
-    ToastContext.tsx
   features/
+    analytics/
     auth/
-      access.ts
-      storage.ts
-      types.ts
-      user.ts
+    menu/
+    orders/
+    qr-context/
+    tables/
   hooks/
-    useDebounce.ts
-    useLocalStorage.ts
+  lib/
   pages/
     admin/
-      AdminLayout.tsx
-      AddUp.tsx
-      MenuManagement.tsx
-      constants.ts
-      components/
-        MenuFormPage.tsx
-        shared/
-          AdminFormControls.tsx
+    not-authorized/
+    not-found/
+    public/
     user/
-      menu/
-        MenuHome.tsx
-        MenuList.tsx
-        MenuItemDetail.tsx
-        menu.utils.ts
-        components/
-          MenuItemsGrid.tsx
-          MenuPageLayout.tsx
-          MenuSearchBar.tsx
   routes/
-    ProtectedRoute.tsx
-    PublicRoute.tsx
   store/
   styles/
   types/
   utils/
-    api.ts
-    formatPrice.ts
-    storage.ts
-    validators.ts
+  App.tsx
+  index.css
+  main.tsx
 ```
 
-## Architecture Notes
+## Important Behavior
 
-### App Bootstrap
+- QR routes require authentication before the menu list is shown.
+- When a user logs in from a QR link, the app returns them to the scanned QR route.
+- Canceling the QR login prompt keeps the customer out of the menu list.
+- Admin users are blocked from the customer menu flow unless they entered through a valid QR table session.
+- QR table context is shared across menu, item detail, and cart routes.
 
-- `src/App.tsx` is intentionally thin.
-- `src/app/AppProviders.tsx` composes theme, toast, auth, and cart providers.
-- `src/app/router.tsx` owns route registration and route guards.
+## Key Files
 
-### Auth
+- `src/app/router.tsx` defines the route tree and QR/admin guards.
+- `src/context/AuthContext.tsx` manages login state, refresh handling, and logout.
+- `src/features/qr-context/` contains QR session APIs, navigation helpers, and store state.
+- `src/features/menu/api.ts` and `src/features/tables/api.ts` wrap customer and admin API calls.
+- `src/pages/admin/TableManagement.tsx` manages generated QR tables by branch.
+- `src/pages/user/menu/` contains the customer menu browsing flow.
+- `src/utils/navigation.ts` provides safe fallback navigation for back buttons.
 
-- `src/features/auth/types.ts` contains shared auth types.
-- `src/features/auth/access.ts` contains role constants and role-matching helpers.
-- `src/features/auth/user.ts` normalizes API user payloads.
-- `src/features/auth/storage.ts` centralizes token persistence.
+## Verification
 
-### Storage
-
-- `src/constants/storageKeys.ts` holds local storage keys in one place.
-- `src/utils/storage.ts` contains reusable local storage helpers.
-- Header restaurant/table selection also uses a dedicated helper in `src/components/Header/storage.ts`.
-
-### Menu UI Reuse
-
-- `src/pages/user/menu/menu.utils.ts` contains shared menu filtering helpers.
-- `MenuPageLayout.tsx` standardizes the customer menu page shell.
-- `MenuSearchBar.tsx` reuses the menu search input UI.
-- `MenuItemsGrid.tsx` reuses menu card rendering and empty states.
-
-### Admin UI Reuse
-
-- `src/pages/admin/constants.ts` centralizes admin navigation config.
-- `src/pages/admin/components/shared/AdminFormControls.tsx` contains reusable admin section, field, input, textarea, and checkbox wrappers.
-- `AddUp.tsx` and `MenuFormPage.tsx` use those shared admin controls to reduce duplication.
-
-## Important Files
-
-- `src/main.tsx` mounts the application.
-- `src/App.tsx` connects providers and the router.
-- `src/app/router.tsx` defines the route tree.
-- `src/context/AuthContext.tsx` manages session state and refresh/logout behavior.
-- `src/utils/api.ts` contains the shared API request wrapper.
-- `src/pages/user/menu/MenuHome.tsx` and `src/pages/user/menu/MenuList.tsx` drive customer menu discovery.
-- `src/pages/admin/AdminLayout.tsx` drives admin shell navigation.
-
-## Known Issues
-
-At the moment, `npm run build` is blocked by existing project issues outside the core refactor:
-
-- `src/components/Food3DViewer/Food3DViewer.tsx` requires `@react-three/fiber`, `@react-three/drei`, and `three`, but those packages are not currently present in `package.json`.
-- `src/pages/admin/Accounts.tsx` still contains unused imports/state that fail the current TypeScript build settings.
-
-If you want the build fully green, those two areas should be cleaned up next.
-
-## Development Guidelines
-
-- Keep business logic in place and prefer structural refactors over behavior changes.
-- Reuse shared helpers in `src/app`, `src/features`, `src/utils`, and `src/pages/.../components/shared` before duplicating logic.
-- Add new route-level pages under `src/pages`.
-- Add reusable UI under `src/components` or feature-local `components` folders when it is page-specific.
-- Keep storage keys and auth role rules centralized instead of scattering strings across pages.
+- `npx tsc -b`
+- `npm run build`

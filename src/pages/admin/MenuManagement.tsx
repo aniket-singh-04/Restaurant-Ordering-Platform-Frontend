@@ -53,10 +53,8 @@ export default function MenuManagement() {
       setLoading(true);
       setLoadError("");
       const data = await api.get<any>(endpoint);
-      console.log(data)
       const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
       const filtered = list.filter((item: MenuRecord) => !item.isDeleted);
-      console.log(filtered)
       setItems(filtered.length ? filtered : []);
     } catch (error) {
       setItems([]);

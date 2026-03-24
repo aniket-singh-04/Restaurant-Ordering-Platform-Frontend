@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { Navigate, useParams, useNavigate } from "react-router-dom";
 import { Star, Clock, Leaf, Flame } from "lucide-react";
 import Header from "./components/Header";
 import AddOnsSelector from "./components/AddOnsSelector";
@@ -8,18 +8,27 @@ import QuantitySelector from "./components/QuantitySelector";
 import AddToCartButton from "./components/AddToCartButton";
 import { formatPrice } from "../../../utils/formatPrice";
 import { useCart } from "../../../context/CartContext";
+import { isAdminPanelRole } from "../../../features/auth/access";
 import { useMenuItem } from "../../../features/menu/api";
-import { useQrContextStore } from "../../../features/qr-context/store";
 import { useAuth } from "../../../context/AuthContext";
 import FullPageLoader from "../../../components/FullPageLoader";
 import MenuImageToggle from "../../../pages/MenuImageToggle";
+import {
+  buildQrCartPath,
+  buildQrMenuPath,
+  useResolvedQrId,
+} from "../../../features/qr-context/navigation";
+import { useActiveQrContext } from "../../../features/qr-context/useActiveQrContext";
 
 export default function MenuItemDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addItem } = useCart();
   const { user } = useAuth();
-  const qrContext = useQrContextStore((state) => state.context);
+  const qrId = useResolvedQrId();
+  const shouldBlockCustomerMenu = Boolean(!qrId && user && isAdminPanelRole(user.role));
+  const qrContextQuery = useActiveQrContext(qrId);
+  const qrContext = qrContextQuery.data;
 
   const [quantity, setQuantity] = useState(1);
   const [selectedAddOns, setSelectedAddOns] = useState<
@@ -27,15 +36,40 @@ export default function MenuItemDetail() {
   >([]);
   const [specialInstructions, setSpecialInstructions] = useState("");
 
-  const menuItemQuery = useMenuItem(id);
+  const menuItemQuery = useMenuItem(shouldBlockCustomerMenu ? undefined : id);
   const item = useMemo(() => menuItemQuery.data, [menuItemQuery.data]);
-  console.log(item)
-  useEffect(() => {
-    if (!menuItemQuery.isLoading && !item) navigate("/menu");
-  }, [item, menuItemQuery.isLoading, navigate]);
 
-  if (menuItemQuery.isLoading) {
+  useEffect(() => {
+    if (!shouldBlockCustomerMenu && !menuItemQuery.isLoading && !item) {
+      navigate(buildQrMenuPath(qrId));
+    }
+  }, [item, menuItemQuery.isLoading, navigate, qrId, shouldBlockCustomerMenu]);
+
+  if (shouldBlockCustomerMenu) {
+    return <Navigate to="/admin" replace />;
+  }
+
+  if (menuItemQuery.isLoading || (qrId && qrContextQuery.isLoading)) {
     return <FullPageLoader label="Loading item..." />;
+  }
+
+  if (qrId && qrContextQuery.isError) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#fff9f0] px-4 text-center">
+        <h1 className="text-2xl font-semibold text-[#4a3f35]">This QR code is not available.</h1>
+        <p className="mt-2 text-sm text-gray-600">
+          {qrContextQuery.error instanceof Error
+            ? qrContextQuery.error.message
+            : "Please ask the restaurant team for a fresh table QR code."}
+        </p>
+        <button
+          onClick={() => navigate(buildQrMenuPath(qrId))}
+          className="mt-5 rounded-lg bg-orange-500 px-5 py-2 font-medium text-white"
+        >
+          Back to Menu
+        </button>
+      </div>
+    );
   }
 
   if (!item) {
@@ -43,7 +77,7 @@ export default function MenuItemDetail() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#fff9f0]">
         <p className="text-lg text-gray-500 mb-4">Item not found</p>
         <button
-          onClick={() => navigate("/menu")}
+          onClick={() => navigate(buildQrMenuPath(qrId))}
           className="px-5 py-2 cursor-pointer rounded-lg bg-orange-500 text-white font-medium"
         >
           Back to Menu
@@ -82,12 +116,16 @@ export default function MenuItemDetail() {
       addOns: selectedAddOns,
       specialInstructions: specialInstructions || undefined,
     });
-    navigate("/cart");
+    navigate(buildQrCartPath(qrId));
   };
 
   return (
     <div className="min-h-screen bg-[#fff9f0] pb-32 font-sans">
-      <Header title={item.name} className="sticky top-0 z-50 border-b bg-white " />
+      <Header
+        title={item.name}
+        className="sticky top-0 z-50 border-b bg-white "
+        fallbackTo={buildQrMenuPath(qrId)}
+      />
 
       <main className="container mx-auto max-w-5xl px-4 py-8">
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden">

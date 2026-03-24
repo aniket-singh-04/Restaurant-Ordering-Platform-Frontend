@@ -339,7 +339,6 @@ export default function Accounts() {
         api.get<ApiResponse<BranchResponse[]>>(`/api/v1/branches/restaurant/${restaurantId}`),
         api.get<ApiResponse<ManagedUser[]>>(`/api/v1/users?restaurantId=${restaurantId}`),
       ]);
-console.log(branchResponse)
       setRestaurant(restaurantResponse.data);
       setBranches(branchResponse.data.map(mapBranchToDraft));
       setUsers(userResponse.data.map(mapUserToDraft));
@@ -438,7 +437,6 @@ console.log(branchResponse)
     }
   };
 
-  console.log(typeof (branchForm.tableCount))
   const handleCreateBranch = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 

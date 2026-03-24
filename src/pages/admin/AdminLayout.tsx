@@ -50,7 +50,7 @@ export default function AdminLayout() {
           aria-expanded={isSidebarOpen}
           aria-controls="admin-sidebar"
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-5 h-5 cursor-pointer" />
         </button>
       </header>
 
@@ -88,7 +88,7 @@ export default function AdminLayout() {
             className="md:hidden rounded-lg p-2 text-[#f7f1e3] hover:bg-[#3c2c20] transition-colors"
             aria-label="Close navigation menu"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 cursor-pointer" />
           </button>
         </div>
 

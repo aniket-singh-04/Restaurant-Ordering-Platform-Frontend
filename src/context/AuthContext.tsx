@@ -68,6 +68,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       authStore.clear();
     }
 
+    if (!authStore.getState().accessToken) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
     await fetchUser(true);
   };
 
