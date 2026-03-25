@@ -18,12 +18,13 @@ import ProtectedRoute from "../routes/ProtectedRoute";
 import PublicRoute from "../routes/PublicRoute";
 import QrRouteGuard from "../routes/QrRouteGuard";
 import ProfileLayout from "../pages/ProfileLayout";
-import OrdersManagement from "../pages/admin/OrdersManagement";
+import OrdersManagement from "../pages/admin/OrdersManagementLive";
 import Analytics from "../pages/admin/Analytics";
 import Settings from "../pages/admin/Settings";
 import MenuFormPage from "../pages/admin/components/MenuFormPage";
 import AddUp from "../pages/admin/AddUp";
 import Accounts from "../pages/admin/Accounts";
+import Subscriptions from "../pages/admin/Subscriptions";
 import {
   ADMIN_PANEL_ROLES,
   AUTHENTICATED_APP_ROLES,
@@ -140,6 +141,10 @@ export const router = createBrowserRouter([
       {
         path: "orders",
         element: <OrdersManagement />,
+      },
+      {
+        path: "subscriptions",
+        element: <Subscriptions />,
       },
       {
         path: "analytics",

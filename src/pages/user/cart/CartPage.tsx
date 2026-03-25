@@ -7,9 +7,15 @@ import { IoMdArrowRoundBack } from "react-icons/io";
 import { useToast } from "../../../context/ToastContext";
 import { useMemo, useState } from "react";
 import { createOrder } from "../../../features/orders/api";
+import {
+  confirmOrderPayment,
+  failOrderPayment,
+  initiateOrderPayment,
+} from "../../../features/payments/api";
 import { isAdminPanelRole } from "../../../features/auth/access";
 import { useAuth } from "../../../context/AuthContext";
 import { useActiveQrContext } from "../../../features/qr-context/useActiveQrContext";
+import { useRazorpayCheckout } from "../../../hooks/useRazorpayCheckout";
 import {
   buildQrMenuPath,
   useResolvedQrId,
@@ -30,15 +36,23 @@ export default function CartPage() {
   const { user } = useAuth();
   const shouldBlockCustomerMenu = Boolean(!qrId && user && isAdminPanelRole(user.role));
   const [placingOrder, setPlacingOrder] = useState(false);
+  const [orderType, setOrderType] = useState<"DINE_IN" | "TAKEAWAY">("DINE_IN");
   const [paymentMode, setPaymentMode] = useState<"ONLINE_ADVANCE" | "CASH_CONFIRMED_BY_STAFF">(
     "ONLINE_ADVANCE",
   );
+  const { openCheckout, loading: checkoutLoading } = useRazorpayCheckout();
 
   const tax = Math.round(subtotal * TAX_RATE);
-  const total = subtotal + tax;
-  const hasTableContext = useMemo(
-    () => Boolean(qrContext?.restaurant.id && qrContext?.branch.id && qrContext?.table.id),
-    [qrContext],
+  const dineInCharge = orderType === "DINE_IN" ? 20 : 0;
+  const total = subtotal + tax + dineInCharge;
+  const hasCheckoutContext = useMemo(
+    () =>
+      Boolean(
+        qrContext?.restaurant.id &&
+        qrContext?.branch.id &&
+        (orderType === "TAKEAWAY" || qrContext?.table.id),
+      ),
+    [orderType, qrContext],
   );
 
   if (shouldBlockCustomerMenu) {
@@ -155,12 +169,47 @@ export default function CartPage() {
                 <span>Tax</span>
                 <span className="font-semibold text-black">{formatPrice(tax)}</span>
               </div>
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>Dine-in charge</span>
+                <span className="font-semibold text-black">{formatPrice(dineInCharge)}</span>
+              </div>
               <div className="flex justify-between text-base text-gray-900">
                 <span>Total</span>
                 <span className="font-semibold text-black">
                   {formatPrice(total)}
                 </span>
               </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  className={`w-full py-2 rounded-xl font-medium border ${
+                    orderType === "DINE_IN"
+                      ? "border-orange-500 bg-orange-50 text-orange-600"
+                      : "border-gray-200 text-gray-600"
+                  }`}
+                  onClick={() => setOrderType("DINE_IN")}
+                >
+                  Dine-In
+                </button>
+                <button
+                  type="button"
+                  className={`w-full py-2 rounded-xl font-medium border ${
+                    orderType === "TAKEAWAY"
+                      ? "border-orange-500 bg-orange-50 text-orange-600"
+                      : "border-gray-200 text-gray-600"
+                  }`}
+                  onClick={() => setOrderType("TAKEAWAY")}
+                >
+                  Takeaway
+                </button>
+              </div>
+
+              <p className="text-xs text-gray-500">
+                {orderType === "DINE_IN"
+                  ? "Dine-in orders include an extra Rs 20 service charge."
+                  : "Takeaway uses the current QR context to identify the branch only."}
+              </p>
 
               <button
                 type="button"
@@ -187,9 +236,9 @@ export default function CartPage() {
 
               <button
                 className="w-full py-3 rounded-xl text-white font-semibold bg-linear-to-br from-[#f97415] via-[#f99e1f] to-[#fac938]"
-                disabled={placingOrder || !hasTableContext}
+                disabled={placingOrder || checkoutLoading || !hasCheckoutContext}
                 onClick={async () => {
-                  if (!hasTableContext || !qrContext) {
+                  if (!hasCheckoutContext || !qrContext) {
                     pushToast({
                       title: "QR context missing",
                       description: "Scan the table QR before placing an order.",
@@ -212,8 +261,8 @@ export default function CartPage() {
                     const order = await createOrder({
                       restaurantId: qrContext.restaurant.id,
                       branchId: qrContext.branch.id,
-                      tableId: qrContext.table.id,
-                      orderType: "DINE_IN",
+                      ...(orderType === "DINE_IN" ? { tableId: qrContext.table.id } : {}),
+                      orderType,
                       paymentMode,
                       items: items.map((item) => ({
                         menuId: item.menuItemId,
@@ -226,15 +275,74 @@ export default function CartPage() {
                     });
 
                     clearCart();
-                    pushToast({
-                      title: "Order created",
-                      description:
-                        paymentMode === "ONLINE_ADVANCE"
-                          ? "Complete the advance payment to place it."
-                          : "Ask staff to confirm the cash order.",
-                      variant: "success",
-                    });
-                    navigate(`/profile${order?._id ?? order?.id ? `?order=${order._id ?? order.id}` : ""}`);
+                    const orderId = order.id ?? order._id ?? "";
+
+                    if (paymentMode === "ONLINE_ADVANCE" && orderId) {
+                      const payment = await initiateOrderPayment(orderId, {
+                        idempotencyKey: `order-payment-${orderId}-${Date.now()}`,
+                      });
+                      const paymentAttemptId =
+                        payment.paymentAttempt.id ?? payment.paymentAttempt._id ?? "";
+
+                      try {
+                        const result = await openCheckout({
+                          key: payment.checkout.keyId,
+                          amount: payment.checkout.amount,
+                          currency: payment.checkout.currency,
+                          order_id: payment.checkout.orderId,
+                          name: payment.checkout.name,
+                          description: payment.checkout.description,
+                          notes: payment.checkout.notes,
+                          prefill: {
+                            name: user?.name,
+                            email: user?.email,
+                            contact: user?.phone,
+                          },
+                          theme: {
+                            color: "#f97415",
+                          },
+                        });
+
+                        if (paymentAttemptId) {
+                          await confirmOrderPayment(paymentAttemptId, {
+                            razorpay_order_id: result.razorpay_order_id,
+                            razorpay_payment_id: result.razorpay_payment_id,
+                            razorpay_signature: result.razorpay_signature,
+                            amount: payment.paymentAttempt.amount,
+                          });
+                        }
+
+                        pushToast({
+                          title: "Payment successful",
+                          description: "Your order is placed and waiting for restaurant acceptance.",
+                          variant: "success",
+                        });
+                      } catch (error: any) {
+                        if (paymentAttemptId) {
+                          await failOrderPayment(paymentAttemptId, {
+                            message: error?.message ?? "Payment was not completed.",
+                            retryable: true,
+                            failureSource: "CUSTOMER",
+                          }).catch(() => undefined);
+                        }
+
+                        pushToast({
+                          title: "Payment pending",
+                          description:
+                            error?.message ??
+                            "The order draft was created, but payment is still pending. You can retry from your order history.",
+                          variant: "warning",
+                        });
+                      }
+                    } else {
+                      pushToast({
+                        title: "Order created",
+                        description: "Ask staff to confirm the cash order.",
+                        variant: "success",
+                      });
+                    }
+
+                    navigate(`/profile${orderId ? `?order=${orderId}` : ""}`);
                   } catch (error: any) {
                     pushToast({
                       title: "Could not create order",
@@ -248,13 +356,15 @@ export default function CartPage() {
               >
                 {placingOrder
                   ? "Creating Order..."
+                  : checkoutLoading
+                    ? "Opening Payment..."
                   : !user
                     ? "Login to Place Order"
                     : `Create Order${user.name ? ` as ${user.name}` : ""}`}
               </button>
-              {!hasTableContext && (
+              {!hasCheckoutContext && (
                 <p className="text-xs text-red-500">
-                  Table context is required for dine-in checkout.
+                  QR table context is required for checkout.
                 </p>
               )}
             </div>

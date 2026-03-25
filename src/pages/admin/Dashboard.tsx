@@ -91,7 +91,7 @@ export default function AdminDashboard() {
       items: order.itemsSnapshot?.length ?? 0,
       total: (order.totalsSnapshot?.grandTotal ?? 0) / 100,
       status: (order.OrderStatus ?? "pending").toLowerCase(),
-      time: new Date(order.createdAt).toLocaleTimeString(),
+      time: order.createdAt ? new Date(order.createdAt).toLocaleTimeString() : "--",
     })) ?? [];
 
   return (

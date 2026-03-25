@@ -1,16 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { CgProfile } from "react-icons/cg";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { api } from "../utils/api";
+import { cancelOrder as cancelOrderRequest, useMyOrders } from "../features/orders/api";
 import { getApiErrorMessage, getApiFieldErrors } from "../utils/apiErrorHelpers";
 import {
   isStrongPassword,
   isValidEmail,
   isValidPhone,
 } from "../utils/validators";
+import { formatPrice } from "../utils/formatPrice";
+import { goBackOrNavigate } from "../utils/navigation";
 
 type ProfileResponse = {
   success: boolean;
@@ -44,6 +48,9 @@ export default function ProfileLayout() {
   const { user, loading, logout, refresh } = useAuth();
   const { pushToast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryClient = useQueryClient();
+  const ordersQuery = useMyOrders();
 
   const [form, setForm] = useState<FormState>(() => createFormState(user));
   const [errors, setErrors] = useState<FormErrors>({});
@@ -51,11 +58,23 @@ export default function ProfileLayout() {
   const [loggingOut, setLoggingOut] = useState(false);
   const [sendingVerification, setSendingVerification] = useState(false);
   const [pendingVerificationMessage, setPendingVerificationMessage] = useState("");
+  const [orderActionId, setOrderActionId] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  const highlightedOrderId = useMemo(
+    () => new URLSearchParams(location.search).get("order"),
+    [location.search],
+  );
 
   useEffect(() => {
     setForm(createFormState(user));
     setErrors({});
   }, [user]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const hasSensitiveChanges = useMemo(() => {
     if (!user) return false;
@@ -204,6 +223,38 @@ export default function ProfileLayout() {
     }
   };
 
+  const formatMinorAmount = (value?: number) => formatPrice((value ?? 0) / 100);
+
+  const formatCountdown = (deadline?: string | null) => {
+    if (!deadline) return null;
+
+    const remainingMs = Math.max(new Date(deadline).getTime() - now, 0);
+    const minutes = Math.floor(remainingMs / 60000);
+    const seconds = Math.floor((remainingMs % 60000) / 1000);
+    return `${minutes}m ${seconds.toString().padStart(2, "0")}s`;
+  };
+
+  const handleOrderCancel = async (orderId: string) => {
+    setOrderActionId(orderId);
+    try {
+      await cancelOrderRequest(orderId, "Cancelled by customer after review.");
+      await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      pushToast({
+        title: "Order cancelled",
+        description: "Refund processing will start automatically for captured online payments.",
+        variant: "success",
+      });
+    } catch (error) {
+      pushToast({
+        title: "Unable to cancel order",
+        description: getApiErrorMessage(error),
+        variant: "error",
+      });
+    } finally {
+      setOrderActionId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center text-lg font-semibold text-gray-700">
@@ -227,7 +278,7 @@ export default function ProfileLayout() {
       <div className="mx-auto max-w-5xl space-y-8">
         <div className="flex items-center justify-between gap-4">
           <button
-            onClick={() => navigate("/")}
+            onClick={() => goBackOrNavigate(navigate, '/', location.key)}
             className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-linear-to-br from-amber-400 to-orange-500 text-white shadow-lg transition hover:shadow-xl"
             aria-label="Go back"
           >
@@ -424,6 +475,118 @@ export default function ProfileLayout() {
             </div>
           </section>
         </div>
+
+        <section className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-2 border-b border-orange-100 pb-4">
+            <h2 className="text-2xl font-semibold text-[#3b2f2f]">Order History</h2>
+            <p className="text-sm text-gray-600">
+              Track restaurant acceptance, payment state, and refunds for every order.
+            </p>
+          </div>
+
+          {ordersQuery.isLoading ? (
+            <div className="mt-6 rounded-2xl border border-dashed border-[#e5d5c6] bg-[#fff9f2] px-4 py-6 text-sm text-gray-600">
+              Loading your orders...
+            </div>
+          ) : ordersQuery.data && ordersQuery.data.length > 0 ? (
+            <div className="mt-6 space-y-4">
+              {ordersQuery.data.map((order) => {
+                const isHighlighted = highlightedOrderId === order.id || highlightedOrderId === order._id;
+                const countdown = formatCountdown(order.acceptanceDeadlineAt);
+
+                return (
+                  <div
+                    key={order.id}
+                    className={`rounded-3xl border p-5 shadow-sm ${
+                      isHighlighted
+                        ? "border-orange-300 bg-orange-50/60"
+                        : "border-[#f0e3d5] bg-[#fffaf5]"
+                    }`}
+                  >
+                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-lg font-semibold text-[#3b2f2f]">{order.id}</h3>
+                          <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-medium text-white">
+                            {order.OrderStatus}
+                          </span>
+                          <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700">
+                            {order.orderType}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-sm text-gray-600">
+                          {order.createdAt
+                            ? new Date(order.createdAt).toLocaleString()
+                            : "Recently created"}
+                        </p>
+                      </div>
+
+                      <div className="text-sm text-gray-700">
+                        <p>Payment: <span className="font-medium">{order.paymentStatus}</span></p>
+                        <p>Refund: <span className="font-medium">{order.refundStatus ?? order.refundSummary?.status ?? "NOT_REQUIRED"}</span></p>
+                        <p>Total: <span className="font-medium">{formatMinorAmount(order.totalsSnapshot?.grandTotal)}</span></p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 md:grid-cols-4">
+                      <div className="rounded-2xl border border-[#f0e3d5] bg-white px-4 py-3">
+                        <p className="text-xs uppercase tracking-wide text-gray-500">Subtotal</p>
+                        <p className="mt-1 font-semibold text-[#3b2f2f]">
+                          {formatMinorAmount(order.totalsSnapshot?.subtotal)}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-[#f0e3d5] bg-white px-4 py-3">
+                        <p className="text-xs uppercase tracking-wide text-gray-500">Tax</p>
+                        <p className="mt-1 font-semibold text-[#3b2f2f]">
+                          {formatMinorAmount(order.totalsSnapshot?.tax)}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-[#f0e3d5] bg-white px-4 py-3">
+                        <p className="text-xs uppercase tracking-wide text-gray-500">Dine-in fee</p>
+                        <p className="mt-1 font-semibold text-[#3b2f2f]">
+                          {formatMinorAmount(order.totalsSnapshot?.dineInCharge)}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-[#f0e3d5] bg-white px-4 py-3">
+                        <p className="text-xs uppercase tracking-wide text-gray-500">Remaining</p>
+                        <p className="mt-1 font-semibold text-[#3b2f2f]">
+                          {formatMinorAmount(order.paymentSummary?.remainingDue)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {order.acceptanceDeadlineAt && order.OrderStatus !== "ACCEPTED" && order.OrderStatus !== "COMPLETED" && order.OrderStatus !== "CANCELLED" && (
+                      <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                        Acceptance deadline: {countdown ?? "Expired"}
+                      </div>
+                    )}
+
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                      {order.canCustomerCancel ? (
+                        <button
+                          type="button"
+                          disabled={orderActionId === order.id}
+                          onClick={() => void handleOrderCancel(order.id)}
+                          className="cursor-pointer rounded-xl bg-red-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {orderActionId === order.id ? "Cancelling..." : "Cancel Order"}
+                        </button>
+                      ) : (
+                        <span className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-600">
+                          Cancellation becomes available after the restaurant misses the acceptance window.
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-6 rounded-2xl border border-dashed border-[#e5d5c6] bg-[#fff9f2] px-4 py-6 text-sm text-gray-600">
+              No orders yet. Your placed orders will appear here with payment and refund updates.
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );

@@ -469,7 +469,7 @@ export default function TableManagement() {
                 }))
               }
               placeholder="Table 12"
-              className="rounded-2xl border border-[#e4d2bf] bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-xl border border-[#e5d5c6] bg-[#fff9f2] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
           </label>
 
@@ -485,7 +485,7 @@ export default function TableManagement() {
                   capacity: Math.max(1, Number(event.target.value) || 1),
                 }))
               }
-              className="rounded-2xl border border-[#e4d2bf] bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full rounded-xl border border-[#e5d5c6] bg-[#fff9f2] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-400"
             />
           </label>
 
@@ -598,11 +598,11 @@ export default function TableManagement() {
             ) : null}
 
             {tables.length ? (
-              <div className="mt-6 grid gap-5 xl:grid-cols-2">
+              <div className="mt-6 flex gap-5 xl:flex-col">
                 {tables.map((table) => (
                   <article
                     key={table.id}
-                    className="grid gap-5 rounded-3xl border border-[#f0e3d5] bg-[#fffaf5] p-5 lg:grid-cols-[minmax(0,1fr)_220px]"
+                    className="w-full grid gap-5 rounded-3xl border border-[#f0e3d5] bg-[#fffaf5] p-5 lg:grid-cols-[minmax(0,1fr)_220px]"
                   >
                     <div className="space-y-4">
                       <div className="flex items-start justify-between gap-3">
@@ -614,8 +614,19 @@ export default function TableManagement() {
                             Table {table.tableNumber}
                           </h3>
                         </div>
-                        <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#5d4d3f] shadow-sm">
-                          {table.status}
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-medium shadow-sm
+                            ${table.status === "ACTIVE"
+                              ? "bg-green-100 text-green-700"
+                              : table.status === "BLOCKED"
+                                ? "bg-red-100 text-red-700"
+                                : table.status === "ARCHIVED"
+                                  ? "bg-gray-200 text-gray-600"
+                                  : "bg-gray-100 text-gray-600"
+                            }
+  `}
+                        >
+                          {table.status.charAt(0) + table.status.slice(1).toLowerCase()}
                         </span>
                       </div>
 
@@ -754,22 +765,29 @@ export default function TableManagement() {
                       </div>
                     </div>
 
-                    <div className="rounded-3xl border border-[#eedbc8] bg-white p-4 text-center shadow-sm">
-                      <p className="text-xs uppercase tracking-[0.16em] text-orange-600">Scan Preview</p>
-                      <div className="mt-4 rounded-2xl bg-white p-3 shadow-inner">
-                        <QRCode
-                          value={table.qrUrl}
-                          size={160}
-                          bgColor="#ffffff"
-                          fgColor="#1f1914"
-                          className="h-auto w-full"
-                        />
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-[#eedbc8] bg-linear-to-b from-white to-[#fff7f0] p-5 shadow-sm">
+                      <p className="text-xs uppercase tracking-widest text-orange-600">
+                        Scan Preview
+                      </p>
+
+                      <div className="mt-4 w-full flex justify-center">
+                        <div className="rounded-2xl bg-white p-3 shadow-inner">
+                          <QRCode
+                            value={table.qrUrl}
+                            size={160}
+                            bgColor="#ffffff"
+                            fgColor="#1f1914"
+                            className="w-full h-auto max-w-40 sm:max-w-45 md:max-w-50"
+                          />
+                        </div>
                       </div>
-                      <p className="mt-4 text-sm font-medium text-[#2f241d]">
+
+                      <p className="mt-4 text-sm font-semibold text-[#2f241d]">
                         Table {table.tableNumber}
                       </p>
-                      <p className="mt-1 text-xs text-[#6d5c4d]">
-                        Guests scanning this QR will open the correct branch menu.
+
+                      <p className="mt-1 text-center text-xs text-[#6d5c4d] max-w-55">
+                        Guests can scan this QR to view the menu instantly.
                       </p>
                     </div>
                   </article>

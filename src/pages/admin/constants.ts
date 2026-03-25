@@ -2,10 +2,12 @@ import type { ComponentType } from "react";
 import {
   BarChart3,
   ClipboardList,
+  CreditCard,
   LayoutDashboard,
   Settings,
   Table2Icon,
   User,
+  UserPen,
   UtensilsCrossed,
 } from "lucide-react";
 import { MdManageAccounts } from "react-icons/md";
@@ -23,6 +25,12 @@ export const adminNavItems: AdminNavItem[] = [
   { to: "/admin", icon: LayoutDashboard, label: "Dashboard", end: true },
   { to: "/admin/menu", icon: UtensilsCrossed, label: "Menu" },
   { to: "/admin/orders", icon: ClipboardList, label: "Orders" },
+  {
+    to: "/admin/subscriptions",
+    icon: CreditCard,
+    label: "Subscriptions",
+    roles: ["ADMIN", "RESTRO_OWNER"],
+  },
   {
     to: "/admin/analytics",
     icon: BarChart3,
@@ -51,6 +59,12 @@ export const adminNavItems: AdminNavItem[] = [
     to: "/admin/tables",
     icon: Table2Icon,
     label: "Tables",
+    roles: ["ADMIN", "RESTRO_OWNER", "BRANCH_OWNER"],
+  },
+  {
+    to: "/profile",
+    icon: UserPen,
+    label: "Profile",
     roles: ["ADMIN", "RESTRO_OWNER", "BRANCH_OWNER"],
   },
 ];
