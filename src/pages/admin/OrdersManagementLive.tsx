@@ -93,13 +93,14 @@ export default function OrdersManagementLive() {
   };
 
   const renderPrimaryAction = (order: OrderRecord) => {
-    if (order.OrderStatus === "AWAITING_CASH_CONFIRMATION") {
+    if (order.paymentSummary?.canConfirmCash) {
       return (
         <button
           type="button"
           onClick={() => void runAction(order.id, () => confirmCashOrder(order.id), "Cash confirmed")}
-          className="rounded-xl bg-green-600 px-4 py-2 text-sm font-medium text-white"
+          className="inline-flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-emerald-700 transition disabled:opacity-50"
         >
+          <Check className="h-4 w-4" />
           Confirm Cash
         </button>
       );
@@ -107,6 +108,13 @@ export default function OrdersManagementLive() {
 
     const nextState = nextStateMap[order.OrderStatus];
     if (!nextState) return null;
+
+    if (
+      order.OrderStatus === "READY" &&
+      (order.paymentSummary?.remainingDue ?? 0) > 0
+    ) {
+      return null;
+    }
 
     return (
       <button
@@ -118,7 +126,7 @@ export default function OrdersManagementLive() {
             `Order moved to ${nextState}`,
           )
         }
-        className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-medium text-white"
+        className="inline-flex items-center gap-1.5 rounded-md bg-[#ef6820] px-3 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-orange-700 transition disabled:opacity-50"
       >
         {statusActionLabels[order.OrderStatus] ?? "Update"}
       </button>
@@ -126,134 +134,245 @@ export default function OrdersManagementLive() {
   };
 
   return (
-    <div className="min-h-screen space-y-6 bg-[#fff9f2] text-left">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="font-serif text-3xl font-bold text-[#3b2f2f]">Orders</h1>
-          <p className="mt-1 text-[#6b665f]">Manage incoming, active, and refunded orders.</p>
+    <div className="min-h-screen bg-[#fff9f2] text-left">
+      <header className="border-b border-[#eedbc8] bg-white shadow-xs sticky top-0 z-10">
+        <div className="mx-auto max-w-7xl px-2 sm:px-3 py-2 sm:py-3">
+          <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0 flex-1">
+              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#3b2f2f] truncate">Orders</h1>
+              <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-[#6b665f] truncate">Manage incoming, active, and refunded orders in real-time.</p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void refreshOrders()}
+              className="w-fit shrink-0 cursor-pointer inline-flex items-center gap-2 rounded-lg border border-[#ef6820] px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-[#ef6820] transition hover:bg-orange-50 whitespace-nowrap"
+            >
+              <RefreshCw className="h-3.5 sm:h-4 w-3.5 sm:w-4 shrink-0" />
+              <span className="hidden sm:inline">Refresh</span>
+              <span className="sm:hidden">Refresh</span>
+            </button>
+          </div>
         </div>
+      </header>
 
-        <button
-          type="button"
-          onClick={() => void refreshOrders()}
-          className="inline-flex items-center gap-2 rounded-xl border border-[#ef6820] px-4 py-2 text-sm font-medium text-[#ef6820] transition hover:bg-white"
-        >
-          <RefreshCw className="h-4 w-4" />
-          Refresh
-        </button>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {statusOptions.map((status) => (
-          <button
-            key={status}
-            type="button"
-            onClick={() => setFilter(status)}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              filter === status
-                ? "bg-[#3b2f2f] text-white"
-                : "border border-[#e5d5c6] bg-white text-[#3b2f2f]"
-            }`}
-          >
-            {status}
-          </button>
-        ))}
-      </div>
-
-      {loading ? (
-        <div className="rounded-3xl border border-dashed border-[#d9c1a8] bg-white px-6 py-8 text-[#6d5c4d]">
-          Loading orders...
-        </div>
-      ) : filteredOrders.length > 0 ? (
-        <div className="grid gap-5 lg:grid-cols-2">
-          {filteredOrders.map((order) => {
-            const nextCountdown = countdownLabel(order.acceptanceDeadlineAt, now);
-
-            return (
-              <article
-                key={order.id}
-                className="rounded-3xl border border-[#eedbc8] bg-white p-5 shadow-sm"
+      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+        {/* Filter Section */}
+        <div className="bg-white rounded-lg border border-[#e5d5c6] p-4 sm:p-5">
+          <p className="text-xs uppercase font-bold tracking-widest text-[#8d7967] mb-3">Order Status</p>
+          <div className="flex flex-wrap gap-2">
+            {statusOptions.map((status) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => setFilter(status)}
+                className={`cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition whitespace-nowrap ${filter === status
+                    ? "bg-[#ef6820] text-white shadow-md"
+                    : "border border-[#e5d5c6] bg-white text-[#3b2f2f] hover:border-[#ef6820]"
+                  }`}
               >
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="font-semibold text-[#3b2f2f]">{order.id}</h2>
-                      <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-medium text-white">
-                        {order.OrderStatus}
-                      </span>
+                {status}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Orders List */}
+        {loading ? (
+          <div className="rounded-lg border border-dashed border-[#d9c1a8] bg-white px-8 py-16 text-center">
+            <p className="text-sm font-semibold text-[#3b2f2f]">Loading orders...</p>
+          </div>
+        ) : filteredOrders.length > 0 ? (
+          <div className="space-y-4">
+            {filteredOrders.map((order) => {
+              const nextCountdown = countdownLabel(order.acceptanceDeadlineAt, now);
+
+              return (
+                <article
+                  key={order.id}
+                  className="rounded-lg border border-[#e5d5c6] bg-white shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+                >
+                  {/* Header */}
+                  <div className="bg-linear-to-r from-white to-[#fffaf5] px-1 sm:px-6 py-4 sm:py-5 border-b border-[#f0e3d5]">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <h3 className="font-mono text-lg sm:text-xl font-bold text-[#3b2f2f]">#{order.id.slice(-6).toUpperCase()}</h3>
+                          <span className={`rounded-md px-3 py-1 text-xs font-bold text-white shrink-0 ${
+                            order.OrderStatus === "COMPLETED" ? "bg-emerald-600" :
+                            order.OrderStatus === "CANCELLED" ? "bg-red-600" :
+                            order.OrderStatus === "READY" ? "bg-blue-600" :
+                            order.OrderStatus === "PREPARING" ? "bg-amber-600" :
+                            "bg-slate-700"
+                          }`}>
+                            {order.OrderStatus}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-xs text-[#8d7967] font-medium">
+                          {order.createdAt ? new Date(order.createdAt).toLocaleString() : "Just now"}
+                        </p>
+                      </div>
+
+                      <div className="text-right shrink-0">
+                        <p className="text-xs font-bold uppercase tracking-widest text-[#ef6820] mb-1">{order.orderType}</p>
+                        <p className="text-2xl font-bold text-[#3b2f2f]">{formatMinorAmount(order.totalsSnapshot?.grandTotal)}</p>
+                      </div>
                     </div>
-                    <p className="mt-2 text-sm text-[#6b665f]">
-                      {order.createdAt ? new Date(order.createdAt).toLocaleString() : "Just now"}
-                    </p>
                   </div>
 
-                  <div className="text-sm text-[#3b2f2f]">
-                    <p>{order.orderType}</p>
-                    <p>{formatMinorAmount(order.totalsSnapshot?.grandTotal)}</p>
-                  </div>
-                </div>
+                  {/* Body */}
+                  <div className="px-5 sm:px-6 py-4 sm:py-5 space-y-5">
+                    {/* Summary Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="rounded-md bg-[#fffaf5] px-3 py-3 border border-[#f0e3d5]">
+                        <p className="text-xs font-bold uppercase tracking-widest text-[#8d7967]">Payment</p>
+                        <p className="mt-2 text-sm font-semibold text-[#3b2f2f]">{order.paymentStatus}</p>
+                      </div>
+                      <div className="rounded-md bg-[#fffaf5] px-3 py-3 border border-[#f0e3d5]">
+                        <p className="text-xs font-bold uppercase tracking-widest text-[#8d7967]">Refund</p>
+                        <p className="mt-2 text-sm font-semibold text-[#3b2f2f] truncate">{order.refundStatus ?? order.refundSummary?.status ?? "—"}</p>
+                      </div>
+                      <div className="rounded-md bg-[#fffaf5] px-3 py-3 border border-[#f0e3d5]">
+                        <p className="text-xs font-bold uppercase tracking-widest text-[#8d7967]">Items</p>
+                        <p className="mt-2 text-sm font-semibold text-[#3b2f2f]">{order.itemsSnapshot?.length ?? 0}</p>
+                      </div>
+                      <div className="rounded-md bg-[#fffaf5] px-3 py-3 border border-[#f0e3d5]">
+                        <p className="text-xs font-bold uppercase tracking-widest text-[#8d7967]">Mode</p>
+                        <p className="mt-2 text-sm font-semibold text-[#3b2f2f] truncate">{order.paymentSummary?.mode ?? "—"}</p>
+                      </div>
+                    </div>
 
-                <div className="mt-4 grid gap-3 md:grid-cols-3">
-                  <div className="rounded-2xl bg-[#fff9f2] px-4 py-3">
-                    <p className="text-xs uppercase tracking-wide text-[#8d7967]">Payment</p>
-                    <p className="mt-1 font-medium text-[#3b2f2f]">{order.paymentStatus}</p>
-                  </div>
-                  <div className="rounded-2xl bg-[#fff9f2] px-4 py-3">
-                    <p className="text-xs uppercase tracking-wide text-[#8d7967]">Refund</p>
-                    <p className="mt-1 font-medium text-[#3b2f2f]">
-                      {order.refundStatus ?? order.refundSummary?.status ?? "NOT_REQUIRED"}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-[#fff9f2] px-4 py-3">
-                    <p className="text-xs uppercase tracking-wide text-[#8d7967]">Items</p>
-                    <p className="mt-1 font-medium text-[#3b2f2f]">{order.itemsSnapshot?.length ?? 0}</p>
-                  </div>
-                </div>
+                    {/* Payment Summary */}
+                    <div className="rounded-md bg-[#fffaf5] px-4 py-3 border border-[#f0e3d5]">
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-widest text-[#8d7967]">Advance Paid</p>
+                          <p className="mt-1.5 text-sm font-semibold text-[#3b2f2f]">{formatMinorAmount(order.paymentSummary?.advanceReceived)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-widest text-[#8d7967]">Remaining</p>
+                          <p className="mt-1.5 text-sm font-bold text-[#ef6820]">{formatMinorAmount(order.paymentSummary?.remainingDue)}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs font-bold uppercase tracking-widest text-[#8d7967]">Total</p>
+                          <p className="mt-1.5 text-sm font-semibold text-[#3b2f2f]">{formatMinorAmount(order.totalsSnapshot?.grandTotal)}</p>
+                        </div>
+                      </div>
+                    </div>
 
-                {nextCountdown && order.OrderStatus !== "ACCEPTED" && order.OrderStatus !== "COMPLETED" && (
-                  <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-                    <Clock className="mr-2 inline h-4 w-4" />
-                    Acceptance deadline: {nextCountdown}
+                    {/* Items Section */}
+                    {(order.itemsSnapshot ?? []).length > 0 && (
+                      <div className="border-t border-[#f0e3d5] pt-4">
+                        <p className="text-xs font-bold uppercase tracking-widest text-[#8d7967] mb-3">Items Ordered</p>
+                        <div className="space-y-3">
+                          {order.itemsSnapshot?.map((item) => (
+                            <div
+                              key={`${order.id}-${item.itemId}-${item.nameSnapshot}`}
+                              className="rounded-lg bg-linear-to-br from-[#fffaf5] to-[#fff5ed] border border-[#f0e3d5] p-3 hover:shadow-sm transition-shadow"
+                            >
+                              <div className="flex items-start justify-between gap-3 mb-2">
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-sm text-[#3b2f2f]">{item.nameSnapshot}</p>
+                                  <p className="text-xs text-[#6b665f] mt-0.5">{formatMinorAmount(item.priceSnapshot)} each</p>
+                                </div>
+                                <div className="text-center shrink-0">
+                                  <div className="rounded-md bg-white border-2 border-[#ef6820] px-2.5 py-1.5 inline-block">
+                                    <span className="text-sm font-bold text-[#ef6820]">×{item.quantity}</span>
+                                  </div>
+                                </div>
+                                <div className="text-right shrink-0">
+                                  <p className="text-sm font-bold text-[#3b2f2f]">{formatMinorAmount(item.lineTotalSnapshot)}</p>
+                                  <p className="text-xs text-[#8d7967]">subtotal</p>
+                                </div>
+                              </div>
+                              {(item.addonsSnapshot ?? []).length > 0 && (
+                                <div className="mt-2.5 pt-2.5 border-t border-[#e5d5c6]">
+                                  <p className="text-xs font-semibold text-[#8d7967] mb-2 uppercase tracking-wide">Add-ons:</p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {item.addonsSnapshot?.map((addon) => (
+                                      <span
+                                        key={`${item.itemId}-${addon.code ?? addon.nameSnapshot}`}
+                                        className="inline-flex items-center rounded-full bg-white px-3 py-1.5 text-xs font-medium text-[#7a624f] border border-[#e5d5c6] whitespace-nowrap"
+                                        title={`${addon.nameSnapshot} +${formatMinorAmount(addon.priceDeltaSnapshot)}`}
+                                      >
+                                        <span>{addon.nameSnapshot}</span>
+                                        <span className="ml-1.5 text-[#c2a878] font-semibold">+{formatMinorAmount(addon.priceDeltaSnapshot)}</span>
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Alerts */}
+                    {nextCountdown && order.OrderStatus !== "ACCEPTED" && order.OrderStatus !== "COMPLETED" && (
+                      <div className="rounded-md border border-blue-300 bg-blue-50 px-4 py-3 flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-blue-600 shrink-0" />
+                        <div className="text-sm text-blue-900">
+                          <strong>Deadline:</strong> <span className="ml-1 font-mono">{nextCountdown}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {order.paymentSummary?.canInitiateFinalOnlinePayment && (
+                      <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3">
+                        <p className="text-sm font-semibold text-amber-900">⚠ Balance Pending</p>
+                        <p className="mt-1 text-xs text-amber-800">Customer can complete payment online or staff can collect cash.</p>
+                      </div>
+                    )}
+
+                    {order.OrderStatus === "READY" && (order.paymentSummary?.remainingDue ?? 0) > 0 && (
+                      <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3">
+                        <p className="text-sm font-semibold text-red-900">⚠ Action Required</p>
+                        <p className="mt-1 text-xs text-red-800">Collect remaining ₹{(order.paymentSummary?.remainingDue ?? 0) / 100} before completing.</p>
+                      </div>
+                    )}
                   </div>
-                )}
 
-                <div className="mt-4 flex flex-wrap items-center gap-3">
-                  {renderPrimaryAction(order)}
+                  {/* Footer - Actions */}
+                  <div className="bg-[#fffaf5] px-5 sm:px-6 py-4 border-t border-[#f0e3d5] flex flex-wrap gap-2 justify-end">
+                    {renderPrimaryAction(order)}
 
-                  {order.canStaffCancel && order.OrderStatus !== "CANCELLED" && order.OrderStatus !== "COMPLETED" && (
-                    <button
-                      type="button"
-                      disabled={actionOrderId === order.id}
-                      onClick={() =>
-                        void runAction(
-                          order.id,
-                          () => cancelOrder(order.id, "Cancelled by restaurant staff."),
-                          "Order cancelled",
-                        )
-                      }
-                      className="rounded-xl bg-red-500 px-4 py-2 text-sm font-medium text-white"
-                    >
-                      <X className="mr-2 inline h-4 w-4" />
-                      Cancel
-                    </button>
-                  )}
+                    {order.canStaffCancel && order.OrderStatus !== "CANCELLED" && order.OrderStatus !== "COMPLETED" && (
+                      <button
+                        type="button"
+                        disabled={actionOrderId === order.id}
+                        onClick={() =>
+                          void runAction(
+                            order.id,
+                            () => cancelOrder(order.id, "Cancelled by restaurant staff."),
+                            "Order cancelled",
+                          )
+                        }
+                        className="inline-flex items-center gap-1.5 rounded-md border-2 border-red-500 px-3 py-2 text-xs sm:text-sm font-semibold text-red-600 hover:bg-red-50 transition disabled:opacity-50"
+                      >
+                        <X className="h-4 w-4" />
+                        Cancel Order
+                      </button>
+                    )}
 
-                  {order.OrderStatus === "COMPLETED" && (
-                    <span className="rounded-xl border border-green-200 px-4 py-2 text-sm text-green-700">
-                      <Check className="mr-2 inline h-4 w-4" />
-                      Completed
-                    </span>
-                  )}
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="rounded-3xl border border-dashed border-[#d9c1a8] bg-white px-6 py-8 text-[#6d5c4d]">
-          No orders found for the current scope.
-        </div>
-      )}
+                    {order.OrderStatus === "COMPLETED" && (
+                      <div className="inline-flex items-center gap-1.5 rounded-md bg-emerald-100 px-3 py-2 text-xs sm:text-sm font-semibold text-emerald-700">
+                        <Check className="h-4 w-4" />
+                        Completed
+                      </div>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed border-[#d9c1a8] bg-white px-8 py-16 text-center">
+            <p className="font-semibold text-[#3b2f2f]">No orders found</p>
+            <p className="mt-2 text-sm text-[#6b665f]">Adjust your filters or refresh to see pending orders.</p>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

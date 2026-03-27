@@ -65,6 +65,6 @@ export const adminNavItems: AdminNavItem[] = [
     to: "/profile",
     icon: UserPen,
     label: "Profile",
-    roles: ["ADMIN", "RESTRO_OWNER", "BRANCH_OWNER"],
+    roles: ["ADMIN", "RESTRO_OWNER", "BRANCH_OWNER","STAFF"],
   },
 ];

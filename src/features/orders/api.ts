@@ -25,6 +25,10 @@ export type OrderRecord = {
     advanceReceived: number;
     remainingDue: number;
     settlementStatus: string;
+    readySettlementRequired?: boolean;
+    canInitiateAdvancePayment?: boolean;
+    canInitiateFinalOnlinePayment?: boolean;
+    canConfirmCash?: boolean;
   } | null;
   refundSummary?: {
     status: string;
@@ -42,6 +46,12 @@ export type OrderRecord = {
     nameSnapshot: string;
     priceSnapshot: number;
     quantity: number;
+    lineTotalSnapshot?: number;
+    addonsSnapshot?: Array<{
+      code?: string;
+      nameSnapshot: string;
+      priceDeltaSnapshot: number;
+    }>;
   }>;
 };
 
@@ -50,7 +60,10 @@ type OrderPayload = {
   branchId: string;
   tableId?: string;
   orderType: "DINE_IN" | "TAKEAWAY";
-  paymentMode: "ONLINE_ADVANCE" | "CASH_CONFIRMED_BY_STAFF";
+  paymentMode:
+    | "ONLINE_ADVANCE"
+    | "CASH_CONFIRMED_BY_STAFF"
+    | "SETTLE_ON_READY";
   notes?: string;
   items: Array<{
     menuId: string;

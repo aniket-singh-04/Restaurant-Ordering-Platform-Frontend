@@ -70,29 +70,47 @@ export default function AddUp() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8">
-      <div className="mx-auto max-w-3xl">
-        <AdminSection
-          title="Create Restaurant"
-          className="space-y-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
-        >
-          {/* Basic Info */}
-          <div className="space-y-4">
-            <h2 className="text-sm font-semibold text-gray-700">
-              Basic Information
-            </h2>
+return (
+  <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-5xl space-y-6">
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* HEADER */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">
+            Create Restaurant
+          </h1>
+          <p className="text-sm text-gray-500">
+            Add a new restaurant with details and configuration
+          </p>
+        </div>
+      </div>
+
+      {/* FORM CARD */}
+      <AdminSection
+        title=""
+        className="rounded-3xl bg-white p-8 shadow-lg hover:shadow-xl transition duration-300 space-y-8"
+      >
+
+        {/* BASIC INFO */}
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-base font-bold text-gray-800 flex items-center gap-2">
+              🏢 Basic Information
+            </h2>
+            <p className="text-xs text-gray-500">
+              Enter official and display details of the restaurant
+            </p>
+          </div>
+
+          <div className="rounded-xl bg-gray-50 p-4 border border-gray-100 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <AdminInputField
                 label="Restaurant Name *"
                 type="text"
                 value={restaurantForm.name}
                 onChange={(e) =>
-                  setRestaurantForm({
-                    ...restaurantForm,
-                    name: e.target.value,
-                  })
+                  setRestaurantForm({ ...restaurantForm, name: e.target.value })
                 }
               />
 
@@ -101,10 +119,7 @@ export default function AddUp() {
                 type="text"
                 value={restaurantForm.legalName}
                 onChange={(e) =>
-                  setRestaurantForm({
-                    ...restaurantForm,
-                    legalName: e.target.value,
-                  })
+                  setRestaurantForm({ ...restaurantForm, legalName: e.target.value })
                 }
               />
             </div>
@@ -114,21 +129,25 @@ export default function AddUp() {
               type="text"
               value={restaurantForm.gstNumber}
               onChange={(e) =>
-                setRestaurantForm({
-                  ...restaurantForm,
-                  gstNumber: e.target.value,
-                })
+                setRestaurantForm({ ...restaurantForm, gstNumber: e.target.value })
               }
             />
           </div>
+        </div>
 
-          {/* Contact Info */}
-          <div className="space-y-4">
-            <h2 className="text-sm font-semibold text-gray-700">
-              Contact Details
+        {/* CONTACT */}
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-base font-bold text-gray-800 flex items-center gap-2">
+              📞 Contact Details
             </h2>
+            <p className="text-xs text-gray-500">
+              Provide support contact details for customers
+            </p>
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="rounded-xl bg-gray-50 p-4 border border-gray-100">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <AdminInputField
                 label="Support Email *"
                 type="email"
@@ -154,69 +173,79 @@ export default function AddUp() {
               />
             </div>
           </div>
+        </div>
 
-          {/* Status */}
-          <div className="space-y-3">
-            <h2 className="text-sm font-semibold text-gray-700">Status</h2>
-
-            <div className="flex gap-6">
-              <AdminCheckboxField
-                label="Active"
-                checked={restaurantForm.isActive}
-                onChange={(e) =>
-                  setRestaurantForm({
-                    ...restaurantForm,
-                    isActive: e.target.checked,
-                  })
-                }
-              />
-
-              <AdminCheckboxField
-                label="Verified"
-                checked={restaurantForm.isVerified}
-                onChange={(e) =>
-                  setRestaurantForm({
-                    ...restaurantForm,
-                    isVerified: e.target.checked,
-                  })
-                }
-              />
-            </div>
+        {/* STATUS */}
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-base font-bold text-gray-800 flex items-center gap-2">
+              ⚙️ Status
+            </h2>
+            <p className="text-xs text-gray-500">
+              Control restaurant visibility and verification
+            </p>
           </div>
 
-          {/* Actions */}
-          <div className="pt-4 flex gap-3">
-            {!confirmCreate ? (
+          <div className="rounded-xl bg-gray-50 p-4 border border-gray-100 flex flex-wrap gap-6">
+            <AdminCheckboxField
+              label="Active"
+              checked={restaurantForm.isActive}
+              onChange={(e) =>
+                setRestaurantForm({
+                  ...restaurantForm,
+                  isActive: e.target.checked,
+                })
+              }
+            />
+
+            <AdminCheckboxField
+              label="Verified"
+              checked={restaurantForm.isVerified}
+              onChange={(e) =>
+                setRestaurantForm({
+                  ...restaurantForm,
+                  isVerified: e.target.checked,
+                })
+              }
+            />
+          </div>
+        </div>
+
+        {/* ACTIONS */}
+        <div className="pt-6 border-t border-gray-100 flex flex-col sm:flex-row gap-3">
+
+          {!confirmCreate ? (
+            <button
+              type="button"
+              onClick={() => setConfirmCreate(true)}
+              className="flex-1 rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white shadow-md hover:bg-orange-600 hover:scale-[1.02] transition"
+            >
+              Create Restaurant
+            </button>
+          ) : (
+            <>
               <button
                 type="button"
-                onClick={() => setConfirmCreate(true)}
-                className="cursor-pointer flex-1 rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600"
+                onClick={handleCreateRestaurant}
+                disabled={restaurantLoading}
+                className="flex-1 rounded-xl bg-green-600 py-3 text-sm font-semibold text-white shadow-md hover:bg-green-700 hover:scale-[1.02] transition disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                Create Restaurant
+                {restaurantLoading ? "Creating..." : "Confirm Create"}
               </button>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={handleCreateRestaurant}
-                  disabled={restaurantLoading}
-                  className="cursor-pointer flex-1 rounded-xl bg-green-600 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 disabled:opacity-60"
-                >
-                  {restaurantLoading ? "Creating..." : "Confirm Create"}
-                </button>
 
-                <button
-                  type="button"
-                  onClick={() => setConfirmCreate(false)}
-                  className="cursor-pointer flex-1 rounded-xl border border-gray-300 py-3 text-sm font-medium transition hover:bg-gray-100"
-                >
-                  Cancel
-                </button>
-              </>
-            )}
-          </div>
-        </AdminSection>
-      </div>
+              <button
+                type="button"
+                onClick={() => setConfirmCreate(false)}
+                className="flex-1 rounded-xl border border-gray-300 py-3 text-sm font-medium hover:bg-gray-100 transition"
+              >
+                Cancel
+              </button>
+            </>
+          )}
+        </div>
+
+      </AdminSection>
     </div>
-  );
+  </div>
+);
 }

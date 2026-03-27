@@ -1,4 +1,4 @@
-import { MapPin, QrCode, ShoppingCart } from "lucide-react";
+import { ClipboardList, MapPin, QrCode, ShoppingCart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CgProfile } from "react-icons/cg";
@@ -100,6 +100,19 @@ export default function Header() {
               {totalItems}
             </span>
           )}
+        </button>
+        <button
+          className="flex items-center justify-center w-9 h-9 cursor-pointer rounded-xl bg-linear-to-br from-amber-400 to-orange-500 text-white shadow-md hover:from-amber-500 hover:to-orange-600 hover:shadow-lg transition-all duration-300 active:scale-95"
+          onClick={() =>
+            navigate(user ? "/orders" : "/login", {
+              state: {
+                from: `${location.pathname}${location.search}`,
+              },
+            })
+          }
+          aria-label="Open orders"
+        >
+          <ClipboardList size={18} />
         </button>
         <button
           className="flex items-center justify-center w-9 h-9 cursor-pointer rounded-xl bg-linear-to-br from-amber-400 to-orange-500 text-white shadow-md hover:from-amber-500 hover:to-orange-600 hover:shadow-lg transition-all duration-300 active:scale-95"

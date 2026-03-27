@@ -37,9 +37,9 @@ export default function CartPage() {
   const shouldBlockCustomerMenu = Boolean(!qrId && user && isAdminPanelRole(user.role));
   const [placingOrder, setPlacingOrder] = useState(false);
   const [orderType, setOrderType] = useState<"DINE_IN" | "TAKEAWAY">("DINE_IN");
-  const [paymentMode, setPaymentMode] = useState<"ONLINE_ADVANCE" | "CASH_CONFIRMED_BY_STAFF">(
-    "ONLINE_ADVANCE",
-  );
+  const [paymentMode, setPaymentMode] = useState<
+    "ONLINE_ADVANCE" | "CASH_CONFIRMED_BY_STAFF" | "SETTLE_ON_READY"
+  >("ONLINE_ADVANCE");
   const { openCheckout, loading: checkoutLoading } = useRazorpayCheckout();
 
   const tax = Math.round(subtotal * TAX_RATE);
@@ -85,7 +85,7 @@ export default function CartPage() {
     <>
       <Header />
 
-      <main className="bg-gray-50 min-h-screen px-4 pt-11 pb-36">
+      <main className="bg-gray-50 min-h-screen px-4 pb-36">
         <div className="max-w-4xl mx-auto space-y-5">
           <div className="flex items-center gap-2 pt-4">
             <button
@@ -122,10 +122,21 @@ export default function CartPage() {
                   </div>
 
                   {item.addOns.length > 0 && (
-                    <p className="text-xs text-gray-500">
-                      + {item.addOns.map((a) => a.name).join(", ")}
-                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {item.addOns.map((addOn) => (
+                        <span
+                          key={`${item.id}-${addOn.name}`}
+                          className="rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-medium text-orange-700"
+                        >
+                          {addOn.name} (+{formatPrice(addOn.price)})
+                        </span>
+                      ))}
+                    </div>
                   )}
+
+                  <p className="text-xs text-gray-500">
+                    Unit total {formatPrice(item.finalUnitPrice)}
+                  </p>
 
                   <div className="flex justify-between items-center mt-2">
                     <div className="flex items-center gap-3">
@@ -211,28 +222,49 @@ export default function CartPage() {
                   : "Takeaway uses the current QR context to identify the branch only."}
               </p>
 
-              <button
-                type="button"
-                className={`w-full py-2 rounded-xl font-medium border ${
-                  paymentMode === "ONLINE_ADVANCE"
-                    ? "border-orange-500 bg-orange-50 text-orange-600"
-                    : "border-gray-200 text-gray-600"
-                }`}
-                onClick={() => setPaymentMode("ONLINE_ADVANCE")}
-              >
-                Pay 50% Online
-              </button>
-              <button
-                type="button"
-                className={`w-full py-2 rounded-xl font-medium border ${
-                  paymentMode === "CASH_CONFIRMED_BY_STAFF"
-                    ? "border-orange-500 bg-orange-50 text-orange-600"
-                    : "border-gray-200 text-gray-600"
-                }`}
-                onClick={() => setPaymentMode("CASH_CONFIRMED_BY_STAFF")}
-              >
-                Cash via Staff
-              </button>
+              <div className="grid gap-2 pt-1">
+                <button
+                  type="button"
+                  className={`w-full py-2 rounded-xl font-medium border ${
+                    paymentMode === "ONLINE_ADVANCE"
+                      ? "border-orange-500 bg-orange-50 text-orange-600"
+                      : "border-gray-200 text-gray-600"
+                  }`}
+                  onClick={() => setPaymentMode("ONLINE_ADVANCE")}
+                >
+                  Pay 50% Online Now
+                </button>
+                <button
+                  type="button"
+                  className={`w-full py-2 rounded-xl font-medium border ${
+                    paymentMode === "SETTLE_ON_READY"
+                      ? "border-orange-500 bg-orange-50 text-orange-600"
+                      : "border-gray-200 text-gray-600"
+                  }`}
+                  onClick={() => setPaymentMode("SETTLE_ON_READY")}
+                >
+                  Pay When Order Is Ready
+                </button>
+                <button
+                  type="button"
+                  className={`w-full py-2 rounded-xl font-medium border ${
+                    paymentMode === "CASH_CONFIRMED_BY_STAFF"
+                      ? "border-orange-500 bg-orange-50 text-orange-600"
+                      : "border-gray-200 text-gray-600"
+                  }`}
+                  onClick={() => setPaymentMode("CASH_CONFIRMED_BY_STAFF")}
+                >
+                  Cash via Staff Confirmation
+                </button>
+              </div>
+
+              <p className="text-xs text-gray-500">
+                {paymentMode === "ONLINE_ADVANCE"
+                  ? "Pay the required advance now and settle the rest later."
+                  : paymentMode === "SETTLE_ON_READY"
+                    ? "Place the order now, then pay online or by cash once the restaurant marks it ready."
+                    : "A staff member will collect and confirm the cash payment before the kitchen starts."}
+              </p>
 
               <button
                 className="w-full py-3 rounded-xl text-white font-semibold bg-linear-to-br from-[#f97415] via-[#f99e1f] to-[#fac938]"
@@ -334,15 +366,22 @@ export default function CartPage() {
                           variant: "warning",
                         });
                       }
-                    } else {
+                    } else if (paymentMode === "CASH_CONFIRMED_BY_STAFF") {
                       pushToast({
                         title: "Order created",
                         description: "Ask staff to confirm the cash order.",
                         variant: "success",
                       });
+                    } else {
+                      pushToast({
+                        title: "Order created",
+                        description:
+                          "We will notify you when the order is ready so you can settle the remaining amount.",
+                        variant: "success",
+                      });
                     }
 
-                    navigate(`/profile${orderId ? `?order=${orderId}` : ""}`);
+                    navigate(`/orders${orderId ? `?order=${orderId}` : ""}`);
                   } catch (error: any) {
                     pushToast({
                       title: "Could not create order",

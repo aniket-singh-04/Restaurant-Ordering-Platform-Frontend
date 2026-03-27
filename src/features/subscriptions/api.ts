@@ -21,16 +21,24 @@ export type RestaurantSubscriptionRecord = {
   restaurantId: string;
   ownerUserId: string;
   planId: string;
+  kind?: "TRIAL" | "PAID";
   subscriptionId?: string;
   razorpayPaymentId?: string;
   status: string;
   paymentStatus: string;
+  accessStatus?: "PENDING" | "ACTIVE" | "GRACE" | "BLOCKED";
   startDate?: string;
   expiryDate?: string;
+  trialStartsAt?: string;
+  trialEndsAt?: string;
+  graceStartsAt?: string;
+  graceEndsAt?: string;
   currentPeriodStart?: string;
   currentPeriodEnd?: string;
   activatedAt?: string;
   cancelledAt?: string;
+  lastReminderSentAt?: string;
+  lastReminderType?: string;
   createdAt?: string;
   planSnapshot: {
     code: string;
@@ -83,6 +91,13 @@ export const initiateSubscription = async (planId: string) => {
     };
   }>("/api/v1/subscriptions/initiate", { planId });
 
+  return response.data;
+};
+
+export const startTrialSubscription = async () => {
+  const response = await api.post<{ data: RestaurantSubscriptionRecord }>(
+    "/api/v1/subscriptions/trial/start",
+  );
   return response.data;
 };
 

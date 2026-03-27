@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { roleMatches } from '../../features/auth/access';
+import { useLiveOrderSync } from '../../features/orders/useLiveOrderSync';
 import { adminNavItems } from './constants';
 
 export default function AdminLayout() {
@@ -15,6 +16,8 @@ export default function AdminLayout() {
   const location = useLocation();
   const { user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useLiveOrderSync();
 
   useEffect(() => {
     setIsSidebarOpen(false);

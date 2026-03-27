@@ -6,6 +6,7 @@ import MenuList from "../pages/user/menu/MenuList";
 import NotFound from "../pages/not-found/NotFound";
 import NotAuthorized from "../pages/not-authorized/NotAuthorized";
 import CartPage from "../pages/user/cart/CartPage";
+import OrdersPage from "../pages/user/orders/OrdersPage";
 import AdminLayout from "../pages/admin/AdminLayout";
 import AdminDashboard from "../pages/admin/Dashboard";
 import MenuManagement from "../pages/admin/MenuManagement";
@@ -17,7 +18,7 @@ import VerifyEmail from "../pages/VerifyEmail";
 import ProtectedRoute from "../routes/ProtectedRoute";
 import PublicRoute from "../routes/PublicRoute";
 import QrRouteGuard from "../routes/QrRouteGuard";
-import ProfileLayout from "../pages/ProfileLayout";
+import ProfilePage from "../pages/ProfilePage";
 import OrdersManagement from "../pages/admin/OrdersManagementLive";
 import Analytics from "../pages/admin/Analytics";
 import Settings from "../pages/admin/Settings";
@@ -112,7 +113,11 @@ export const router = createBrowserRouter([
   },
   {
     path: "/profile",
-    element: withProtectedRoute(<ProfileLayout />, AUTHENTICATED_APP_ROLES),
+    element: withProtectedRoute(<ProfilePage />, AUTHENTICATED_APP_ROLES),
+  },
+  {
+    path: "/orders",
+    element: withProtectedRoute(<OrdersPage />, AUTHENTICATED_APP_ROLES),
   },
   {
     path: "/not-authorized",
