@@ -31,6 +31,25 @@ body {
   background-color: #fbfaf8;
   color: #1f1914;
 }
+
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href],
+summary,
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"]::file-selector-button,
+select {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"],
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+}
+
 #root {
   width: 100%;
   margin: 0 auto;
