@@ -619,7 +619,7 @@ export default function Subscriptions() {
             <div className="border-t border-[#f0e3d5] pt-8">
               <h3 className="text-lg font-bold text-[#3b2f2f] mb-4">Business Address</h3>
               <div>
-                <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Street Address</label>
+                <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Street Address 1</label>
                 <input
                   value={paymentConnectionForm.businessAddress.street1}
                   onChange={(event) =>
@@ -631,7 +631,24 @@ export default function Subscriptions() {
                       },
                     }))
                   }
-                  placeholder="Registered business address"
+                  placeholder="Registered business address 1"
+                  className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Street Address 2</label>
+                <input
+                  value={paymentConnectionForm.businessAddress.street2}
+                  onChange={(event) =>
+                    updateForm((current) => ({
+                      ...current,
+                      businessAddress: {
+                        ...current.businessAddress,
+                        street2: event.target.value,
+                      },
+                    }))
+                  }
+                  placeholder="Registered business address 2"
                   className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
                 />
               </div>
