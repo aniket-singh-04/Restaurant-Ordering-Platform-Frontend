@@ -4,6 +4,7 @@ import { AuthProvider } from "../context/AuthContext";
 import { ToastProvider } from "../context/ToastContext";
 import { ThemeProvider } from "../context/ThemeContext";
 import { CartProvider } from "../context/CartContext";
+import { PlatformAdminAuthProvider } from "../features/platform-admin/auth/context";
 import { queryClient } from "./queryClient";
 
 export default function AppProviders({ children }: { children: ReactNode }) {
@@ -11,9 +12,11 @@ export default function AppProviders({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <ToastProvider>
-          <AuthProvider>
-            <CartProvider>{children}</CartProvider>
-          </AuthProvider>
+          <PlatformAdminAuthProvider>
+            <AuthProvider>
+              <CartProvider>{children}</CartProvider>
+            </AuthProvider>
+          </PlatformAdminAuthProvider>
         </ToastProvider>
       </ThemeProvider>
     </QueryClientProvider>

@@ -15,7 +15,16 @@ import Login from "../pages/Login";
 import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
 import VerifyEmail from "../pages/VerifyEmail";
+import PlatformAdminDashboard from "../pages/platform-admin/Dashboard";
+import PlatformAdminLayout from "../pages/platform-admin/Layout";
+import PlatformAdminLogin from "../pages/platform-admin/Login";
+import PlatformAdminOrders from "../pages/platform-admin/Orders";
+import PlatformAdminPayments from "../pages/platform-admin/Payments";
+import PlatformAdminRestaurants from "../pages/platform-admin/Restaurants";
+import PlatformAdminSubscriptions from "../pages/platform-admin/Subscriptions";
+import PlatformAdminUsers from "../pages/platform-admin/Users";
 import ProtectedRoute from "../routes/ProtectedRoute";
+import PlatformProtectedRoute from "../routes/PlatformProtectedRoute";
 import PublicRoute from "../routes/PublicRoute";
 import QrRouteGuard from "../routes/QrRouteGuard";
 import ProfilePage from "../pages/ProfilePage";
@@ -40,6 +49,10 @@ const withProtectedRoute = (
 
 const withPublicRoute = (element: ReactElement) => (
   <PublicRoute>{element}</PublicRoute>
+);
+
+const withPlatformProtectedRoute = (element: ReactElement) => (
+  <PlatformProtectedRoute>{element}</PlatformProtectedRoute>
 );
 
 export const router = createBrowserRouter([
@@ -82,6 +95,10 @@ export const router = createBrowserRouter([
   {
     path: "/login",
     element: withPublicRoute(<Login />),
+  },
+  {
+    path: "/platform/login",
+    element: <PlatformAdminLogin />,
   },
   {
     path: "/forgot-password",
@@ -170,6 +187,36 @@ export const router = createBrowserRouter([
       {
         path: "tables",
         element: <TableManagement />,
+      },
+    ],
+  },
+  {
+    path: "/platform",
+    element: withPlatformProtectedRoute(<PlatformAdminLayout />),
+    children: [
+      {
+        index: true,
+        element: <PlatformAdminDashboard />,
+      },
+      {
+        path: "users",
+        element: <PlatformAdminUsers />,
+      },
+      {
+        path: "restaurants",
+        element: <PlatformAdminRestaurants />,
+      },
+      {
+        path: "orders",
+        element: <PlatformAdminOrders />,
+      },
+      {
+        path: "payments",
+        element: <PlatformAdminPayments />,
+      },
+      {
+        path: "subscriptions",
+        element: <PlatformAdminSubscriptions />,
       },
     ],
   },
