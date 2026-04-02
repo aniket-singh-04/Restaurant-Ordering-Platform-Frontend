@@ -43,15 +43,16 @@ jobs:
           aws-region: ap-south-1
 
       # 6. Upload VERSIONED build (IMPORTANT)
+      - name: Debug Build Output
+        run: |
+          echo "Listing files..."
+          ls -la
+          
       - name: Upload Versioned Build
         run: |
           aws s3 sync build/ s3://${{ secrets.S3_BUCKET_NAME }}/${{ env.VERSION }} \
             --delete
 
-      - name: Debug Build Output
-        run: |
-          echo "Listing files..."
-          ls -la
 
       # 7. Update CURRENT pointer (serve from here)
       - name: Update Current Version
