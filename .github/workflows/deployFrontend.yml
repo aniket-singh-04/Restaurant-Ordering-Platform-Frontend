@@ -1,0 +1,62 @@
+name: Deploy Frontend to AWS
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  NODE_VERSION: 22
+  VERSION: v${{ github.run_number }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # 2. Setup Node
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      # 3. Install Dependencies
+      - name: Install Dependencies
+        run: npm ci
+
+      # 4. Build Project
+      - name: Build Project
+        run: npm run build
+
+      # 5. Configure AWS
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # 6. Upload VERSIONED build (IMPORTANT)
+      - name: Upload Versioned Build
+        run: |
+          aws s3 sync build/ s3://${{ secrets.S3_BUCKET_NAME }}/${{ env.VERSION }} \
+            --delete
+
+      # 7. Update CURRENT pointer (serve from here)
+      - name: Update Current Version
+        run: |
+          aws s3 sync s3://${{ secrets.S3_BUCKET_NAME }}/${{ env.VERSION }} \
+                       s3://${{ secrets.S3_BUCKET_NAME }}/current \
+                       --delete
+
+      # 8. Invalidate CloudFront Cache
+      - name: Invalidate CloudFront Cache
+        run: |
+          aws cloudfront create-invalidation \
+          --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+          --paths "/*"
