@@ -47,10 +47,10 @@ jobs:
         run: |
           echo "Listing files..."
           ls -la
-          
+
       - name: Upload Versioned Build
         run: |
-          aws s3 sync build/ s3://${{ secrets.S3_BUCKET_NAME }}/${{ env.VERSION }} \
+          aws s3 sync dist/ s3://${{ secrets.S3_BUCKET_NAME }}/${{ env.VERSION }} \
             --delete
 
 
