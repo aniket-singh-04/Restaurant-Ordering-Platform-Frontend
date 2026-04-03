@@ -23,6 +23,7 @@ import {
   getApiRequestId,
 } from "../../utils/apiErrorHelpers";
 import { api } from "../../utils/api";
+import { isTrustedAppUrl } from "../../security";
 
 type BranchOption = {
   id: string;
@@ -340,6 +341,23 @@ export default function TableManagement() {
         variant: "warning",
       });
     }
+  };
+
+  const handleOpenQrLink = (table: Table) => {
+    if (!isTrustedAppUrl(table.qrUrl)) {
+      pushToast({
+        title: "Blocked an unsafe QR link",
+        description: "Only same-origin QR URLs can be opened from the admin dashboard.",
+        variant: "error",
+      });
+      return;
+    }
+
+    window.open(
+      new URL(table.qrUrl, window.location.origin).toString(),
+      "_blank",
+      "noopener,noreferrer",
+    );
   };
 
   return (
@@ -744,7 +762,9 @@ export default function TableManagement() {
 
                         <button
                           type="button"
-                          onClick={() => window.open(table.qrUrl, "_blank", "noopener,noreferrer")}
+                          onClick={() => {
+                            handleOpenQrLink(table);
+                          }}
                           className="cursor-pointer inline-flex items-center gap-2 rounded-2xl border border-[#d8c0a7] px-4 py-2.5 text-sm font-medium text-[#5d4d3f] transition hover:bg-white"
                         >
                           <ExternalLink className="h-4 w-4" />

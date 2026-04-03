@@ -16,6 +16,10 @@ export const useLiveOrderSync = () => {
 
     const socket = getSocket();
 
+    if (!socket) {
+      return;
+    }
+
     if (user.restroId) {
       socket.emit("restaurant.subscribe", { restaurantId: user.restroId });
     }

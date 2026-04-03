@@ -1,5 +1,6 @@
 import { authStore } from "../features/auth/store";
 import { mapAuthUser } from "../features/auth/user";
+import { buildApiUrl } from "../config/api";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -23,21 +24,8 @@ export class ApiError extends Error {
 
 const DEFAULT_TIMEOUT_MS = 15000;
 
-const resolveBaseUrl = () => {
-  const base =
-    import.meta.env.VITE_API_BASE_URL ??
-    import.meta.env.VITE_API_URL ??
-    "http://localhost:2300";
-  return base.replace(/\/+$/, "");
-};
-
 const buildUrl = (path: string) => {
-  if (path.startsWith("http://") || path.startsWith("https://")) {
-    return path;
-  }
-  const base = resolveBaseUrl();
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${base}${normalizedPath}`;
+  return buildApiUrl(path);
 };
 
 const safeParseJson = async <T,>(response: Response): Promise<T | null> => {

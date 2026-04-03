@@ -1,4 +1,5 @@
 import { platformAdminAuthStore } from "../features/platform-admin/auth/store";
+import { buildApiUrl } from "../config/api";
 
 export type AdminApiErrorShape = {
   message: string;
@@ -32,21 +33,8 @@ export type AdminApiRequestOptions = {
 
 const DEFAULT_TIMEOUT_MS = 15000;
 
-const resolveBaseUrl = () => {
-  const base =
-    import.meta.env.VITE_API_BASE_URL ??
-    import.meta.env.VITE_API_URL ??
-    "http://localhost:2300";
-  return base.replace(/\/+$/, "");
-};
-
 const buildUrl = (path: string) => {
-  if (path.startsWith("http://") || path.startsWith("https://")) {
-    return path;
-  }
-
-  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-  return `${resolveBaseUrl()}${normalizedPath}`;
+  return buildApiUrl(path);
 };
 
 const safeParseJson = async <T,>(response: Response): Promise<T | null> => {
