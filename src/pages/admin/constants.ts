@@ -4,7 +4,7 @@ import {
   ClipboardList,
   CreditCard,
   LayoutDashboard,
-  Settings,
+  // Settings,
   Table2Icon,
   User,
   UserPen,
