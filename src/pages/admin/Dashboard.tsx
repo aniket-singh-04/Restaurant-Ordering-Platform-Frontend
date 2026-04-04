@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { motion } from "framer-motion";
+import { useMemo } from "react";
 import {
   TrendingUp,
   DollarSign,
@@ -13,6 +14,13 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { useRestaurantOverview } from "../../features/analytics/api";
 import { useBranchOrders } from "../../features/orders/api";
+import {
+  buildRankedOrderItems,
+  formatCompactOrderStatus,
+  shortenEntityId,
+  sortOrdersByNewest,
+} from "./orderInsights";
+import { LoadingListRows, LoadingMetricCards } from "../../components/LoadingState";
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -43,10 +51,37 @@ const formatStatValue = (stat: Stat) => {
   return String(stat.value);
 };
 
+const getOrderStatusBadgeClass = (status: string) => {
+  switch (status.trim().toUpperCase()) {
+    case "COMPLETED":
+      return "bg-emerald-100 text-emerald-700";
+    case "READY":
+      return "bg-green-100 text-green-700";
+    case "CANCELLED":
+      return "bg-rose-100 text-rose-700";
+    case "PREPARING":
+    case "ACCEPTED":
+      return "bg-sky-100 text-sky-700";
+    case "PLACED":
+    case "CREATED":
+    case "HALF_PAID":
+      return "bg-orange-100 text-orange-700";
+    case "PENDING_VALIDATION":
+    case "AWAITING_ADVANCE_PAYMENT":
+    case "AWAITING_CASH_CONFIRMATION":
+      return "bg-amber-100 text-amber-700";
+    case "ACCEPTANCE_EXPIRED":
+      return "bg-slate-200 text-slate-700";
+    default:
+      return "bg-slate-100 text-slate-700";
+  }
+};
+
 export default function AdminDashboard() {
   const { user } = useAuth();
   const overview = useRestaurantOverview(user?.restroId);
   const branchOrders = useBranchOrders(user?.branchIds?.[0]?._id);
+  const isStatsLoading = overview.isLoading || branchOrders.isLoading;
 
   const stats: Stat[] = [
     {
@@ -84,15 +119,46 @@ export default function AdminDashboard() {
     },
   ];
 
-  const recentOrders =
-    branchOrders.data?.slice(0, 4).map((order) => ({
-      id: order._id ?? order.id,
-      table: order.tableId ?? "--",
-      items: order.itemsSnapshot?.length ?? 0,
-      total: (order.totalsSnapshot?.grandTotal ?? 0) / 100,
-      status: (order.OrderStatus ?? "pending").toLowerCase(),
-      time: order.createdAt ? new Date(order.createdAt).toLocaleTimeString() : "--",
-    })) ?? [];
+  const recentOrders = useMemo(
+    () =>
+      sortOrdersByNewest(branchOrders.data ?? []).slice(0, 4).map((order) => ({
+        id: order._id ?? order.id,
+        shortId: shortenEntityId(order._id ?? order.id),
+        table: order.tableId ? shortenEntityId(order.tableId, 4, 4) : "--",
+        items: order.itemsSnapshot?.reduce(
+          (total, item) => total + item.quantity,
+          0,
+        ) ?? 0,
+        total: (order.totalsSnapshot?.grandTotal ?? 0) / 100,
+        status: order.OrderStatus ?? "PENDING_VALIDATION",
+        statusLabel: formatCompactOrderStatus(order.OrderStatus),
+        time: order.createdAt
+          ? new Date(order.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "--",
+      })),
+    [branchOrders.data],
+  );
+
+  const popularItems = useMemo(
+    () =>
+      buildRankedOrderItems(branchOrders.data ?? [], {
+        itemLimit: 3,
+        fallbackOrderLimit: 3,
+      }),
+    [branchOrders.data],
+  );
+
+  const popularItemsHint =
+    branchOrders.isLoading
+      ? "Loading today's item rankings."
+      : popularItems.mode === "today"
+        ? "Based on today's orders."
+        : popularItems.mode === "recent"
+          ? `No orders today, so the latest ${popularItems.sourceOrderCount} orders are shown.`
+          : "No order activity yet.";
 
   return (
     <div className="min-h-screen space-y-8 text-left">
@@ -108,7 +174,7 @@ export default function AdminDashboard() {
         </div>
         <button
           type="button"
-          className="ui-icon-button warm-linear relative border-transparent p-3 text-white shadow-[var(--shadow-glow)]"
+          className="ui-icon-button w-fit warm-linear relative border-transparent p-3 text-white shadow-[var(--shadow-glow)]"
           aria-label="Open notifications"
         >
           <Bell className="w-5 h-5" />
@@ -119,39 +185,43 @@ export default function AdminDashboard() {
       </header>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, idx) => (
-          <motion.div
-            key={stat.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
-            className="ui-card rounded-[1.5rem]"
-          >
-            <div className="flex justify-between mb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[color:var(--accent-soft)] text-[color:var(--accent)]">
-                <stat.icon className="w-6 h-6" />
+      {isStatsLoading ? (
+        <LoadingMetricCards count={4} className="gap-6" cardClassName="rounded-[1.5rem]" />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {stats.map((stat, idx) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1 }}
+              className="ui-card rounded-[1.5rem]"
+            >
+              <div className="flex justify-between mb-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[color:var(--accent-soft)] text-[color:var(--accent)]">
+                  <stat.icon className="w-6 h-6" />
+                </div>
+                <div
+                  className={`flex items-center gap-1 font-semibold text-sm ${
+                    stat.isPositive ? "text-green-600" : "text-red-600"
+                  }`}
+                >
+                  {stat.isPositive ? (
+                    <ArrowUp className="w-4 h-4" />
+                  ) : (
+                    <ArrowDown className="w-4 h-4" />
+                  )}
+                  {stat.change}
+                </div>
               </div>
-              <div
-                className={`flex items-center gap-1 font-semibold text-sm ${
-                  stat.isPositive ? "text-green-600" : "text-red-600"
-                }`}
-              >
-                {stat.isPositive ? (
-                  <ArrowUp className="w-4 h-4" />
-                ) : (
-                  <ArrowDown className="w-4 h-4" />
-                )}
-                {stat.change}
-              </div>
-            </div>
-            <p className="font-serif font-bold text-xl text-[#3b2f2f]">
-              {formatStatValue(stat)}
-            </p>
-            <p className="text-[#6b665f]">{stat.label}</p>
-          </motion.div>
-        ))}
-      </div>
+              <p className="font-serif font-bold text-xl text-[#3b2f2f]">
+                {formatStatValue(stat)}
+              </p>
+              <p className="text-[#6b665f]">{stat.label}</p>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       {/* Recent Orders */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -170,36 +240,46 @@ export default function AdminDashboard() {
             </button>
           </div>
           <div className="space-y-4">
-            {recentOrders.map((order) => (
-              <div
-                key={order.id}
-                className="flex items-center justify-between rounded-lg bg-[color:var(--surface-muted)] p-4"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-[#3b2f2f]">{order.id}</p>
-                    <span
-                      className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold uppercase text-white ${
-                        order.status === "preparing"
-                          ? "bg-blue-400"
-                          : order.status === "pending"
-                            ? "bg-yellow-400"
-                            : "bg-green-400"
-                      }`}
-                    >
-                      {order.status}
-                    </span>
+            {branchOrders.isLoading ? (
+              <LoadingListRows rows={4} rowClassName="bg-[color:var(--surface-muted)]" />
+            ) : recentOrders.length > 0 ? (
+              recentOrders.map((order) => (
+                <div
+                  key={order.id}
+                  className="flex flex-col gap-3 rounded-xl bg-[color:var(--surface-muted)] p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p
+                        title={order.id}
+                        className="max-w-[12rem] truncate font-semibold text-[#3b2f2f] sm:max-w-[16rem]"
+                      >
+                        #{order.shortId}
+                      </p>
+                      <span
+                        title={order.status}
+                        className={`inline-flex max-w-full shrink-0 items-center rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] ${getOrderStatusBadgeClass(
+                          order.status,
+                        )}`}
+                      >
+                        {order.statusLabel}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-left text-sm text-[#6b665f]">
+                      Table {order.table} • {order.items} items
+                    </p>
                   </div>
-                  <p className="text-[#6b665f] text-sm text-left mt-1">
-                    Table {order.table} - {order.items} items
-                  </p>
+                  <div className="shrink-0 text-left text-[#3b2f2f] sm:text-right">
+                    <p className="font-semibold">{formatCurrency(order.total)}</p>
+                    <p className="text-xs text-[#6b665f]">{order.time}</p>
+                  </div>
                 </div>
-                <div className="text-right text-[#3b2f2f]">
-                  <p className="font-semibold">{formatCurrency(order.total)}</p>
-                  <p className="text-xs text-[#6b665f]">{order.time}</p>
-                </div>
+              ))
+            ) : (
+              <div className="ui-empty-state rounded-xl px-4 py-6 text-sm text-[#6b665f]">
+                No recent orders yet.
               </div>
-            ))}
+            )}
           </div>
         </motion.div>
 
@@ -232,20 +312,34 @@ export default function AdminDashboard() {
 
           {/* Popular Today */}
           <div className="mt-6">
-            <h3 className="font-semibold text-[#3b2f2f] mb-4">Popular Today</h3>
+            <div className="mb-4">
+              <h3 className="font-semibold text-[#3b2f2f]">Popular Items</h3>
+              <p className="mt-1 text-sm text-[#6b665f]">{popularItemsHint}</p>
+            </div>
             <div className="space-y-3">
-              {["Butter Chicken", "Margherita Pizza", "Gourmet Burger"].map(
-                (item, i) => (
-                  <div key={item} className="flex items-center justify-between">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#ef6820] text-white font-semibold">
-                      {i + 1}
+              {branchOrders.isLoading ? (
+                <LoadingListRows rows={3} rowClassName="bg-[color:var(--surface-muted)]" />
+              ) : popularItems.items.length > 0 ? (
+                popularItems.items.map((item, index) => (
+                  <div
+                    key={item.name}
+                    className="flex items-center justify-between gap-3"
+                  >
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#ef6820] text-sm font-semibold text-white">
+                      {index + 1}
                     </span>
-                    <span className="flex-1 text-[#3b2f2f] ml-4">{item}</span>
-                    <span className="text-[#6b665f] text-sm">
-                      {15 - i * 3} orders
+                    <span className="min-w-0 flex-1 truncate text-[#3b2f2f]">
+                      {item.name}
+                    </span>
+                    <span className="shrink-0 text-sm text-[#6b665f]">
+                      {item.orders} orders
                     </span>
                   </div>
-                ),
+                ))
+              ) : (
+                <div className="ui-empty-state rounded-xl px-4 py-6 text-sm text-[#6b665f]">
+                  No popular items yet.
+                </div>
               )}
             </div>
           </div>

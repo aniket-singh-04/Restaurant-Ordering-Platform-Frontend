@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Clock3, CreditCard, Receipt, ScrollText } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../../../components/Header/Header";
+import { LoadingOrderCards } from "../../../components/LoadingState";
 import { useAuth } from "../../../context/AuthContext";
 import { useToast } from "../../../context/ToastContext";
 import {
@@ -425,9 +426,7 @@ export default function OrdersPage() {
             </div>
 
             {ordersQuery.isLoading ? (
-              <div className="ui-empty-state rounded-[2rem] px-6 py-8 text-[#6d5c4d]">
-                Loading your live orders...
-              </div>
+              <LoadingOrderCards count={2} />
             ) : activeOrders.length > 0 ? (
               <div className="grid gap-5">
                 {activeOrders.map((order) => (
@@ -459,7 +458,9 @@ export default function OrdersPage() {
               <h2 className="text-2xl font-semibold text-[#3b2f2f]">Past Orders</h2>
             </div>
 
-            {pastOrders.length > 0 ? (
+            {ordersQuery.isLoading ? (
+              <LoadingOrderCards count={2} />
+            ) : pastOrders.length > 0 ? (
               <div className="grid gap-5">
                 {pastOrders.map((order) => (
                   <OrderCard

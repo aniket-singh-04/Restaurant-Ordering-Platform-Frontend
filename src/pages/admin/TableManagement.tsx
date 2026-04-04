@@ -22,6 +22,7 @@ import {
   getApiErrorMessage,
   getApiRequestId,
 } from "../../utils/apiErrorHelpers";
+import { SkeletonBlock } from "../../components/LoadingState";
 import { api } from "../../utils/api";
 import { isTrustedAppUrl } from "../../security";
 
@@ -84,6 +85,7 @@ export default function TableManagement() {
     () => Object.values(tablesByBranch).reduce((sum, tables) => sum + tables.length, 0),
     [tablesByBranch],
   );
+  const showInitialLoading = loading && branches.length === 0;
 
   const updateTableDraft = useCallback(
     (branchId: string, tableId: string, updater: (table: Table) => Table) => {
@@ -575,13 +577,79 @@ export default function TableManagement() {
         </form>
       </section>
 
-      {!branches.length && !loading ? (
+      {showInitialLoading ? (
+        <div className="space-y-6">
+          {Array.from({ length: 2 }).map((_, index) => (
+            <section key={index} className="ui-card bg-white p-6 shadow-sm">
+              <div className="flex flex-col gap-3 border-b border-[#f0e3d5] pb-4 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-2">
+                  <SkeletonBlock className="h-7 w-44" />
+                  <SkeletonBlock className="h-4 w-32" />
+                </div>
+                <SkeletonBlock className="h-7 w-24 rounded-full" />
+              </div>
+
+              <div className="mt-6 space-y-5">
+                {Array.from({ length: 2 }).map((__, cardIndex) => (
+                  <article
+                    key={cardIndex}
+                    className="grid gap-5 rounded-3xl border border-[#f0e3d5] bg-[#fffaf5] p-5 lg:grid-cols-[minmax(0,1fr)_220px]"
+                  >
+                    <div className="space-y-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-2">
+                          <SkeletonBlock className="h-4 w-20" />
+                          <SkeletonBlock className="h-6 w-28" />
+                        </div>
+                        <SkeletonBlock className="h-7 w-20 rounded-full" />
+                      </div>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <SkeletonBlock className="h-4 w-24" />
+                          <SkeletonBlock className="h-11 w-full rounded-2xl" />
+                        </div>
+                        <div className="space-y-2">
+                          <SkeletonBlock className="h-4 w-24" />
+                          <SkeletonBlock className="h-11 w-full rounded-2xl" />
+                        </div>
+                        <div className="space-y-2 sm:col-span-2">
+                          <SkeletonBlock className="h-4 w-20" />
+                          <SkeletonBlock className="h-11 w-full rounded-2xl" />
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
+                        <SkeletonBlock className="h-4 w-full" />
+                        <SkeletonBlock className="mt-2 h-3.5 w-32" />
+                      </div>
+
+                      <div className="flex flex-wrap gap-3">
+                        <SkeletonBlock className="h-10 w-32 rounded-2xl" />
+                        <SkeletonBlock className="h-10 w-28 rounded-2xl" />
+                        <SkeletonBlock className="h-10 w-36 rounded-2xl" />
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-[#eedbc8] bg-linear-to-b from-white to-[#fff7f0] p-5 shadow-sm">
+                      <SkeletonBlock className="h-4 w-24" />
+                      <SkeletonBlock className="mt-4 h-40 w-40 rounded-2xl" />
+                      <SkeletonBlock className="mt-4 h-5 w-28" />
+                      <SkeletonBlock className="mt-2 h-3.5 w-36" />
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      ) : !branches.length ? (
         <section className="ui-card bg-white px-6 py-8 text-center text-[#6d5c4d]">
           No accessible branches were found for your account yet.
         </section>
       ) : null}
 
-      {branches.map((branch) => {
+      {!showInitialLoading && branches.map((branch) => {
         const tables = tablesByBranch[branch.id] ?? [];
         const branchError = branchErrors[branch.id];
 

@@ -11,6 +11,7 @@ import {
   useRestaurantOrders,
   type OrderRecord,
 } from "../../features/orders/api";
+import { LoadingOrderCards } from "../../components/LoadingState";
 import { formatPrice } from "../../utils/formatPrice";
 
 const formatMinorAmount = (value?: number) => formatPrice((value ?? 0) / 100);
@@ -179,9 +180,7 @@ export default function OrdersManagementLive() {
 
         {/* Orders List */}
         {loading ? (
-          <div className="rounded-lg border border-dashed border-[#d9c1a8] bg-white px-8 py-16 text-center">
-            <p className="text-sm font-semibold text-[#3b2f2f]">Loading orders...</p>
-          </div>
+          <LoadingOrderCards count={3} />
         ) : filteredOrders.length > 0 ? (
           <div className="space-y-4">
             {filteredOrders.map((order) => {
@@ -190,10 +189,10 @@ export default function OrdersManagementLive() {
               return (
                 <article
                   key={order.id}
-                  className="rounded-lg border border-[#e5d5c6] bg-white shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+                  className="rounded-lg border border-[#e5d5c6] shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
                 >
                   {/* Header */}
-                  <div className="bg-linear-to-r from-white to-[#fffaf5] px-1 sm:px-6 py-4 sm:py-5 border-b border-[#f0e3d5]">
+                  <div className="px-1 sm:px-6 py-4 sm:py-5 border-b border-[#f0e3d5]">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 flex-wrap">
@@ -267,7 +266,7 @@ export default function OrdersManagementLive() {
                           {order.itemsSnapshot?.map((item) => (
                             <div
                               key={`${order.id}-${item.itemId}-${item.nameSnapshot}`}
-                              className="rounded-lg bg-linear-to-br from-[#fffaf5] to-[#fff5ed] border border-[#f0e3d5] p-3 hover:shadow-sm transition-shadow"
+                              className="rounded-lg border border-[#f0e3d5] p-3 hover:shadow-sm transition-shadow"
                             >
                               <div className="flex items-start justify-between gap-3 mb-2">
                                 <div className="flex-1 min-w-0">

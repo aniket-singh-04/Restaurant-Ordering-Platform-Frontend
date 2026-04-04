@@ -2,6 +2,7 @@
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import { LoadingPanel } from "../../components/LoadingState";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { api } from "../../utils/api";
@@ -800,11 +801,11 @@ export default function Accounts() {
               )}
             </div>
           </>
+        ) : loading ? (
+          <LoadingPanel className="border-gray-300 bg-gray-50" />
         ) : (
           <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-600">
-            {loading
-              ? "Loading restaurant data..."
-              : "Restaurant information will appear here once a linked restaurant is available."}
+            Restaurant information will appear here once a linked restaurant is available.
           </div>
         )}
       </section>
@@ -1338,9 +1339,11 @@ export default function Accounts() {
               );
             })}
           </div>
+        ) : loading ? (
+          <LoadingPanel className="border-gray-300 bg-gray-50" />
         ) : (
           <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-600">
-            {loading ? "Loading branches..." : "No branches found for this restaurant yet."}
+            No branches found for this restaurant yet.
           </div>
         )}
       </section>
@@ -1784,16 +1787,18 @@ export default function Accounts() {
               </article>
             ))}
           </div>
+        ) : loading ? (
+          <LoadingPanel className="border-gray-300 bg-gray-50" />
         ) : (
           <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-sm text-gray-600">
-            {loading ? "Loading users..." : "No team members found for this restaurant yet."}
+            No team members found for this restaurant yet.
           </div>
         )}
       </section>
 
       {loading && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-          <div className="rounded-lg bg-white px-6 py-3 text-sm shadow">Loading...</div>
+          <LoadingPanel className="w-[18rem] border-[#e5d5c6] bg-white shadow-xl" />
         </div>
       )}
     </div>

@@ -424,19 +424,19 @@ export default function Subscriptions() {
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-xl bg-linear-to-br from-[#fffaf5] to-[#fff5ed] px-6 py-5 border border-[#f0e3d5]">
+            <div className="rounded-xl  px-6 py-5 border border-[#f0e3d5]">
               <p className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Subscription Kind</p>
               <p className="mt-3 text-lg font-bold text-[#3b2f2f]">
                 {currentQuery.data?.kind ?? "—"}
               </p>
             </div>
-            <div className="rounded-xl bg-linear-to-br from-[#fffaf5] to-[#fff5ed] px-6 py-5 border border-[#f0e3d5]">
+            <div className="rounded-xl  px-6 py-5 border border-[#f0e3d5]">
               <p className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Access Status</p>
               <p className="mt-3 text-lg font-bold text-[#3b2f2f]">
                 {currentQuery.data?.accessStatus ?? "BLOCKED"}
               </p>
             </div>
-            <div className="rounded-xl bg-linear-to-br from-[#fffaf5] to-[#fff5ed] px-6 py-5 border border-[#f0e3d5]">
+            <div className="rounded-xl  px-6 py-5 border border-[#f0e3d5]">
               <p className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Grace Period Ends</p>
               <p className="mt-3 text-lg font-bold text-[#3b2f2f]">
                 {currentQuery.data?.graceEndsAt
@@ -480,7 +480,7 @@ export default function Subscriptions() {
             {plans.map((plan) => (
               <article
                 key={plan.id}
-                className="rounded-2xl border border-[#f0e3d5] bg-linear-to-br from-[#fffaf5] to-[#fff5ed] p-6 shadow-sm hover:shadow-md transition-shadow"
+                className="rounded-2xl border border-[#f0e3d5] p-6 shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div className="flex-1">

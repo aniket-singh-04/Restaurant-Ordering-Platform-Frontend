@@ -3,6 +3,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { CgProfile } from "react-icons/cg";
 import { useLocation, useNavigate } from "react-router-dom";
+import FullPageLoader from "../components/FullPageLoader";
+import { LoadingOrderCards } from "../components/LoadingState";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { api } from "../utils/api";
@@ -256,11 +258,7 @@ export default function ProfileLayout() {
   };
 
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center text-lg font-semibold text-gray-700">
-        Loading profile...
-      </div>
-    );
+    return <FullPageLoader label="Loading profile..." />;
   }
 
   if (!user) {
@@ -489,9 +487,7 @@ export default function ProfileLayout() {
           </div>
 
           {ordersQuery.isLoading ? (
-            <div className="mt-6 rounded-lg border border-dashed border-[#e5d5c6] bg-[#fff9f2] px-4 py-8 text-sm text-[#6b665f] text-center">
-              Loading orders...
-            </div>
+            <LoadingOrderCards count={2} className="mt-6" />
           ) : ordersQuery.data && ordersQuery.data.length > 0 ? (
             <div className="mt-6 space-y-4">
               {ordersQuery.data.map((order) => {

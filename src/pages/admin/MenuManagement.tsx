@@ -9,6 +9,7 @@ import { formatPrice } from "../../utils/formatPrice";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useToast } from "../../context/ToastContext";
 import { useAuth } from "../../context/AuthContext";
+import { LoadingCardGrid } from "../../components/LoadingState";
 import MenuImageToggle from "../MenuImageToggle";
 
 const MENU_ENDPOINT = "/api/v1/menu";
@@ -142,7 +143,7 @@ export default function MenuManagement() {
           <h1 className="text-3xl font-bold text-[#3b2f2f]">
             Menu Management
           </h1>
-          <p className="text-[#6b665f]">{items.length} total items</p>
+          <p className="text-[#6b665f]">{isPageLoading ? "Loading menu items..." : `${items.length} total items`}</p>
         </div>
 
         <div className="flex gap-3">
@@ -249,7 +250,7 @@ export default function MenuManagement() {
 
       {
         isPageLoading ? (
-          <div className="text-center py-20 text-gray-500">Loading menu...</div>
+          <LoadingCardGrid count={6} />
         ) : pagedItems.length ? (
           <>
             <div className="ui-card grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
