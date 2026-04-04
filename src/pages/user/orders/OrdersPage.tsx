@@ -70,7 +70,7 @@ const OrderCard = ({
     <article
       className={`rounded-[2rem] border p-5 shadow-sm transition ${
         highlighted
-          ? "border-orange-300 bg-orange-50/80"
+          ? "border-orange-300 bg-[color:var(--accent-soft)]"
           : "border-[#eedbc8] bg-white"
       }`}
     >
@@ -78,10 +78,10 @@ const OrderCard = ({
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-lg font-semibold text-[#3b2f2f]">{order.id}</h2>
-            <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-medium text-white">
+            <span className="ui-badge ui-badge--neutral bg-slate-900 px-3 py-1 text-white">
               {order.OrderStatus}
             </span>
-            <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-700">
+            <span className="ui-badge ui-badge--accent">
               {order.orderType}
             </span>
           </div>
@@ -112,25 +112,25 @@ const OrderCard = ({
       </div>
 
       <div className="mt-5 grid gap-3 md:grid-cols-4">
-        <div className="rounded-2xl bg-[#fff9f2] px-4 py-3">
+        <div className="rounded-2xl bg-[color:var(--surface-muted)] px-4 py-3">
           <p className="text-xs uppercase tracking-wide text-[#8d7967]">Advance paid</p>
           <p className="mt-1 font-semibold text-[#3b2f2f]">
             {formatMinorAmount(order.paymentSummary?.advanceReceived)}
           </p>
         </div>
-        <div className="rounded-2xl bg-[#fff9f2] px-4 py-3">
+        <div className="rounded-2xl bg-[color:var(--surface-muted)] px-4 py-3">
           <p className="text-xs uppercase tracking-wide text-[#8d7967]">Remaining</p>
           <p className="mt-1 font-semibold text-[#3b2f2f]">
             {formatMinorAmount(order.paymentSummary?.remainingDue)}
           </p>
         </div>
-        <div className="rounded-2xl bg-[#fff9f2] px-4 py-3">
+        <div className="rounded-2xl bg-[color:var(--surface-muted)] px-4 py-3">
           <p className="text-xs uppercase tracking-wide text-[#8d7967]">Mode</p>
           <p className="mt-1 font-semibold text-[#3b2f2f]">
             {order.paymentSummary?.mode ?? "N/A"}
           </p>
         </div>
-        <div className="rounded-2xl bg-[#fff9f2] px-4 py-3">
+        <div className="rounded-2xl bg-[color:var(--surface-muted)] px-4 py-3">
           <p className="text-xs uppercase tracking-wide text-[#8d7967]">Settlement</p>
           <p className="mt-1 font-semibold text-[#3b2f2f]">
             {order.paymentSummary?.settlementStatus ?? "N/A"}
@@ -376,16 +376,16 @@ export default function OrdersPage() {
     <>
       <Header />
 
-      <main className="min-h-screen bg-[#fff9f2] px-4 py-6">
-        <div className="mx-auto max-w-6xl space-y-8">
-          <section className="rounded-[2rem] border border-[#eedbc8] bg-white p-6 shadow-sm">
+      <main className="app-shell min-h-screen px-4 py-6">
+        <div className="app-container space-y-8">
+          <section className="ui-card rounded-[2rem]">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => goBackOrNavigate(navigate, "/", location.key)}
-                    className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-linear-to-br from-amber-400 to-orange-500 text-white shadow-lg transition hover:shadow-xl"
+                    className="ui-icon-button warm-linear h-11 min-w-11 border-transparent text-white shadow-[var(--shadow-glow)]"
                     aria-label="Go back"
                   >
                     <ArrowRight className="h-4 w-4 rotate-180" />
@@ -403,14 +403,14 @@ export default function OrdersPage() {
                 <button
                   type="button"
                   onClick={() => navigate("/profile")}
-                  className="cursor-pointer rounded-xl border border-[#e5d5c6] px-4 py-2.5 text-sm font-medium text-[#3b2f2f] transition hover:bg-[#fff9f2]"
+                  className="ui-button-secondary ui-button-pill px-4 text-sm font-medium"
                 >
                   Open Profile
                 </button>
                 <button
                   type="button"
                   onClick={() => void refreshOrders()}
-                  className="cursor-pointer rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"
+                  className="ui-button ui-button-pill px-4 text-sm font-medium"
                 >
                   Refresh
                 </button>
@@ -425,7 +425,7 @@ export default function OrdersPage() {
             </div>
 
             {ordersQuery.isLoading ? (
-              <div className="rounded-[2rem] border border-dashed border-[#d9c1a8] bg-white px-6 py-8 text-[#6d5c4d]">
+              <div className="ui-empty-state rounded-[2rem] px-6 py-8 text-[#6d5c4d]">
                 Loading your live orders...
               </div>
             ) : activeOrders.length > 0 ? (
@@ -447,7 +447,7 @@ export default function OrdersPage() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-[2rem] border border-dashed border-[#d9c1a8] bg-white px-6 py-8 text-[#6d5c4d]">
+              <div className="ui-empty-state rounded-[2rem] px-6 py-8 text-[#6d5c4d]">
                 You do not have any active orders right now.
               </div>
             )}
@@ -472,7 +472,7 @@ export default function OrdersPage() {
                 ))}
               </div>
             ) : (
-              <div className="rounded-[2rem] border border-dashed border-[#d9c1a8] bg-white px-6 py-8 text-[#6d5c4d]">
+              <div className="ui-empty-state rounded-[2rem] px-6 py-8 text-[#6d5c4d]">
                 Completed and cancelled orders will appear here.
               </div>
             )}

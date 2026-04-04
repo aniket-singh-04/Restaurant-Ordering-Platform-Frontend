@@ -8,14 +8,14 @@ export default function MenuPageLayout({
   children: ReactNode;
 }) {
   return (
-    <>
+    <div className="app-shell">
       <Header />
 
-      <main className="w-full px-4">
-        <div className="sm:px-6 lg:px-8 space-y-8">{children}</div>
+      <main className="app-page">
+        <div className="app-container ui-page-stack">{children}</div>
       </main>
 
       <Footer />
-    </>
+    </div>
   );
 }

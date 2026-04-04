@@ -72,110 +72,113 @@ export default function MenuHome() {
 
   return (
     <MenuPageLayout>
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="relative mt-3 overflow-hidden rounded-3xl bg-linear-to-br from-[#f97415] via-[#f99e1f] to-[#fac938] p-5 shadow-lg sm:p-5"
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="ui-hero mt-2 p-6 sm:p-7"
+      >
+        <div className="relative z-10 max-w-md text-left sm:max-w-lg md:max-w-xl">
+          <p className="ui-eyebrow !text-white/72">Featured Experience</p>
+          <h1 className="mb-1 mt-3 font-display text-3xl font-bold text-white sm:text-4xl md:text-5xl">
+            Discover Flavors <br /> in 3D
+          </h1>
+
+          <p className="mb-5 max-w-sm text-sm text-white/82 sm:text-base">
+            {activeContext
+              ? `${activeContext.restaurant.name}, ${activeContext.branch.name} - Table ${activeContext.table.tableNumber}`
+              : "Experience your food before ordering with our interactive menu."}
+          </p>
+
+          <button
+            type="button"
+            onClick={() => navigate(buildQrMenuPath(qrId))}
+            className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/16 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/24"
           >
-            {/* Content */}
-            <div className="relative z-10 max-w-md sm:max-w-lg md:max-w-xl text-left">
-              <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-1">
-                Discover Flavors <br /> in 3D
-              </h1>
+            <Sparkles className="h-5 w-5" />
+            Explore 3D Menu
+          </button>
+        </div>
 
-              <p className="text-white/80 mb-4 text-sm sm:text-base max-w-sm">
-                {activeContext
-                  ? `${activeContext.restaurant.name}, ${activeContext.branch.name} - Table ${activeContext.table.tableNumber}`
-                  : "Experience your food before ordering with our interactive menu."}
-              </p>
+        <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-white/20 blur-3xl" />
+        <div className="absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
+        <div className="absolute bottom-10 right-10 h-24 w-24 rounded-full bg-white/5 blur-xl" />
+      </motion.section>
 
-              <button
-                onClick={() => navigate(buildQrMenuPath(qrId))}
-                className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/30 bg-white/20 px-4 py-2 font-medium text-white transition hover:bg-white/30"
-              >
-                <Sparkles className="h-5 w-5" />
-                Explore 3D Menu
-              </button>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="relative"
+      >
+        <MenuSearchBar
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+        />
+      </motion.div>
+
+      <motion.section
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <CategoryPills
+          categories={categories}
+          activeCategory={activeCategory}
+          onSelect={setActiveCategory}
+        />
+      </motion.section>
+
+      {activeCategory === "all" && !searchQuery && (
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="ui-card"
+        >
+          <div className="mb-5 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-[color:var(--accent)]" />
+              <h2 className="font-display text-2xl font-semibold text-[color:var(--text-primary)]">Top Picks</h2>
             </div>
-
-            {/* Decorative Circles */}
-            <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-white/20 blur-3xl" />
-            <div className="absolute -left-16 bottom-0 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
-            <div className="absolute bottom-10 right-10 h-24 w-24 rounded-full bg-white/5 blur-xl" />
-          </motion.section>
-
-
-          {/* Search */}
-          <motion.div initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="relative">
-            <MenuSearchBar
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-            />
-          </motion.div>
-
-          {/* Categories */}
-          <motion.section
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <CategoryPills
-              categories={categories}
-              activeCategory={activeCategory}
-              onSelect={setActiveCategory}
-            />
-          </motion.section>
-
-          {/* Featured Section */}
-          {activeCategory === 'all' && !searchQuery && (
-            <motion.section
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+            <button
+              type="button"
+              className="ui-button-secondary ui-button-pill px-4 text-sm font-semibold"
+              onClick={() => navigate(buildQrMenuPath(qrId))}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-orange-500" />
-                  <h2 className="font-display text-xl font-semibold">Top Picks</h2>
-                </div>
-                <button className="flex cursor-pointer items-center gap-2 rounded-2xl px-3 py-1.5 hover:bg-amber-500" onClick={() => navigate(buildQrMenuPath(qrId))}>
-                  View All
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
+              View All
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
 
-              <MenuItemsGrid
-                items={featuredItems}
-                emptyState={null}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-              />
-            </motion.section>
-          )}
+          <MenuItemsGrid
+            items={featuredItems}
+            emptyState={null}
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          />
+        </motion.section>
+      )}
 
-          {/* All Items */}
-          <motion.section
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <h2 className="font-display text-xl text-left font-semibold mb-4">
-              {getActiveCategoryTitle(categories, activeCategory)}
-            </h2>
+      <motion.section
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="ui-card"
+      >
+        <h2 className="mb-4 text-left font-display text-2xl font-semibold text-[color:var(--text-primary)]">
+          {getActiveCategoryTitle(categories, activeCategory)}
+        </h2>
 
-            <MenuItemsGrid
-              items={filteredItems}
-              emptyState={
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground">
-                    {menuQuery.isError ? "Could not load menu" : "No items found"}
-                  </p>
-                </div>
-              }
-            />
-          </motion.section>
+        <MenuItemsGrid
+          items={filteredItems}
+          emptyState={
+            <div className="ui-empty-state py-12 text-center">
+              <p className="text-muted-foreground">
+                {menuQuery.isError ? "Could not load menu" : "No items found"}
+              </p>
+            </div>
+          }
+        />
+      </motion.section>
     </MenuPageLayout>
   );
 }

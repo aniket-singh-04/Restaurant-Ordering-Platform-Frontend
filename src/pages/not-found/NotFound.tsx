@@ -1,21 +1,31 @@
 import { useNavigate } from "react-router-dom";
+import ThemeToggle from "../../components/ThemeToggle";
 
 export default function NotFound() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#fff9f0] text-center">
-      <h1 className="text-6xl font-extrabold mb-4">404</h1>
-      <p className="text-lg text-gray-600 mb-6">
-        Page not found
-      </p>
+    <div className="state-shell">
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="auth-theme-bar">
+          <ThemeToggle />
+        </div>
+        <div className="state-card px-6 py-10 text-center sm:px-8">
+          <p className="ui-eyebrow">Not Found</p>
+          <h1 className="mt-3 font-display text-6xl font-extrabold text-[color:var(--text-primary)]">404</h1>
+          <p className="mt-4 text-base text-[color:var(--text-secondary)]">
+            Page not found
+          </p>
 
-      <button
-        onClick={() => navigate("/")}
-        className="px-6 py-3 cursor-pointer rounded-xl bg-orange-500 text-white font-semibold hover:opacity-90"
-      >
-        Go Home
-      </button>
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="ui-button ui-button-pill mt-8 px-6 text-sm font-semibold"
+          >
+            Go Home
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import ThemeToggle from "../../components/ThemeToggle";
 import { usePlatformAdminAuth } from "../../features/platform-admin/auth/context";
 import { useState } from "react";
 
@@ -36,18 +37,22 @@ export default function PlatformAdminLayout() {
   const [isOpen, setIsOpen] = useState(false);
 
 return (
-  <div className="h-screen flex bg-linear-to-br from-gray-50 to-gray-100 text-gray-900 overflow-hidden">
+  <div className="panel-shell flex h-screen overflow-hidden">
 
     {/* Mobile Header */}
-    <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur border-b border-gray-200 flex items-center justify-between px-4 py-3 shadow-sm">
-      <h1 className="text-lg font-semibold tracking-tight">Owner Console</h1>
+    <div className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between border-b border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--surface)_85%,transparent)] px-4 py-3 shadow-[var(--shadow-sm)] backdrop-blur-xl md:hidden">
+      <h1 className="font-display text-lg font-semibold tracking-tight">Owner Console</h1>
 
-      <button
-        onClick={() => setIsOpen(true)}
-        className="p-2 rounded-lg hover:bg-gray-100 transition"
-      >
-        <Menu className="h-5 w-5 text-gray-700" />
-      </button>
+      <div className="flex items-center gap-2">
+        <ThemeToggle compact />
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="ui-icon-button h-10 min-w-10 rounded-lg p-0"
+        >
+          <Menu className="h-5 w-5 text-[color:var(--text-primary)]" />
+        </button>
+      </div>
     </div>
 
     {/* Overlay */}
@@ -63,29 +68,32 @@ return (
       className={`fixed md:static z-50 top-0 left-0 h-screen w-60 shrink-0 transform transition-transform duration-300
       ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
     >
-      <div className="flex flex-col h-full bg-white/95 backdrop-blur-xl border-r border-gray-200 shadow-lg">
+      <div className="panel-sidebar flex h-full flex-col border-r">
 
         {/* Header */}
-        <div className="px-6 py-3 border-b border-gray-100">
-          <p className="text-xs uppercase tracking-widest text-gray-400 font-medium">
+        <div className="border-b border-[color:var(--border-subtle)] px-6 py-3">
+          <p className="text-xs font-medium uppercase tracking-widest text-[color:var(--text-muted)]">
             Platform
           </p>
 
-          <h1 className="mt-1 text-xl font-bold text-gray-900 tracking-tight">
+          <h1 className="mt-1 font-display text-xl font-bold tracking-tight text-[color:var(--text-primary)]">
             Owner Console
           </h1>
 
-          <p className="mt-2 text-sm text-gray-500 truncate">
+          <p className="mt-2 truncate text-sm text-[color:var(--text-secondary)]">
             {admin?.email}
           </p>
 
-          {/* Close (Mobile) */}
-          <button
-            onClick={() => setIsOpen(false)}
-            className="md:hidden mt-4 p-2 rounded-lg hover:bg-gray-100 transition"
-          >
-            <X className="h-5 w-5 text-gray-700" />
-          </button>
+          <div className="mt-4 flex items-center gap-2">
+            <ThemeToggle compact className="hidden md:inline-flex" />
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="ui-icon-button h-10 min-w-10 rounded-lg p-0 md:hidden"
+            >
+              <X className="h-5 w-5 text-[color:var(--text-primary)]" />
+            </button>
+          </div>
         </div>
 
         {/* Nav (Scrollable if needed) */}
@@ -97,10 +105,10 @@ return (
               end={item.end}
               onClick={() => setIsOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
+                `panel-nav-link flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 ${
                   isActive
-                    ? "bg-linear-to-r from-orange-50 to-orange-100 text-orange-600 shadow-sm border border-orange-200"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                    ? "panel-nav-link--active"
+                    : ""
                 }`
               }
             >
@@ -111,10 +119,10 @@ return (
         </nav>
 
         {/* Logout (Sticky bottom) */}
-        <div className="p-4 border-t border-gray-100">
+        <div className="border-t border-[color:var(--border-subtle)] p-4">
           <button
             type="button"
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-gray-900 to-gray-800 text-white py-3 text-sm font-semibold hover:opacity-90 transition shadow-md"
+            className="ui-button ui-button-pill flex w-full items-center justify-center gap-2 py-3 text-sm font-semibold"
             onClick={() => {
               void logout().then(() =>
                 navigate("/platform/login", { replace: true })
@@ -131,7 +139,7 @@ return (
     {/* Main */}
     <main className="flex-1 overflow-y-auto p-2 md:p-4 mt-14 md:mt-0">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 md:p-3">
+        <div className="panel-content p-2 md:p-3">
           <Outlet />
         </div>
       </div>

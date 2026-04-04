@@ -6,6 +6,7 @@ import {
   Menu,
   X,
 } from 'lucide-react';
+import ThemeToggle from '../../components/ThemeToggle';
 import { useAuth } from '../../context/AuthContext';
 import { roleMatches } from '../../features/auth/access';
 import { useLiveOrderSync } from '../../features/orders/useLiveOrderSync';
@@ -33,28 +34,31 @@ export default function AdminLayout() {
   return (
 
 
-    <div className="min-h-screen bg-[#fff9f2] md:flex">
+    <div className="panel-shell min-h-screen md:flex">
       {/* Mobile Header */}
-      <header className="sticky top-0 z-30 flex items-center justify-between bg-[#1f1914] px-4 py-3 text-[#f7f1e3] shadow md:hidden">
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--surface)_85%,transparent)] px-4 py-3 text-[color:var(--text-primary)] shadow-[var(--shadow-sm)] backdrop-blur-xl md:hidden">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-linear-to-tr from-yellow-400 to-orange-500 flex items-center justify-center">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl warm-linear">
             <ChefHat className="w-5 h-5 text-white" />
           </div>
           <div>
-            <p className="font-serif font-bold text-base">Orderly</p>
-            <p className="text-[10px] text-[#b0a79d]">Admin Panel</p>
+            <p className="font-display text-base font-bold">Orderly</p>
+            <p className="text-[10px] text-[color:var(--text-muted)]">Admin Panel</p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsSidebarOpen(true)}
-          className="rounded-lg p-2 text-[#f7f1e3] hover:bg-[#3c2c20] transition-colors"
-          aria-label="Open navigation menu"
-          aria-expanded={isSidebarOpen}
-          aria-controls="admin-sidebar"
-        >
-          <Menu className="w-5 h-5 cursor-pointer" />
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle compact />
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen(true)}
+            className="ui-icon-button h-10 min-w-10 rounded-xl p-0"
+            aria-label="Open navigation menu"
+            aria-expanded={isSidebarOpen}
+            aria-controls="admin-sidebar"
+          >
+            <Menu className="w-5 h-5 cursor-pointer" />
+          </button>
+        </div>
       </header>
 
       {/* Mobile Overlay */}
@@ -70,29 +74,32 @@ export default function AdminLayout() {
       {/* Sidebar */}
       <aside
         id="admin-sidebar"
-        className={`fixed inset-y-0 left-0 z-50 w-72 border-r bg-[#1f1914] text-[#f7f1e3] flex flex-col transform transition-transform duration-300 md:static md:w-64 md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        className={`panel-sidebar fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r text-[color:var(--text-primary)] transform transition-transform duration-300 md:static md:w-64 md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
           }`}
         aria-label="Admin navigation"
       >
         {/* Logo */}
-        <div className="p-6 border-b border-[#5a4c4c] flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 border-b border-[color:var(--border-subtle)] p-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-linear-to-tr from-yellow-400 to-orange-500 flex items-center justify-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl warm-linear">
               <ChefHat className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h1 className="font-serif font-bold text-lg">Orderly</h1>
-              <p className="text-xs text-[#b0a79d]">Admin Panel</p>
+              <h1 className="font-display text-lg font-bold">Orderly</h1>
+              <p className="text-xs text-[color:var(--text-muted)]">Admin Panel</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsSidebarOpen(false)}
-            className="md:hidden rounded-lg p-2 text-[#f7f1e3] hover:bg-[#3c2c20] transition-colors"
-            aria-label="Close navigation menu"
-          >
-            <X className="w-5 h-5 cursor-pointer" />
-          </button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle compact className="hidden md:inline-flex" />
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(false)}
+              className="ui-icon-button h-10 min-w-10 rounded-xl p-0 md:hidden"
+              aria-label="Close navigation menu"
+            >
+              <X className="w-5 h-5 cursor-pointer" />
+            </button>
+          </div>
         </div>
 
         {/* Navigation */}
@@ -104,9 +111,9 @@ export default function AdminLayout() {
               end={item.end}
               onClick={() => setIsSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-xl transition-colors duration-200 font-medium ${isActive
-                  ? 'bg-[#3c2c20] text-orange-500'
-                  : 'text-[#b0a79d] hover:bg-[#5a4c4c] hover:text-[#fff9f2]'
+                `panel-nav-link flex items-center gap-3 px-4 py-3 rounded-xl font-medium ${isActive
+                  ? 'panel-nav-link--active'
+                  : ''
                 }`
               }
             >
@@ -117,10 +124,10 @@ export default function AdminLayout() {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-[#5a4c4c]">
+        <div className="border-t border-[color:var(--border-subtle)] p-4">
           <button
             type="button"
-            className="flex items-center w-full gap-3 px-4 py-3 rounded-lg text-[#b0a79d] hover:text-[#fff9f2] hover:bg-[#5a4c4c] transition-colors duration-200"
+            className="ui-button-secondary ui-button-pill flex w-full gap-3 rounded-lg px-4 py-3 text-sm font-semibold"
             onClick={() => navigate('/')}
           >
             <LogOut className="w-5 h-5" />
@@ -130,7 +137,7 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 md:p-6 bg-[#fff9f2]">
+      <main className="flex-1 p-4 md:p-6">
         <Outlet />
       </main>
     </div>

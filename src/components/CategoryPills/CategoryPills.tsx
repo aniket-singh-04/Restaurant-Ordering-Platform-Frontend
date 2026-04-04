@@ -14,13 +14,13 @@ export default function CategoryPills({
             key={category.id}
             onClick={() => onSelect(category.id)}
             className={`
-              flex items-center gap-2 px-4 py-2.5 rounded-full whitespace-nowrap
-              text-sm font-medium transition-all duration-300 ease-out
-              active:scale-95 focus:outline-none cursor-pointer
+              flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2.5
+              text-sm font-semibold transition-all duration-300 ease-out
+              active:scale-95 focus:outline-none
               ${
                 isActive
-                  ? "text-white bg-linear-to-br from-orange-500 via-orange-400 to-yellow-400"
-                  : "bg-[#eae4dc] hover:bg-linear-to-br from-orange-200 via-orange-100 to-yellow-100 text-gray-700"
+                  ? "warm-linear text-white shadow-[var(--shadow-glow)]"
+                  : "border border-[color:var(--border-subtle)] bg-[color:var(--surface)] text-[color:var(--text-secondary)] hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
               }
             `}
           >

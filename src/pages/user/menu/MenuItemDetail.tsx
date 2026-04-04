@@ -12,7 +12,7 @@ import { isAdminPanelRole } from "../../../features/auth/access";
 import { useMenuItem } from "../../../features/menu/api";
 import { useAuth } from "../../../context/AuthContext";
 import FullPageLoader from "../../../components/FullPageLoader";
-import MenuImageToggle from "../../../pages/MenuImageToggle";
+import MenuImageToggle from "../../MenuImageToggle";
 import {
   buildQrCartPath,
   buildQrMenuPath,
@@ -55,33 +55,39 @@ export default function MenuItemDetail() {
 
   if (qrId && qrContextQuery.isError) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-[#fff9f0] px-4 text-center">
-        <h1 className="text-2xl font-semibold text-[#4a3f35]">This QR code is not available.</h1>
-        <p className="mt-2 text-sm text-gray-600">
-          {qrContextQuery.error instanceof Error
-            ? qrContextQuery.error.message
-            : "Please ask the restaurant team for a fresh table QR code."}
-        </p>
-        <button
-          onClick={() => navigate(buildQrMenuPath(qrId))}
-          className="mt-5 rounded-lg bg-orange-500 px-5 py-2 font-medium text-white"
-        >
-          Back to Menu
-        </button>
+      <div className="state-shell flex items-center justify-center px-4 text-center">
+        <div className="state-card px-6 py-10 sm:px-8">
+          <h1 className="font-display text-2xl font-semibold text-[color:var(--text-primary)]">This QR code is not available.</h1>
+          <p className="mt-2 text-sm text-[color:var(--text-secondary)]">
+            {qrContextQuery.error instanceof Error
+              ? qrContextQuery.error.message
+              : "Please ask the restaurant team for a fresh table QR code."}
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate(buildQrMenuPath(qrId))}
+            className="ui-button ui-button-pill mt-6 px-5 text-sm font-semibold"
+          >
+            Back to Menu
+          </button>
+        </div>
       </div>
     );
   }
 
   if (!item) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#fff9f0]">
-        <p className="text-lg text-gray-500 mb-4">Item not found</p>
+      <div className="state-shell flex items-center justify-center px-4">
+        <div className="state-card px-6 py-10 text-center sm:px-8">
+        <p className="mb-4 text-lg text-[color:var(--text-secondary)]">Item not found</p>
         <button
+          type="button"
           onClick={() => navigate(buildQrMenuPath(qrId))}
-          className="px-5 py-2 cursor-pointer rounded-lg bg-orange-500 text-white font-medium"
+          className="ui-button ui-button-pill px-5 text-sm font-semibold"
         >
           Back to Menu
         </button>
+        </div>
       </div>
     );
   }
@@ -120,24 +126,18 @@ export default function MenuItemDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fff9f0] pb-32 font-sans">
+    <div className="app-shell min-h-screen pb-32">
       <Header
         title={item.name}
-        className="sticky top-0 z-50 border-b bg-white "
+        className="sticky top-0 z-50"
         fallbackTo={buildQrMenuPath(qrId)}
       />
 
-      <main className="container mx-auto max-w-5xl px-4 py-8">
-        <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+      <main className="app-page">
+        <div className="app-container">
+        <div className="ui-section-card overflow-hidden rounded-[2rem]">
           <div className="grid grid-cols-1 md:grid-cols-2">
-            {/* IMAGE SECTION */}
-            <div className="relative bg-orange-50 rounded-3xl">
-              {/* <img
-                src={item.image}
-                alt={item.name}
-                loading="lazy"
-                className="w-full object-cover rounded-3xl"
-              /> */}
+            <div className="relative rounded-[2rem] bg-[color:var(--surface-muted)]">
               <MenuImageToggle
                 items={{
                   name: item.name,
@@ -145,55 +145,54 @@ export default function MenuItemDetail() {
                   images: item.images
                 }}
               />
-              {item.has3DModel && (
+                {item.has3DModel && (
                 <button
                   type="button"
                   aria-label="3D View"
-                  className="cursor-pointer absolute top-3 right-3 rounded-full bg-white px-3 py-1.5 text-xs sm:text-sm font-medium text-gray-800 shadow hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className="ui-button-secondary absolute right-3 top-3 px-3 py-2 text-xs font-semibold"
                 >
                   3D View
                 </button>
               )}
             </div>
 
-            {/* DETAILS SECTION */}
-            <div className="text-left p-8 flex flex-col justify-between">
+            <div className="flex flex-col justify-between p-8 text-left">
               <div className="space-y-4">
-                <h1 className="text-3xl sm:text-4xl font-extrabold">
+                <h1 className="font-display text-3xl font-extrabold text-[color:var(--text-primary)] sm:text-4xl">
                   {item.name}
                 </h1>
 
-                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                <div className="flex flex-wrap items-center gap-4 text-sm text-[color:var(--text-secondary)]">
                   <div className="flex items-center gap-1">
-                    <Star className="w-5 h-5 text-yellow-500" />
+                    <Star className="h-5 w-5 text-[color:var(--chart-3)]" />
                     {(item.rating ?? 0).toFixed(1)}
                   </div>
 
                   <div className="flex items-center gap-1">
-                    <Clock className="w-5 h-5" />
+                    <Clock className="h-5 w-5" />
                     {item.prepTime}
                   </div>
 
                   {item.isVeg && (
-                    <div className="flex items-center gap-1 text-green-600 font-semibold">
-                      <Leaf className="w-5 h-5" />
+                    <div className="flex items-center gap-1 font-semibold text-[color:var(--success)]">
+                      <Leaf className="h-5 w-5" />
                       Veg
                     </div>
                   )}
 
                   {item.isSpicy && (
-                    <div className="flex items-center gap-1 text-red-500 font-semibold">
-                      <Flame className="w-5 h-5" />
+                    <div className="flex items-center gap-1 font-semibold text-[color:var(--danger)]">
+                      <Flame className="h-5 w-5" />
                       Spicy
                     </div>
                   )}
                 </div>
 
-                <p className="text-3xl font-extrabold text-orange-500">
+                <p className="text-3xl font-extrabold text-[color:var(--accent)]">
                   {formatPrice(item.price)}
                 </p>
 
-                <p className="text-gray-700 leading-relaxed">
+                <p className="leading-relaxed text-[color:var(--text-secondary)]">
                   {item.description}
                 </p>
 
@@ -215,17 +214,18 @@ export default function MenuItemDetail() {
             />
           </div>
         </div>
+        </div>
       </main>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-xl p-4">
-        <div className="container mx-auto max-w-5xl flex items-center justify-between gap-4">
+      <div className="fixed bottom-0 left-0 right-0 p-4">
+        <div className="app-container ui-sticky-bar flex items-center justify-between gap-4 p-3">
           <QuantitySelector quantity={quantity} setQuantity={setQuantity} />
 
           <AddToCartButton
             totalPrice={totalPrice}
             onClick={handleAddToCart}
             disabled={quantity === 0}
-            className="flex-1 bg-orange-500 text-white rounded-xl h-14 font-semibold hover:opacity-90"
+            className="flex-1 h-14"
           />
         </div>
       </div>

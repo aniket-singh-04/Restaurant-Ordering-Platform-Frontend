@@ -16,13 +16,13 @@ import { useBranchTrends, useRestaurantOverview } from '../../features/analytics
 // Local Button component
 // --------------------
 const buttonBase =
-  'px-4 py-2 rounded-md font-semibold transition-colors duration-200 flex items-center justify-center';
+  'ui-button-pill flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200';
 const buttonVariants = {
-  default: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
-  secondary: 'bg-white text-gray-800 border border-gray-300 hover:bg-gray-50',
-  destructive: 'bg-red-500 text-white hover:bg-red-600',
-  warm: 'bg-orange-400 text-white hover:bg-orange-500',
-  outline: 'bg-transparent border border-gray-400 text-gray-800 hover:bg-gray-100',
+  default: 'ui-button-secondary',
+  secondary: 'ui-button-secondary',
+  destructive: 'ui-button-danger',
+  warm: 'ui-button',
+  outline: 'ui-button-ghost',
 } as const;
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -64,11 +64,11 @@ const formatNumber = (value: number) => numberFormatter.format(value);
 // Demo data
 // --------------------
 const categoryData = [
-  { name: 'Main Course', value: 35, color: 'hsl(25, 95%, 53%)' },
-  { name: 'Pizza', value: 25, color: 'hsl(35, 95%, 55%)' },
-  { name: 'Burgers', value: 20, color: 'hsl(45, 95%, 60%)' },
-  { name: 'Desserts', value: 12, color: 'hsl(142, 70%, 45%)' },
-  { name: 'Beverages', value: 8, color: 'hsl(200, 80%, 50%)' },
+  { name: 'Main Course', value: 35, color: 'var(--chart-1)' },
+  { name: 'Pizza', value: 25, color: 'var(--chart-2)' },
+  { name: 'Burgers', value: 20, color: 'var(--chart-3)' },
+  { name: 'Desserts', value: 12, color: 'var(--chart-4)' },
+  { name: 'Beverages', value: 8, color: 'var(--chart-5)' },
 ];
 
 const topItems = [
@@ -142,10 +142,10 @@ export default function Analytics() {
   ];
 
   return (
-    <div className="text-left space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-6 text-left">
+      <div className="ui-card flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
+          <p className="ui-eyebrow">Performance</p>
           <h1 className="font-display text-3xl font-bold">Analytics</h1>
           <p className="text-gray-600">Track your restaurant's performance</p>
         </div>
@@ -168,11 +168,11 @@ export default function Analytics() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="bg-white rounded-2xl p-6 shadow-md"
+            className="ui-card rounded-2xl"
           >
             <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center">
-                <stat.icon className="w-6 h-6 text-orange-500" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[color:var(--accent-soft)]">
+                <stat.icon className="w-6 h-6 text-[color:var(--accent)]" />
               </div>
               <div className={`flex items-center gap-1 text-sm font-medium ${stat.isPositive ? 'text-green-600' : 'text-red-600'}`}>
                 {stat.isPositive ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
@@ -192,23 +192,24 @@ export default function Analytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-2xl p-6 shadow-md"
+          className="ui-card rounded-2xl"
         >
           <h2 className="font-display text-xl font-semibold mb-6">Revenue Trend</h2>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="name" stroke="#9ca3af" />
-                <YAxis stroke="#9ca3af" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                <XAxis dataKey="name" stroke="var(--text-muted)" />
+                <YAxis stroke="var(--text-muted)" />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
+                    backgroundColor: 'var(--surface-strong)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: '18px',
+                    color: 'var(--text-primary)',
                   }}
                 />
-                <Line type="monotone" dataKey="revenue" stroke="#f97316" strokeWidth={3} dot={{ fill: '#f97316' }} />
+                <Line type="monotone" dataKey="revenue" stroke="var(--chart-1)" strokeWidth={3} dot={{ fill: 'var(--chart-1)' }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -219,7 +220,7 @@ export default function Analytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white rounded-2xl p-6 shadow-md"
+          className="ui-card rounded-2xl"
         >
           <h2 className="font-display text-xl font-semibold mb-6">Sales by Category</h2>
           <div className="h-72 flex items-center justify-center">
@@ -232,9 +233,10 @@ export default function Analytics() {
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
+                    backgroundColor: 'var(--surface-strong)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: '18px',
+                    color: 'var(--text-primary)',
                   }}
                 />
               </PieChart>
@@ -258,23 +260,24 @@ export default function Analytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="bg-white rounded-2xl p-6 shadow-md"
+          className="ui-card rounded-2xl"
         >
           <h2 className="font-display text-xl font-semibold mb-6">Daily Orders</h2>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="name" stroke="#9ca3af" />
-                <YAxis stroke="#9ca3af" />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
+                <XAxis dataKey="name" stroke="var(--text-muted)" />
+                <YAxis stroke="var(--text-muted)" />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
+                    backgroundColor: 'var(--surface-strong)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: '18px',
+                    color: 'var(--text-primary)',
                   }}
                 />
-                <Bar dataKey="orders" fill="#fbbf24" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="orders" fill="var(--chart-3)" radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -285,13 +288,13 @@ export default function Analytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="bg-white rounded-2xl p-6 shadow-md"
+          className="ui-card rounded-2xl"
         >
           <h2 className="font-display text-xl font-semibold mb-6">Top Selling Items</h2>
           <div className="space-y-4">
             {topItems.map((item, index) => (
               <div key={item.name} className="flex items-center gap-4">
-                <span className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 text-sm flex items-center justify-center font-bold">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-sm font-bold text-[color:var(--accent)]">
                   {index + 1}
                 </span>
                 <div className="flex-1">

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import ThemeToggle from "../components/ThemeToggle";
 import { api } from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 import { getApiErrorMessage } from "../utils/apiErrorHelpers";
@@ -56,39 +57,44 @@ export default function VerifyEmail() {
   }, [refresh, searchParams]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#fff9f2] px-4 py-10">
-      <div className="w-full max-w-lg rounded-3xl border border-orange-100 bg-white p-8 text-center shadow-sm">
-        <p className="text-sm font-medium uppercase tracking-[0.2em] text-orange-500">
-          Email Verification
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold text-[#3b2f2f]">
-          {state === "loading"
-            ? "Verifying..."
-            : state === "success"
-              ? "All Set"
-              : "Verification Failed"}
-        </h1>
-        <p
-          className={`mt-4 text-sm ${
-            state === "error" ? "text-red-600" : "text-gray-600"
-          }`}
-        >
-          {message}
-        </p>
+    <div className="state-shell">
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="auth-theme-bar">
+          <ThemeToggle />
+        </div>
+        <div className="state-card px-6 py-8 text-center sm:px-8">
+          <p className="ui-eyebrow">Email Verification</p>
+          <h1 className="mt-3 font-display text-3xl font-semibold text-[color:var(--text-primary)]">
+            {state === "loading"
+              ? "Verifying..."
+              : state === "success"
+                ? "All Set"
+                : "Verification Failed"}
+          </h1>
+          <p
+            className={`mt-4 text-sm ${
+              state === "error"
+                ? "text-[color:var(--danger)]"
+                : "text-[color:var(--text-secondary)]"
+            }`}
+          >
+            {message}
+          </p>
 
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <Link
-            to={state === "success" ? "/profile" : "/login"}
-            className="rounded-xl bg-linear-to-r from-amber-400 to-orange-500 px-5 py-3 text-sm font-medium text-white shadow-sm transition hover:shadow-md"
-          >
-            {state === "success" ? "Go To Profile" : "Go To Login"}
-          </Link>
-          <Link
-            to="/"
-            className="rounded-xl border border-gray-200 px-5 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-          >
-            Home
-          </Link>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Link
+              to={state === "success" ? "/profile" : "/login"}
+              className="ui-button ui-button-pill px-5 text-sm font-semibold"
+            >
+              {state === "success" ? "Go To Profile" : "Go To Login"}
+            </Link>
+            <Link
+              to="/"
+              className="ui-button-secondary ui-button-pill px-5 text-sm font-semibold"
+            >
+              Home
+            </Link>
+          </div>
         </div>
       </div>
     </div>

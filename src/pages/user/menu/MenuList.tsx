@@ -64,82 +64,83 @@ export default function MenuList() {
 
   return (
     <MenuPageLayout>
-          {/* page title*/}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-left"
-          >
-            <h1 className="font-display text-3xl font-bold">Our Menu</h1>
-            <p className="text-muted-foreground mt-1">
-              {filteredItems.length} delicious items to explore
-              {activeContext
-                ? ` - ${activeContext.branch.name} table ${activeContext.table.tableNumber}`
-                : ""}
-            </p>
-          </motion.div>
+      <motion.section
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="ui-card"
+      >
+        <div className="text-left">
+          <p className="ui-eyebrow">Browse Menu</p>
+          <h1 className="mt-3 font-display text-4xl font-bold text-[color:var(--text-primary)]">Our Menu</h1>
+          <p className="mt-2 text-muted-foreground">
+            {filteredItems.length} delicious items to explore
+            {activeContext
+              ? ` - ${activeContext.branch.name} table ${activeContext.table.tableNumber}`
+              : ""}
+          </p>
+        </div>
 
-          {/* Search */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="relative mb-5"
-          >
-            <MenuSearchBar
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              action={(
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowVegOnly(!showVegOnly)}
-                  className={`px-4 h-12 rounded-xl flex items-center gap-2 font-medium transition  ${
-                    showVegOnly
-                      ? "bg-green-500 text-white hover:bg-green-600"
-                      : "bg-[#f97415] text-white hover:bg-[#f97415]/90"
-                  }`}
-                >
-                  <Filter className="w-5 h-5" />
-                  Veg
-                </motion.button>
-              )}
-            />
-          </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="relative mt-6"
+        >
+          <MenuSearchBar
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            action={(
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                type="button"
+                onClick={() => setShowVegOnly(!showVegOnly)}
+                className={`ui-button-pill flex h-12 items-center gap-2 rounded-full px-4 font-semibold transition ${
+                  showVegOnly
+                    ? "bg-[color:var(--success)] text-white shadow-[var(--shadow-sm)]"
+                    : "ui-button text-sm"
+                }`}
+              >
+                <Filter className="h-5 w-5" />
+                Veg
+              </motion.button>
+            )}
+          />
+        </motion.div>
+      </motion.section>
 
-          {/* Categories */}
-          <motion.section
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <CategoryPills
-              categories={categories}
-              activeCategory={activeCategory}
-              onSelect={setActiveCategory}
-            />
-          </motion.section>
+      <motion.section
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        <CategoryPills
+          categories={categories}
+          activeCategory={activeCategory}
+          onSelect={setActiveCategory}
+        />
+      </motion.section>
 
-          {/* Menu Grid */}
-          <motion.section
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <MenuItemsGrid
-              items={filteredItems}
-              emptyState={
-                <div className="text-center py-16">
-                  <div className="w-20 h-20 rounded-full bg-secondary mx-auto mb-4 flex items-center justify-center">
-                    <Search className="w-8 h-8 text-muted-foreground" />
-                  </div>
-                  <h3 className="font-display text-xl mb-2">No dishes found</h3>
-                  <p className="text-muted-foreground">
-                    {menuQuery.isError ? "We could not load this menu." : "Try adjusting your filters or search"}
-                  </p>
-                </div>
-              }
-            />
-          </motion.section>
+      <motion.section
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="ui-card"
+      >
+        <MenuItemsGrid
+          items={filteredItems}
+          emptyState={
+            <div className="ui-empty-state py-16 text-center">
+              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-secondary">
+                <Search className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="mb-2 font-display text-xl text-[color:var(--text-primary)]">No dishes found</h3>
+              <p className="text-muted-foreground">
+                {menuQuery.isError ? "We could not load this menu." : "Try adjusting your filters or search"}
+              </p>
+            </div>
+          }
+        />
+      </motion.section>
     </MenuPageLayout>
   );
 }

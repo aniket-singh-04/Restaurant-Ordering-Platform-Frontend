@@ -37,12 +37,12 @@ export const adminNavItems: AdminNavItem[] = [
     label: "Analytics",
     roles: ["ADMIN", "RESTRO_OWNER"],
   },
-  {
-    to: "/admin/settings",
-    icon: Settings,
-    label: "Settings",
-    roles: ["ADMIN", "RESTRO_OWNER"],
-  },
+  // {
+  //   to: "/admin/settings",
+  //   icon: Settings,
+  //   label: "Settings",
+  //   roles: ["ADMIN", "RESTRO_OWNER"],
+  // },
   {
     to: "/admin/addups",
     icon: User,

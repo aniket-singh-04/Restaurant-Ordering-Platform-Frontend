@@ -71,7 +71,7 @@ export default function AddUp() {
   };
 
 return (
-  <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 px-4 py-8 sm:px-6 lg:px-8">
+  <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100">
     <div className="mx-auto max-w-5xl space-y-6">
 
       {/* HEADER */}

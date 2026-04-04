@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import ThemeToggle from "../../components/ThemeToggle";
 import { useAuth } from "../../context/AuthContext";
 import { isAdminPanelRole } from "../../features/auth/access";
 import { goBackOrNavigate } from "../../utils/navigation";
@@ -10,27 +11,37 @@ export default function NotAuthorized() {
   const fallbackPath = user && isAdminPanelRole(user.role) ? "/admin" : "/";
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#fff9f0] text-center px-6">
-      <h1 className="text-5xl font-extrabold mb-4 text-[#3b2f2f]">
-        Access Denied
-      </h1>
-      <p className="text-base text-gray-600 mb-6">
-        You do not have permission to view this page.
-      </p>
+    <div className="state-shell px-6">
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="auth-theme-bar">
+          <ThemeToggle />
+        </div>
+        <div className="state-card px-6 py-10 text-center sm:px-8">
+          <p className="ui-eyebrow">Authorization</p>
+          <h1 className="mt-3 font-display text-5xl font-extrabold text-[color:var(--text-primary)]">
+            Access Denied
+          </h1>
+          <p className="mt-4 text-base text-[color:var(--text-secondary)]">
+            You do not have permission to view this page.
+          </p>
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <button
-          onClick={() => goBackOrNavigate(navigate, fallbackPath, location.key)}
-          className="px-6 py-3 rounded-xl border border-orange-500 text-orange-500 font-semibold hover:bg-orange-50"
-        >
-          Go Back
-        </button>
-        <button
-          onClick={() => navigate("/")}
-          className="px-6 py-3 rounded-xl bg-orange-500 text-white font-semibold hover:opacity-90"
-        >
-          Go Home
-        </button>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <button
+              type="button"
+              onClick={() => goBackOrNavigate(navigate, fallbackPath, location.key)}
+              className="ui-button-secondary ui-button-pill px-6 text-sm font-semibold"
+            >
+              Go Back
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="ui-button ui-button-pill px-6 text-sm font-semibold"
+            >
+              Go Home
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

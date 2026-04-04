@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import ThemeToggle from "../components/ThemeToggle";
 import { resetPassword } from "../features/auth/api";
 import { useToast } from "../context/ToastContext";
 import { getApiErrorMessage } from "../utils/apiErrorHelpers";
@@ -71,47 +72,73 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-r from-orange-400 via-red-400 to-pink-400 px-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-xl">
-        <h2 className="text-2xl font-bold mb-2 text-center">Set New Password</h2>
-        <p className="text-sm text-gray-500 text-center mb-6">{helperCopy}</p>
+    <div className="state-shell">
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="auth-theme-bar">
+          <ThemeToggle />
+        </div>
+        <div className="state-card px-6 py-8 sm:px-8">
+          <div className="mx-auto max-w-md">
+            <p className="ui-eyebrow text-center">Password Reset</p>
+            <h2 className="mt-3 text-center font-display text-3xl font-semibold text-[color:var(--text-primary)]">
+              Set New Password
+            </h2>
+            <p className="mt-3 text-center text-sm text-[color:var(--text-secondary)]">{helperCopy}</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="password"
-            placeholder="New Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-3 border rounded-xl outline-none"
-            disabled={!hasValidLink}
-          />
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full p-3 border rounded-xl outline-none"
-            disabled={!hasValidLink}
-          />
+            <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+              <div>
+                <label className="ui-field-label" htmlFor="reset-password">
+                  New Password
+                </label>
+                <input
+                  id="reset-password"
+                  type="password"
+                  placeholder="New Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="ui-input"
+                  disabled={!hasValidLink}
+                />
+              </div>
+              <div>
+                <label className="ui-field-label" htmlFor="reset-password-confirm">
+                  Confirm Password
+                </label>
+                <input
+                  id="reset-password-confirm"
+                  type="password"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="ui-input"
+                  disabled={!hasValidLink}
+                />
+              </div>
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+              {error ? (
+                <p className="rounded-2xl border border-[color:color-mix(in_srgb,var(--danger)_24%,transparent)] bg-[color:var(--danger-soft)] px-4 py-3 text-sm text-[color:var(--danger)]">
+                  {error}
+                </p>
+              ) : null}
 
-          <button
-            type="submit"
-            disabled={loading || !hasValidLink}
-            className="w-full py-3 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition disabled:opacity-60"
-          >
-            {loading ? "Updating..." : "Reset Password"}
-          </button>
-        </form>
+              <button
+                type="submit"
+                disabled={loading || !hasValidLink}
+                className="ui-button ui-button-pill w-full justify-center text-sm font-semibold disabled:opacity-60"
+              >
+                {loading ? "Updating..." : "Reset Password"}
+              </button>
+            </form>
 
-        <button
-          type="button"
-          onClick={() => navigate("/login")}
-          className="mt-4 text-sm text-blue-600 hover:underline"
-        >
-          Back to login
-        </button>
+            <button
+              type="button"
+              onClick={() => navigate("/login")}
+              className="mt-5 text-sm font-semibold text-[color:var(--accent)] transition hover:text-[color:var(--accent-hover)]"
+            >
+              Back to login
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

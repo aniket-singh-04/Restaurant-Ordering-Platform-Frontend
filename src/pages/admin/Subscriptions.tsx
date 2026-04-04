@@ -18,9 +18,14 @@ import {
   useSubscriptionPlans,
   verifySubscription,
 } from "../../features/subscriptions/api";
+import { getApiErrorMessage } from "../../utils/apiErrorHelpers";
 import { formatPrice } from "../../utils/formatPrice";
+import { isValidEmail, isValidGst, isValidPhone } from "../../utils/validators";
 
 const formatMinorAmount = (value?: number) => formatPrice((value ?? 0) / 100);
+const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
+const IFSC_REGEX = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+const ACCOUNT_NUMBER_REGEX = /^[0-9]{6,18}$/;
 
 const createPaymentConnectionForm = (
   user: { name?: string; email?: string; phone?: string } | null | undefined,
@@ -61,8 +66,118 @@ const createPaymentConnectionForm = (
       country: "IN",
     },
   },
-  acceptTerms: true,
+  acceptTerms: false,
 });
+
+const validatePaymentConnectionForm = (
+  form: RestaurantPaymentConnectionOnboardingPayload,
+) => {
+  const errors: Record<string, string> = {};
+  const setError = (field: string, message: string) => {
+    if (!errors[field]) {
+      errors[field] = message;
+    }
+  };
+
+  if (form.businessType.trim().length < 2) {
+    setError("businessType", "Business type is required.");
+  }
+  if (form.businessCategory.trim().length < 2) {
+    setError("businessCategory", "Business category is required.");
+  }
+  if (form.businessSubcategory.trim().length < 2) {
+    setError("businessSubcategory", "Business subcategory is required.");
+  }
+  if (
+    form.customerFacingBusinessName?.trim() &&
+    form.customerFacingBusinessName.trim().length < 2
+  ) {
+    setError(
+      "customerFacingBusinessName",
+      "Customer-facing business name must be at least 2 characters.",
+    );
+  }
+
+  if (form.businessAddress.street1.trim().length < 3) {
+    setError("businessAddress.street1", "Business address is required.");
+  }
+  if (form.businessAddress.city.trim().length < 2) {
+    setError("businessAddress.city", "Business city is required.");
+  }
+  if (form.businessAddress.state.trim().length < 2) {
+    setError("businessAddress.state", "Business state is required.");
+  }
+  if (form.businessAddress.postalCode.trim().length < 4) {
+    setError("businessAddress.postalCode", "Business postal code is required.");
+  }
+
+  if (!PAN_REGEX.test(form.legalInfo.pan.trim().toUpperCase())) {
+    setError("legalInfo.pan", "Enter a valid business PAN.");
+  }
+  if (form.legalInfo.gst?.trim() && !isValidGst(form.legalInfo.gst)) {
+    setError("legalInfo.gst", "Enter a valid GST number.");
+  }
+
+  if (!ACCOUNT_NUMBER_REGEX.test(form.bankAccount.accountNumber.trim())) {
+    setError(
+      "bankAccount.accountNumber",
+      "Account number must be 6-18 digits.",
+    );
+  }
+  if (!IFSC_REGEX.test(form.bankAccount.ifscCode.trim().toUpperCase())) {
+    setError("bankAccount.ifscCode", "Enter a valid IFSC code.");
+  }
+  if (form.bankAccount.beneficiaryName.trim().length < 2) {
+    setError("bankAccount.beneficiaryName", "Beneficiary name is required.");
+  }
+
+  if (form.stakeholder.name.trim().length < 2) {
+    setError("stakeholder.name", "Stakeholder name is required.");
+  }
+  if (!isValidEmail(form.stakeholder.email)) {
+    setError("stakeholder.email", "Enter a valid stakeholder email.");
+  }
+  if (!isValidPhone(form.stakeholder.phone)) {
+    setError("stakeholder.phone", "Stakeholder phone must be exactly 10 digits.");
+  }
+  if (!PAN_REGEX.test(form.stakeholder.pan.trim().toUpperCase())) {
+    setError("stakeholder.pan", "Enter a valid stakeholder PAN.");
+  }
+  if (
+    !Number.isFinite(form.stakeholder.percentageOwnership) ||
+    form.stakeholder.percentageOwnership < 1 ||
+    form.stakeholder.percentageOwnership > 100
+  ) {
+    setError(
+      "stakeholder.percentageOwnership",
+      "Ownership percentage must be between 1 and 100.",
+    );
+  }
+  if (form.stakeholder.address.street1.trim().length < 3) {
+    setError("stakeholder.address.street1", "Stakeholder address is required.");
+  }
+  if (form.stakeholder.address.city.trim().length < 2) {
+    setError("stakeholder.address.city", "Stakeholder city is required.");
+  }
+  if (form.stakeholder.address.state.trim().length < 2) {
+    setError("stakeholder.address.state", "Stakeholder state is required.");
+  }
+  if (form.stakeholder.address.postalCode.trim().length < 4) {
+    setError(
+      "stakeholder.address.postalCode",
+      "Stakeholder postal code is required.",
+    );
+  }
+
+  if (!form.acceptTerms) {
+    setError(
+      "acceptTerms",
+      "Accept the Razorpay Route onboarding terms before submitting.",
+    );
+  }
+
+  return errors;
+};
 
 export default function Subscriptions() {
   const { user } = useAuth();
@@ -76,13 +191,16 @@ export default function Subscriptions() {
   const [actionPlanId, setActionPlanId] = useState<string | null>(null);
   const [trialStarting, setTrialStarting] = useState(false);
   const [paymentConnectLoading, setPaymentConnectLoading] = useState<null | "start" | "complete">(null);
+  const [paymentConnectionErrors, setPaymentConnectionErrors] = useState<Record<string, string>>({});
   const [paymentConnectionForm, setPaymentConnectionForm] =
     useState<RestaurantPaymentConnectionOnboardingPayload>(() =>
       createPaymentConnectionForm(user),
     );
+  const canManageBilling = user?.role === "ADMIN" || user?.role === "RESTRO_OWNER";
 
   useEffect(() => {
     setPaymentConnectionForm(createPaymentConnectionForm(user));
+    setPaymentConnectionErrors({});
   }, [user?.name, user?.email, user?.phone]);
 
   const paymentConnectionQuery = useQuery({
@@ -106,6 +224,15 @@ export default function Subscriptions() {
   };
 
   const handleStartTrial = async () => {
+    if (!canManageBilling) {
+      pushToast({
+        title: "Access restricted",
+        description: "Only restaurant owners and admins can manage billing.",
+        variant: "warning",
+      });
+      return;
+    }
+
     setTrialStarting(true);
     try {
       await startTrialSubscription();
@@ -118,7 +245,7 @@ export default function Subscriptions() {
     } catch (error: any) {
       pushToast({
         title: "Trial could not be started",
-        description: error?.message ?? "Please try again.",
+        description: getApiErrorMessage(error, "Please try again."),
         variant: "error",
       });
     } finally {
@@ -127,6 +254,15 @@ export default function Subscriptions() {
   };
 
   const handlePurchase = async (planId: string) => {
+    if (!canManageBilling) {
+      pushToast({
+        title: "Access restricted",
+        description: "Only restaurant owners and admins can manage billing.",
+        variant: "warning",
+      });
+      return;
+    }
+
     setActionPlanId(planId);
     try {
       const result = await initiateSubscription(planId);
@@ -163,7 +299,10 @@ export default function Subscriptions() {
       pushToast({
         title: "Subscription checkout incomplete",
         description:
-          error?.message ??
+          getApiErrorMessage(
+            error,
+            "The purchase did not finish. You can retry again from the pricing page.",
+          ) ??
           "The purchase did not finish. You can retry again from the pricing page.",
         variant: "warning",
       });
@@ -173,6 +312,15 @@ export default function Subscriptions() {
   };
 
   const handlePaymentConnection = async (mode: "start" | "complete") => {
+    if (!canManageBilling) {
+      pushToast({
+        title: "Access restricted",
+        description: "Only restaurant owners and admins can manage payment onboarding.",
+        variant: "warning",
+      });
+      return;
+    }
+
     if (!user?.restroId) {
       pushToast({
         title: "Restaurant context missing",
@@ -182,6 +330,20 @@ export default function Subscriptions() {
       return;
     }
 
+    if (mode === "start") {
+      const nextErrors = validatePaymentConnectionForm(paymentConnectionForm);
+      if (Object.keys(nextErrors).length) {
+        setPaymentConnectionErrors(nextErrors);
+        pushToast({
+          title: "Complete required onboarding details",
+          description: Object.values(nextErrors)[0] ?? "Please review the onboarding form.",
+          variant: "warning",
+        });
+        return;
+      }
+    }
+
+    setPaymentConnectionErrors({});
     setPaymentConnectLoading(mode);
     try {
       const response =
@@ -198,10 +360,10 @@ export default function Subscriptions() {
             : "Online food-order payments can now route to the restaurant payout account.",
         variant: "success",
       });
-    } catch (error: any) {
+    } catch (error) {
       pushToast({
         title: "Payment connection update failed",
-        description: error?.message ?? "Please try again.",
+        description: getApiErrorMessage(error, "Please try again."),
         variant: "error",
       });
     } finally {
@@ -212,6 +374,7 @@ export default function Subscriptions() {
   const updateForm = (
     updater: (current: RestaurantPaymentConnectionOnboardingPayload) => RestaurantPaymentConnectionOnboardingPayload,
   ) => {
+    setPaymentConnectionErrors({});
     setPaymentConnectionForm((current) => updater(current));
   };
 
@@ -252,7 +415,7 @@ export default function Subscriptions() {
 
             <button
               type="button"
-              disabled={trialStarting}
+              disabled={trialStarting || !canManageBilling}
               onClick={() => void handleStartTrial()}
               className="h-fit w-fit cursor-pointer rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
             >
@@ -346,7 +509,7 @@ export default function Subscriptions() {
 
                 <button
                   type="button"
-                  disabled={loading || actionPlanId === plan.id}
+                  disabled={loading || actionPlanId === plan.id || !canManageBilling}
                   onClick={() => void handlePurchase(plan.id)}
                   className="w-full cursor-pointer rounded-xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
                 >
@@ -549,6 +712,27 @@ export default function Subscriptions() {
           <p className="mt-2 text-sm text-[#6b665f]">Complete all required information for payment processing</p>
 
           <div className="mt-8 rounded-xl border border-[#f0e3d5] bg-[#fffaf5] p-6 space-y-8">
+            <div className="rounded-lg border border-sky-200 bg-sky-50 px-5 py-4 text-sm text-sky-900">
+              Review the restaurant profile in Account Management before submitting onboarding.
+              Razorpay account creation also uses the restaurant support email, support phone, and legal name saved there.
+            </div>
+
+            {Object.keys(paymentConnectionErrors).length > 0 && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4">
+                <p className="text-sm font-semibold text-red-900">
+                  Please review the onboarding details below.
+                </p>
+                <ul className="mt-3 space-y-2 text-sm text-red-800">
+                  {Array.from(new Set(Object.values(paymentConnectionErrors))).map((message) => (
+                    <li key={message} className="flex items-start gap-2">
+                      <span className="mt-1 text-red-500">•</span>
+                      <span>{message}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {/* Business Information */}
             <div>
               <h3 className="text-lg font-bold text-[#3b2f2f] mb-4">Business Information</h3>
@@ -993,11 +1177,39 @@ export default function Subscriptions() {
               </div>
             </div>
 
+            <div className="border-t border-[#f0e3d5] pt-8">
+              <label className="flex items-start gap-3 text-sm text-[#3b2f2f]">
+                <input
+                  type="checkbox"
+                  checked={paymentConnectionForm.acceptTerms}
+                  onChange={(event) =>
+                    updateForm((current) => ({
+                      ...current,
+                      acceptTerms: event.target.checked,
+                    }))
+                  }
+                  className="mt-1 h-4 w-4 rounded border-[#d7c1aa] accent-orange-500"
+                />
+                <span>
+                  I confirm that these business, bank, and stakeholder details are accurate and
+                  I accept the Razorpay Route onboarding terms for this restaurant.
+                </span>
+              </label>
+              <p className="mt-2 text-xs text-[#6b665f]">
+                This confirmation is required before we submit the onboarding request.
+              </p>
+              {paymentConnectionErrors.acceptTerms ? (
+                <p className="mt-2 text-sm text-red-600">
+                  {paymentConnectionErrors.acceptTerms}
+                </p>
+              ) : null}
+            </div>
+
             {/* Action Buttons */}
             <div className="border-t border-[#f0e3d5] pt-8 flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
-                disabled={paymentConnectLoading !== null || !user?.restroId}
+                disabled={paymentConnectLoading !== null || !user?.restroId || !canManageBilling}
                 onClick={() => void handlePaymentConnection("start")}
                 className="flex-1 cursor-pointer rounded-lg border-2 border-[#ef6820] px-6 py-3 text-sm font-semibold text-[#ef6820] transition hover:bg-orange-50 disabled:opacity-60"
               >
@@ -1007,7 +1219,7 @@ export default function Subscriptions() {
               </button>
               <button
                 type="button"
-                disabled={paymentConnectLoading !== null || !user?.restroId}
+                disabled={paymentConnectLoading !== null || !user?.restroId || !canManageBilling}
                 onClick={() => void handlePaymentConnection("complete")}
                 className="flex-1 cursor-pointer rounded-lg bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
               >

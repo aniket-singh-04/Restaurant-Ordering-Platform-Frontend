@@ -67,9 +67,9 @@ export default function CartPage() {
     return (
       <>
         <Header />
-        <main className="min-h-screen bg-gray-50 px-4 pt-11">
-          <div className="mx-auto max-w-3xl rounded-3xl border border-red-200 bg-red-50 p-6 text-left text-red-800">
-            <h1 className="text-2xl font-semibold">This QR code is not available.</h1>
+        <main className="app-shell px-4 pt-11">
+          <div className="app-container rounded-3xl border border-red-200 bg-red-50 p-6 text-left text-red-800">
+            <h1 className="font-display text-2xl font-semibold">This QR code is not available.</h1>
             <p className="mt-2 text-sm text-red-700">
               {qrContextQuery.error instanceof Error
                 ? qrContextQuery.error.message
@@ -85,27 +85,32 @@ export default function CartPage() {
     <>
       <Header />
 
-      <main className="bg-gray-50 min-h-screen px-4 pb-36">
-        <div className="max-w-4xl mx-auto space-y-5">
-          <div className="flex items-center gap-2 pt-4">
+      <main className="app-shell min-h-screen px-4 pb-40">
+        <div className="app-container space-y-5 pt-4">
+          <div className="flex items-center gap-3">
             <button
+              type="button"
+              aria-label="Go back to menu"
               onClick={() => goBackOrNavigate(navigate, buildQrMenuPath(qrId), location.key)}
-              className="flex items-center justify-center cursor-pointer w-8 h-8 rounded-full bg-linear-to-br from-amber-400 to-orange-500 text-white shadow-lg hover:from-amber-500 hover:to-orange-600 hover:shadow-xl transition-all duration-300 active:scale-95"
+              className="ui-icon-button warm-linear border-transparent text-white shadow-[var(--shadow-glow)]"
             >
               <IoMdArrowRoundBack size={22} />
             </button>
-            <h1 className="text-xl font-semibold">Your Cart</h1>
+            <div>
+              <p className="ui-eyebrow">Checkout</p>
+              <h1 className="font-display text-3xl font-semibold text-[color:var(--text-primary)]">Your Cart</h1>
+            </div>
           </div>
 
           {items.length === 0 ? (
-            <div className="bg-white rounded-2xl p-8 text-center text-gray-500">
+            <div className="ui-empty-state p-8 text-center text-[color:var(--text-secondary)]">
               Your cart is empty.
             </div>
           ) : (
             items.map((item) => (
               <div
                 key={item.id}
-                className="bg-white rounded-2xl p-4 shadow-sm flex gap-4"
+                className="ui-card flex gap-4 rounded-[1.6rem] p-4"
               >
                 <img
                   src={item.imageUrl}
@@ -115,8 +120,12 @@ export default function CartPage() {
 
                 <div className="flex-1 space-y-1">
                   <div className="flex justify-between">
-                    <h3 className="font-semibold">{item.name}</h3>
-                    <button onClick={() => removeItem(item.id)}>
+                    <h3 className="font-semibold text-[color:var(--text-primary)]">{item.name}</h3>
+                    <button
+                      type="button"
+                      aria-label={`Remove ${item.name} from cart`}
+                      onClick={() => removeItem(item.id)}
+                    >
                       <Trash2 size={18} className="text-red-500 cursor-pointer" />
                     </button>
                   </div>
@@ -126,7 +135,7 @@ export default function CartPage() {
                       {item.addOns.map((addOn) => (
                         <span
                           key={`${item.id}-${addOn.name}`}
-                          className="rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-medium text-orange-700"
+                          className="rounded-full bg-[color:var(--accent-soft)] px-2.5 py-1 text-[11px] font-medium text-[color:var(--accent)]"
                         >
                           {addOn.name} (+{formatPrice(addOn.price)})
                         </span>
@@ -134,15 +143,17 @@ export default function CartPage() {
                     </div>
                   )}
 
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-[color:var(--text-secondary)]">
                     Unit total {formatPrice(item.finalUnitPrice)}
                   </p>
 
                   <div className="flex justify-between items-center mt-2">
                     <div className="flex items-center gap-3">
                       <button
+                        type="button"
+                        aria-label={`Decrease quantity for ${item.name}`}
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="w-8 h-8 rounded-full border flex items-center justify-center"
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[color:var(--surface-muted)]"
                       >
                         <Minus size={14} />
                       </button>
@@ -150,14 +161,16 @@ export default function CartPage() {
                       <span className="font-medium">{item.quantity}</span>
 
                       <button
+                        type="button"
+                        aria-label={`Increase quantity for ${item.name}`}
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="w-8 h-8 rounded-full border flex items-center justify-center"
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-[color:var(--accent)] bg-[color:var(--accent)] text-white"
                       >
                         <Plus size={14} />
                       </button>
                     </div>
 
-                    <span className="font-semibold">
+                    <span className="font-semibold text-[color:var(--text-primary)]">
                       {formatPrice(item.finalUnitPrice * item.quantity)}
                     </span>
                   </div>
@@ -168,25 +181,25 @@ export default function CartPage() {
         </div>
 
         {items.length > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
-            <div className="max-w-4xl mx-auto p-4 space-y-2">
-              <div className="flex justify-between text-sm text-gray-600">
+          <div className="fixed bottom-0 left-0 right-0 p-4">
+            <div className="app-container ui-sticky-bar space-y-3 p-4">
+              <div className="flex justify-between text-sm text-[color:var(--text-secondary)]">
                 <span>Subtotal</span>
-                <span className="font-semibold text-black">
+                <span className="font-semibold text-[color:var(--text-primary)]">
                   {formatPrice(subtotal)}
                 </span>
               </div>
-              <div className="flex justify-between text-sm text-gray-600">
+              <div className="flex justify-between text-sm text-[color:var(--text-secondary)]">
                 <span>Tax</span>
-                <span className="font-semibold text-black">{formatPrice(tax)}</span>
+                <span className="font-semibold text-[color:var(--text-primary)]">{formatPrice(tax)}</span>
               </div>
-              <div className="flex justify-between text-sm text-gray-600">
+              <div className="flex justify-between text-sm text-[color:var(--text-secondary)]">
                 <span>Dine-in charge</span>
-                <span className="font-semibold text-black">{formatPrice(dineInCharge)}</span>
+                <span className="font-semibold text-[color:var(--text-primary)]">{formatPrice(dineInCharge)}</span>
               </div>
-              <div className="flex justify-between text-base text-gray-900">
+              <div className="flex justify-between text-base text-[color:var(--text-primary)]">
                 <span>Total</span>
-                <span className="font-semibold text-black">
+                <span className="font-semibold text-[color:var(--text-primary)]">
                   {formatPrice(total)}
                 </span>
               </div>
@@ -196,8 +209,8 @@ export default function CartPage() {
                   type="button"
                   className={`w-full py-2 rounded-xl font-medium border ${
                     orderType === "DINE_IN"
-                      ? "border-orange-500 bg-orange-50 text-orange-600"
-                      : "border-gray-200 text-gray-600"
+                      ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent)]"
+                      : "border-[color:var(--border-subtle)] text-[color:var(--text-secondary)]"
                   }`}
                   onClick={() => setOrderType("DINE_IN")}
                 >
@@ -207,8 +220,8 @@ export default function CartPage() {
                   type="button"
                   className={`w-full py-2 rounded-xl font-medium border ${
                     orderType === "TAKEAWAY"
-                      ? "border-orange-500 bg-orange-50 text-orange-600"
-                      : "border-gray-200 text-gray-600"
+                      ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent)]"
+                      : "border-[color:var(--border-subtle)] text-[color:var(--text-secondary)]"
                   }`}
                   onClick={() => setOrderType("TAKEAWAY")}
                 >
@@ -216,7 +229,7 @@ export default function CartPage() {
                 </button>
               </div>
 
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-[color:var(--text-secondary)]">
                 {orderType === "DINE_IN"
                   ? "Dine-in orders include an extra Rs 20 service charge."
                   : "Takeaway uses the current QR context to identify the branch only."}
@@ -227,8 +240,8 @@ export default function CartPage() {
                   type="button"
                   className={`w-full py-2 rounded-xl font-medium border ${
                     paymentMode === "ONLINE_ADVANCE"
-                      ? "border-orange-500 bg-orange-50 text-orange-600"
-                      : "border-gray-200 text-gray-600"
+                      ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent)]"
+                      : "border-[color:var(--border-subtle)] text-[color:var(--text-secondary)]"
                   }`}
                   onClick={() => setPaymentMode("ONLINE_ADVANCE")}
                 >
@@ -238,8 +251,8 @@ export default function CartPage() {
                   type="button"
                   className={`w-full py-2 rounded-xl font-medium border ${
                     paymentMode === "SETTLE_ON_READY"
-                      ? "border-orange-500 bg-orange-50 text-orange-600"
-                      : "border-gray-200 text-gray-600"
+                      ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent)]"
+                      : "border-[color:var(--border-subtle)] text-[color:var(--text-secondary)]"
                   }`}
                   onClick={() => setPaymentMode("SETTLE_ON_READY")}
                 >
@@ -249,8 +262,8 @@ export default function CartPage() {
                   type="button"
                   className={`w-full py-2 rounded-xl font-medium border ${
                     paymentMode === "CASH_CONFIRMED_BY_STAFF"
-                      ? "border-orange-500 bg-orange-50 text-orange-600"
-                      : "border-gray-200 text-gray-600"
+                      ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent)]"
+                      : "border-[color:var(--border-subtle)] text-[color:var(--text-secondary)]"
                   }`}
                   onClick={() => setPaymentMode("CASH_CONFIRMED_BY_STAFF")}
                 >
@@ -258,7 +271,7 @@ export default function CartPage() {
                 </button>
               </div>
 
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-[color:var(--text-secondary)]">
                 {paymentMode === "ONLINE_ADVANCE"
                   ? "Pay the required advance now and settle the rest later."
                   : paymentMode === "SETTLE_ON_READY"
@@ -267,7 +280,8 @@ export default function CartPage() {
               </p>
 
               <button
-                className="w-full py-3 rounded-xl text-white font-semibold bg-linear-to-br from-[#f97415] via-[#f99e1f] to-[#fac938]"
+                type="button"
+                className="ui-button ui-button-pill w-full justify-center rounded-xl py-3 text-sm font-semibold"
                 disabled={placingOrder || checkoutLoading || !hasCheckoutContext}
                 onClick={async () => {
                   if (!hasCheckoutContext || !qrContext) {

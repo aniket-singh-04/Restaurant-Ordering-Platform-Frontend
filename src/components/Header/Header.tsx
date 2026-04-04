@@ -2,6 +2,7 @@ import { ClipboardList, MapPin, QrCode, ShoppingCart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CgProfile } from "react-icons/cg";
+import ThemeToggle from "../ThemeToggle";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
@@ -63,69 +64,84 @@ export default function Header() {
   };
 
   return (
-    <div className="px-4 py-2 sticky top-0 z-40 grid grid-cols-[auto_1fr] bg-[#fbfaf8]/70 backdrop-blur rounded-b-sm border-b border-[#e7e1da80]">
-      <div className="flex items-center gap-2">
-        <div
-          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-linear-to-br from-[#f97415] via-[#f99e1f] to-[#fac938]"
+    <div className="sticky top-0 z-40 border-b border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--surface)_82%,transparent)] px-4 py-3 backdrop-blur-xl">
+      <div className="app-container flex items-center justify-between gap-4">
+        <button
+          type="button"
+          className="flex min-w-0 items-center gap-3 rounded-full border border-[color:var(--border-subtle)] bg-[color:var(--surface)] px-2.5 py-2 text-left shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5"
           onClick={() => navigate(buildQrHomePath(qrId))}
         >
-          <MapPin className="text-white" />
-        </div>
+          <span className="flex h-11 w-11 items-center justify-center rounded-full warm-linear shadow-[var(--shadow-glow)]">
+            <MapPin className="text-white" />
+          </span>
 
-        <div>
-          <p className="text-xs text-muted-foreground">
-            {isQrSession ? qrContext?.branch.name ?? "Scanned branch" : "Deliver to"}
-          </p>
-          <p className="text-sm font-semibold">Table #{tableNumber ?? "--"}</p>
-        </div>
-      </div>
-
-      <div className="justify-self-end flex gap-5">
-        <button
-          className="flex items-center justify-center w-9 h-9 cursor-pointer rounded-xl bg-linear-to-br from-amber-400 to-orange-500 text-white shadow-md hover:from-amber-500 hover:to-orange-600 hover:shadow-lg transition-all duration-300 active:scale-95"
-          onClick={() => {
-            void handleQrAction();
-          }}
-        >
-          <QrCode size={20} />
-        </button>
-        <button
-          className="relative flex items-center justify-center w-9 h-9 cursor-pointer rounded-xl bg-linear-to-br from-amber-400 to-orange-500 text-white shadow-md hover:from-amber-500 hover:to-orange-600 hover:shadow-lg transition-all duration-300 active:scale-95"
-          onClick={() => navigate(buildQrCartPath(qrId))}
-          aria-label="Open cart"
-        >
-          <ShoppingCart size={20} />
-          {totalItems > 0 && (
-            <span className="absolute -top-1 -right-1 h-5 min-w-5 rounded-full bg-red-500 text-white text-[10px] leading-5 text-center px-1">
-              {totalItems}
+          <span className="min-w-0">
+            <span className="block text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[color:var(--text-muted)]">
+              {isQrSession ? "Scanned branch" : "Deliver to"}
             </span>
-          )}
+            <span className="block truncate text-sm font-semibold text-[color:var(--text-primary)]">
+              {isQrSession ? qrContext?.branch.name ?? "Scanned branch" : `Table #${tableNumber ?? "--"}`}
+            </span>
+            <span className="block truncate text-xs text-[color:var(--text-secondary)]">
+              {isQrSession ? `Table #${tableNumber ?? "--"}` : "Tap to browse the menu"}
+            </span>
+          </span>
         </button>
-        <button
-          className="flex items-center justify-center w-9 h-9 cursor-pointer rounded-xl bg-linear-to-br from-amber-400 to-orange-500 text-white shadow-md hover:from-amber-500 hover:to-orange-600 hover:shadow-lg transition-all duration-300 active:scale-95"
-          onClick={() =>
-            navigate(user ? "/orders" : "/login", {
-              state: {
-                from: `${location.pathname}${location.search}`,
-              },
-            })
-          }
-          aria-label="Open orders"
-        >
-          <ClipboardList size={18} />
-        </button>
-        <button
-          className="flex items-center justify-center w-9 h-9 cursor-pointer rounded-xl bg-linear-to-br from-amber-400 to-orange-500 text-white shadow-md hover:from-amber-500 hover:to-orange-600 hover:shadow-lg transition-all duration-300 active:scale-95"
-          onClick={() =>
-            navigate(user ? "/profile" : "/login", {
-              state: {
-                from: `${location.pathname}${location.search}`,
-              },
-            })
-          }
-        >
-          <CgProfile size={20} />
-        </button>
+
+        <div className="flex items-center gap-2">
+          <ThemeToggle compact />
+          <button
+            type="button"
+            className="ui-icon-button warm-linear border-transparent text-white shadow-[var(--shadow-glow)]"
+            onClick={() => {
+              void handleQrAction();
+            }}
+            aria-label="Copy QR session link"
+          >
+            <QrCode size={18} />
+          </button>
+          <button
+            type="button"
+            className="ui-icon-button warm-linear relative border-transparent text-white shadow-[var(--shadow-glow)]"
+            onClick={() => navigate(buildQrCartPath(qrId))}
+            aria-label="Open cart"
+          >
+            <ShoppingCart size={18} />
+            {totalItems > 0 && (
+              <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[color:var(--danger)] px-1 text-[10px] font-semibold text-white">
+                {totalItems}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            className="ui-icon-button"
+            onClick={() =>
+              navigate(user ? "/orders" : "/login", {
+                state: {
+                  from: `${location.pathname}${location.search}`,
+                },
+              })
+            }
+            aria-label="Open orders"
+          >
+            <ClipboardList size={18} />
+          </button>
+          <button
+            type="button"
+            className="ui-icon-button"
+            onClick={() =>
+              navigate(user ? "/profile" : "/login", {
+                state: {
+                  from: `${location.pathname}${location.search}`,
+                },
+              })
+            }
+            aria-label="Open profile"
+          >
+            <CgProfile size={19} />
+          </button>
+        </div>
       </div>
     </div>
   );

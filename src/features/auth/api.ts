@@ -40,7 +40,7 @@ export const verifyLoginOtp = async (payload: {
 
 export const initiateRegistration = async (payload: {
   name: string;
-  email?: string;
+  email: string;
   phone?: string;
   password: string;
   role: "RESTRO_OWNER" | "CUSTOMER";

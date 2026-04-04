@@ -1,46 +1,49 @@
 import { createBrowserRouter } from "react-router-dom";
-import type { ReactElement } from "react";
-import MenuItemDetail from "../pages/user/menu/MenuItemDetail";
-import MenuHome from "../pages/user/menu/MenuHome";
-import MenuList from "../pages/user/menu/MenuList";
-import NotFound from "../pages/not-found/NotFound";
-import NotAuthorized from "../pages/not-authorized/NotAuthorized";
-import CartPage from "../pages/user/cart/CartPage";
-import OrdersPage from "../pages/user/orders/OrdersPage";
-import AdminLayout from "../pages/admin/AdminLayout";
-import AdminDashboard from "../pages/admin/Dashboard";
-import MenuManagement from "../pages/admin/MenuManagement";
-import Register from "../pages/Register";
-import Login from "../pages/Login";
-import ForgotPassword from "../pages/ForgotPassword";
-import ResetPassword from "../pages/ResetPassword";
-import VerifyEmail from "../pages/VerifyEmail";
-import PlatformAdminDashboard from "../pages/platform-admin/Dashboard";
-import PlatformAdminLayout from "../pages/platform-admin/Layout";
-import PlatformAdminLogin from "../pages/platform-admin/Login";
-import PlatformAdminOrders from "../pages/platform-admin/Orders";
-import PlatformAdminPayments from "../pages/platform-admin/Payments";
-import PlatformAdminRestaurants from "../pages/platform-admin/Restaurants";
-import PlatformAdminSubscriptions from "../pages/platform-admin/Subscriptions";
-import PlatformAdminUsers from "../pages/platform-admin/Users";
+import { lazy, type ReactElement } from "react";
 import ProtectedRoute from "../routes/ProtectedRoute";
 import PlatformProtectedRoute from "../routes/PlatformProtectedRoute";
 import PublicRoute from "../routes/PublicRoute";
 import QrRouteGuard from "../routes/QrRouteGuard";
-import ProfilePage from "../pages/ProfilePage";
-import OrdersManagement from "../pages/admin/OrdersManagementLive";
-import Analytics from "../pages/admin/Analytics";
-import Settings from "../pages/admin/Settings";
-import MenuFormPage from "../pages/admin/components/MenuFormPage";
-import AddUp from "../pages/admin/AddUp";
-import Accounts from "../pages/admin/Accounts";
-import Subscriptions from "../pages/admin/Subscriptions";
 import {
   ADMIN_PANEL_ROLES,
   AUTHENTICATED_APP_ROLES,
 } from "../features/auth/access";
 import type { UserRole } from "../features/auth/types";
-import TableManagement from "../pages/admin/TableManagement";
+
+const MenuItemDetail = lazy(() => import("../pages/user/menu/MenuItemDetail"));
+const MenuHome = lazy(() => import("../pages/user/menu/MenuHome"));
+const MenuList = lazy(() => import("../pages/user/menu/MenuList"));
+const NotFound = lazy(() => import("../pages/not-found/NotFound"));
+const NotAuthorized = lazy(() => import("../pages/not-authorized/NotAuthorized"));
+const CartPage = lazy(() => import("../pages/user/cart/CartPage"));
+const OrdersPage = lazy(() => import("../pages/user/orders/OrdersPage"));
+const AdminLayout = lazy(() => import("../pages/admin/AdminLayout"));
+const AdminDashboard = lazy(() => import("../pages/admin/Dashboard"));
+const MenuManagement = lazy(() => import("../pages/admin/MenuManagement"));
+const Register = lazy(() => import("../pages/Register"));
+const Login = lazy(() => import("../pages/Login"));
+const ForgotPassword = lazy(() => import("../pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("../pages/ResetPassword"));
+const VerifyEmail = lazy(() => import("../pages/VerifyEmail"));
+const PlatformAdminDashboard = lazy(() => import("../pages/platform-admin/Dashboard"));
+const PlatformAdminLayout = lazy(() => import("../pages/platform-admin/Layout"));
+const PlatformAdminLogin = lazy(() => import("../pages/platform-admin/Login"));
+const PlatformAdminOrders = lazy(() => import("../pages/platform-admin/Orders"));
+const PlatformAdminPayments = lazy(() => import("../pages/platform-admin/Payments"));
+const PlatformAdminRestaurants = lazy(() => import("../pages/platform-admin/Restaurants"));
+const PlatformAdminSubscriptions = lazy(() => import("../pages/platform-admin/Subscriptions"));
+const PlatformAdminUsers = lazy(() => import("../pages/platform-admin/Users"));
+const ProfilePage = lazy(() => import("../pages/ProfilePage"));
+const OrdersManagement = lazy(() => import("../pages/admin/OrdersManagementLive"));
+const Analytics = lazy(() => import("../pages/admin/Analytics"));
+// const Settings = lazy(() => import("../pages/admin/Settings"));
+const MenuFormPage = lazy(() => import("../pages/admin/components/MenuFormPage"));
+const AddUp = lazy(() => import("../pages/admin/AddUp"));
+const Accounts = lazy(() => import("../pages/admin/Accounts"));
+const Subscriptions = lazy(() => import("../pages/admin/Subscriptions"));
+const TableManagement = lazy(() => import("../pages/admin/TableManagement"));
+
+const SUBSCRIPTION_MANAGEMENT_ROLES: UserRole[] = ["ADMIN", "RESTRO_OWNER"];
 
 const withProtectedRoute = (
   element: ReactElement,
@@ -166,16 +169,16 @@ export const router = createBrowserRouter([
       },
       {
         path: "subscriptions",
-        element: <Subscriptions />,
+        element: withProtectedRoute(<Subscriptions />, SUBSCRIPTION_MANAGEMENT_ROLES),
       },
       {
         path: "analytics",
         element: <Analytics />,
       },
-      {
-        path: "settings",
-        element: <Settings />,
-      },
+      // {
+      //   path: "settings",
+      //   element: <Settings />,
+      // },
       {
         path: "addups",
         element: <AddUp />,

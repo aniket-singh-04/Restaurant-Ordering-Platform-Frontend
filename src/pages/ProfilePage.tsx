@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Camera, KeyRound, LogOut, MailCheck } from "lucide-react";
 import { CgProfile } from "react-icons/cg";
+import ThemeToggle from "../components/ThemeToggle";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { confirmPasswordChange, requestPasswordChangeOtp } from "../features/auth/api";
@@ -162,16 +163,17 @@ export default function ProfilePage() {
     }
   };
 
-  if (loading) return <div className="flex h-screen items-center justify-center">Loading profile...</div>;
-  if (!user) return <div className="flex h-screen items-center justify-center">No user found.</div>;
+  if (loading) return <div className="app-shell flex h-screen items-center justify-center">Loading profile...</div>;
+  if (!user) return <div className="app-shell flex h-screen items-center justify-center">No user found.</div>;
 
   return (
-    <div className="min-h-screen bg-[#fff9f2] px-4 py-6 sm:py-10">
-      <div className="mx-auto max-w-6xl space-y-6 sm:space-y-8">
+    <div className="app-shell min-h-screen px-4 py-6 sm:py-10">
+      <div className="app-container space-y-6 sm:space-y-8">
         <div className="flex items-center justify-start gap-3">
           <button type="button" onClick={() => goBackOrNavigate(navigate, "/", location.key)} className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg bg-[#ef6820] text-white shadow-md transition hover:bg-[#d85a1a] hover:shadow-lg" aria-label="Go back"><svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg></button>
           <div className="flex-1"></div>
           <div className="flex gap-2 sm:gap-3">
+            <ThemeToggle />
             <button type="button" onClick={() => navigate("/orders")} className="rounded-lg border-2 border-[#e5d5c6] px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-[#3b2f2f] transition hover:bg-[#fff9f2]">Orders</button>
             {user.role === "RESTRO_OWNER" && <button type="button" onClick={() => navigate("/admin")} className="rounded-lg bg-[#3b2f2f] px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold text-white shadow-md transition hover:bg-[#2a211f] hover:shadow-lg">Dashboard</button>}
           </div>

@@ -95,10 +95,11 @@ export default function AdminDashboard() {
     })) ?? [];
 
   return (
-    <div className="text-left space-y-8 bg-[#fff9f2] min-h-screen">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="min-h-screen space-y-8 text-left">
+      <header className="ui-card flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="font-serif text-2xl text-left font-bold text-[#3b2f2f]">
+          <p className="ui-eyebrow">Restaurant Overview</p>
+          <h1 className="font-display text-3xl text-left font-bold text-[#3b2f2f]">
             Dashboard
           </h1>
           <p className="text-[#6b665f]">
@@ -107,7 +108,7 @@ export default function AdminDashboard() {
         </div>
         <button
           type="button"
-          className="relative rounded-xl bg-linear-to-tr from-yellow-400 to-orange-500 p-3"
+          className="ui-icon-button warm-linear relative border-transparent p-3 text-white shadow-[var(--shadow-glow)]"
           aria-label="Open notifications"
         >
           <Bell className="w-5 h-5 text-white" />
@@ -125,10 +126,10 @@ export default function AdminDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.1 }}
-            className="bg-white rounded-xl shadow-md p-6"
+            className="ui-card rounded-[1.5rem]"
           >
             <div className="flex justify-between mb-4">
-              <div className="w-10 h-10 rounded-lg bg-[#fce8d8] flex items-center justify-center text-[#ef6820]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[color:var(--accent-soft)] text-[color:var(--accent)]">
                 <stat.icon className="w-6 h-6" />
               </div>
               <div
@@ -158,13 +159,13 @@ export default function AdminDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-white rounded-xl shadow-md p-6"
+          className="ui-card rounded-[1.5rem]"
         >
           <div className="flex justify-between items-center mb-6">
             <h2 className="font-serif font-semibold text-lg text-[#3b2f2f]">
               Recent Orders
             </h2>
-            <button type="button" className="text-[#3b2f2f] font-semibold">
+            <button type="button" className="text-[color:var(--accent)] font-semibold">
               View All
             </button>
           </div>
@@ -172,7 +173,7 @@ export default function AdminDashboard() {
             {recentOrders.map((order) => (
               <div
                 key={order.id}
-                className="flex justify-between items-center bg-[#fdf7f1] rounded-lg p-4"
+                className="flex items-center justify-between rounded-lg bg-[color:var(--surface-muted)] p-4"
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
@@ -207,20 +208,20 @@ export default function AdminDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-white rounded-xl shadow-md p-6"
+          className="ui-card rounded-[1.5rem]"
         >
           <h2 className="font-serif font-semibold text-lg text-[#3b2f2f] mb-6">
             Quick Actions
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <button type="button" className="text-left flex flex-col items-start gap-4 bg-[#fdf7f1] rounded-xl p-6">
+            <button type="button" className="flex flex-col items-start gap-4 rounded-xl bg-[color:var(--surface-muted)] p-6 text-left">
               <ShoppingBag className="text-[#ef6820] w-8 h-8" />
               <div>
                 <p className="font-semibold text-[#3b2f2f]">New Order</p>
                 <p className="text-[#6b665f] text-sm">Create manual order</p>
               </div>
             </button>
-            <button type="button" className="text-left flex flex-col items-start gap-4 bg-[#fdf7f1] rounded-xl p-6">
+            <button type="button" className="flex flex-col items-start gap-4 rounded-xl bg-[color:var(--surface-muted)] p-6 text-left">
               <TrendingUp className="text-[#22c55e] w-8 h-8" />
               <div>
                 <p className="font-semibold text-[#3b2f2f]">Reports</p>

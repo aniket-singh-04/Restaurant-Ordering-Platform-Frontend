@@ -21,10 +21,10 @@ type ToastContextValue = {
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 const variantStyles: Record<ToastVariant, string> = {
-  success: "border-emerald-500 text-emerald-700",
-  error: "border-red-500 text-red-700",
-  info: "border-blue-500 text-blue-700",
-  warning: "border-amber-500 text-amber-700",
+  success: "border-[color:color-mix(in_srgb,var(--success)_28%,transparent)] bg-[color:var(--success-soft)] text-[color:var(--success)]",
+  error: "border-[color:color-mix(in_srgb,var(--danger)_28%,transparent)] bg-[color:var(--danger-soft)] text-[color:var(--danger)]",
+  info: "border-[color:color-mix(in_srgb,var(--info)_28%,transparent)] bg-[color:var(--info-soft)] text-[color:var(--info)]",
+  warning: "border-[color:color-mix(in_srgb,var(--warning)_28%,transparent)] bg-[color:var(--warning-soft)] text-[color:var(--warning)]",
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -61,19 +61,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`rounded-xl border bg-white/95 p-4 shadow-lg backdrop-blur ${variantStyles[toast.variant ?? "info"]}`}
+            className={`rounded-[1.35rem] border p-4 shadow-[var(--shadow-md)] backdrop-blur ${variantStyles[toast.variant ?? "info"]}`}
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="font-semibold">{toast.title}</p>
+                <p className="font-semibold text-[color:var(--text-primary)]">{toast.title}</p>
                 {toast.description && (
-                  <p className="mt-1 text-sm text-gray-600">{toast.description}</p>
+                  <p className="mt-1 text-sm text-[color:var(--text-secondary)]">{toast.description}</p>
                 )}
               </div>
               <button
                 type="button"
                 onClick={() => dismissToast(toast.id)}
-                className="text-xs text-gray-500 hover:text-gray-700"
+                className="text-xs font-semibold text-[color:var(--text-muted)] transition hover:text-[color:var(--text-primary)]"
                 aria-label="Dismiss notification"
               >
                 Close

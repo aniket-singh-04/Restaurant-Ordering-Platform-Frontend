@@ -1,10 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { FaPhone } from "react-icons/fa";
 import { HiOutlineMailOpen } from "react-icons/hi";
-import { MdFoodBank, MdOutlineSms } from "react-icons/md";
+import { MdFoodBank, MdOutlinePassword, MdOutlineSms } from "react-icons/md";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
-import { CheckIcon, ChevronDownIcon } from "lucide-react";
+import ThemeToggle from "../components/ThemeToggle";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { isAdminPanelRole } from "../features/auth/access";
@@ -12,17 +11,13 @@ import {
   initiateRegistration,
   verifyRegistrationOtp,
   type AuthOtpChallenge,
+  type AuthSessionPayload,
 } from "../features/auth/api";
 import { setAuthToken } from "../features/auth/storage";
 import { authStore } from "../features/auth/store";
 import { mapAuthUser } from "../features/auth/user";
 import { getApiErrorMessage } from "../utils/apiErrorHelpers";
-import {
-  isStrongPassword,
-  isValidEmail,
-  isValidOtp,
-  isValidPhone,
-} from "../utils/validators";
+import { isStrongPassword, isValidEmail, isValidOtp, isValidPhone } from "../utils/validators";
 
 type UserRole = "RESTRO_OWNER" | "CUSTOMER";
 
@@ -37,6 +32,16 @@ interface RegisterForm {
 }
 
 const roles: UserRole[] = ["CUSTOMER", "RESTRO_OWNER"];
+
+const fieldShellClass =
+  "ui-field-shell";
+const fieldInputClass =
+  "w-full bg-transparent text-[15px] font-medium outline-none";
+const fieldLabelClass = "ui-field-label";
+const primaryButtonClass =
+  "ui-button ui-button-pill w-full justify-center text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60";
+const secondaryButtonClass =
+  "text-sm font-semibold text-[color:var(--accent)] transition hover:text-[color:var(--accent-hover)] disabled:cursor-not-allowed disabled:opacity-60";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -60,20 +65,21 @@ export default function Register() {
   const [resending, setResending] = useState(false);
 
   const validateRegistration = () => {
+    const nameValue = form.name.trim();
     const emailValue = form.email?.trim() ?? "";
     const phoneValue = form.phone?.trim() ?? "";
 
-    if (!form.name.trim()) {
+    if (!nameValue) {
       setError("Full name is required");
       return null;
     }
 
-    if (!emailValue && !phoneValue) {
-      setError("Email or phone is required");
+    if (!emailValue) {
+      setError("Email is required");
       return null;
     }
 
-    if (emailValue && !isValidEmail(emailValue)) {
+    if (!isValidEmail(emailValue)) {
       setError("Enter valid email");
       return null;
     }
@@ -104,15 +110,15 @@ export default function Register() {
     }
 
     return {
-      name: form.name.trim(),
-      email: emailValue || undefined,
+      name: nameValue,
+      email: emailValue,
       phone: phoneValue || undefined,
       password: form.password,
       role: form.role,
     };
   };
 
-  const persistSession = (payload: { accessToken: string; user: any }) => {
+  const persistSession = (payload: AuthSessionPayload) => {
     setAuthToken(payload.accessToken);
     const mappedUser = mapAuthUser(payload.user);
     authStore.setUser(mappedUser);
@@ -232,190 +238,277 @@ export default function Register() {
   const isOtpStep = Boolean(challenge?.challengeId);
 
   return (
-    <div className="min-h-screen flex justify-center items-center bg-linear-to-r from-orange-400 via-red-400 to-pink-400 px-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-xl">
-        <h2 className="flex items-center justify-center text-3xl font-bold mb-4">
-          Orderly <MdFoodBank className="ml-2" />
-        </h2>
-        <p className="text-center text-gray-500 mb-6">
-          {isOtpStep ? "Enter the verification code to finish signup" : "Create your account"}
-        </p>
-
-        {!isOtpStep ? (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="text"
-              placeholder="Full Name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="w-full p-3 border rounded-xl outline-none"
-            />
-
-            <div className="flex items-center border rounded-xl p-2">
-              <HiOutlineMailOpen />
-              <input
-                type="email"
-                placeholder="Enter Email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="flex-1 outline-none ml-2"
-              />
+    <div className="auth-shell">
+      <div className="auth-frame">
+        <div className="auth-theme-bar">
+          <ThemeToggle />
+        </div>
+        <div className="auth-card auth-grid">
+          <section className="auth-aside hidden lg:flex lg:flex-col lg:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium">
+                <MdFoodBank className="text-xl" />
+                Orderly
+              </div>
+              <h1 className="mt-8 font-display text-4xl font-semibold leading-tight">
+                Start with a verified account that fits your role.
+              </h1>
+              <p className="mt-4 max-w-md text-sm leading-6 text-[#ffe6cf]">
+                Registration uses email verification first, then signs you in. Phone
+                number stays optional, but email is required for OTP delivery and account
+                recovery.
+              </p>
             </div>
 
-            <div className="flex items-center border rounded-xl p-2">
-              <FaPhone />
-              <input
-                type="tel"
-                placeholder="Enter Phone Number"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                className="flex-1 outline-none ml-2"
-              />
+            <div className="rounded-3xl border border-white/10 bg-white/10 p-5 text-sm leading-6 text-[#fff0e1]">
+              Choose <strong>Customer</strong> for ordering access or{" "}
+              <strong>Restaurant Owner</strong> if you manage restaurant operations.
             </div>
+          </section>
 
-            <div className="flex items-center mb-4 gap-2">
-              <label className="text-xl font-semibold text-black-500">Role:</label>
-
-              <Listbox
-                value={form.role}
-                onChange={(value) => setForm({ ...form, role: value })}
-              >
-                <div className="relative w-full">
-                  <ListboxButton
-                    className="cursor-pointer w-full rounded-md border border-black bg-white px-3 py-2 text-sm flex justify-between items-center hover:border-gray-700"
-                  >
-                    <span>{form.role}</span>
-                    <ChevronDownIcon className="h-4 w-4 text-gray-500" />
-                  </ListboxButton>
-
-                  <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-black bg-white shadow-lg">
-                    {roles.map((r) => (
-                      <ListboxOption
-                        key={r}
-                        value={r}
-                        className={({ focus }) =>
-                          `cursor-pointer px-3 py-2 text-sm ${
-                            focus ? "bg-gray-100 text-black" : "text-gray-900"
-                          }`
-                        }
-                      >
-                        {({ selected }) => (
-                          <div className="flex justify-between items-center">
-                            <span>{r}</span>
-                            {selected && (
-                              <CheckIcon className="h-4 w-4 text-black" />
-                            )}
-                          </div>
-                        )}
-                      </ListboxOption>
-                    ))}
-                  </ListboxOptions>
+          <section className="auth-body">
+            <div className="mx-auto w-full max-w-md">
+              <div className="mb-8">
+                <div className="inline-flex items-center gap-2 rounded-full bg-[color:var(--surface-muted)] px-4 py-2 text-sm font-medium text-[color:var(--accent)] lg:hidden">
+                  <MdFoodBank className="text-lg" />
+                  Orderly
                 </div>
-              </Listbox>
+                <h2 className="mt-4 font-display text-3xl font-semibold text-[color:var(--text-primary)]">
+                  {isOtpStep ? "Verify Your Account" : "Create Your Account"}
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-[color:var(--text-secondary)]">
+                  {isOtpStep
+                    ? "Enter the verification code from your inbox to finish setup."
+                    : "Set up your account with the essentials below. We will verify your email before activation."}
+                </p>
+              </div>
+
+              {!isOtpStep ? (
+                <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+                  <div>
+                    <label htmlFor="register-name" className={fieldLabelClass}>
+                      Full Name
+                    </label>
+                    <div className={fieldShellClass}>
+                      <MdFoodBank className="text-xl text-[color:var(--accent)]" aria-hidden="true" />
+                      <input
+                        id="register-name"
+                        type="text"
+                        autoComplete="name"
+                        placeholder="Enter your full name"
+                        value={form.name}
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        className={fieldInputClass}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="register-email" className={fieldLabelClass}>
+                      Email Address
+                    </label>
+                    <div className={fieldShellClass}>
+                      <HiOutlineMailOpen className="text-xl text-[color:var(--accent)]" aria-hidden="true" />
+                      <input
+                        id="register-email"
+                        type="email"
+                        autoComplete="email"
+                        placeholder="Enter your email"
+                        value={form.email}
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        className={fieldInputClass}
+                      />
+                    </div>
+                    <p className="ui-helper-text">
+                      Required for OTP verification, sign-in, and account recovery.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label htmlFor="register-phone" className={fieldLabelClass}>
+                      Phone Number
+                    </label>
+                    <div className={fieldShellClass}>
+                      <FaPhone className="text-[color:var(--accent)]" aria-hidden="true" />
+                      <input
+                        id="register-phone"
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel"
+                        placeholder="Optional"
+                        value={form.phone}
+                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                        className={fieldInputClass}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="register-role" className={fieldLabelClass}>
+                      Account Type
+                    </label>
+                    <div className="ui-field-shell">
+                      <select
+                        id="register-role"
+                        value={form.role}
+                        onChange={(e) =>
+                          setForm({ ...form, role: e.target.value as UserRole })
+                        }
+                        className="w-full bg-transparent text-[15px] font-medium outline-none"
+                      >
+                        {roles.map((role) => (
+                          <option key={role} value={role}>
+                            {role === "RESTRO_OWNER" ? "Restaurant Owner" : "Customer"}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="register-password" className={fieldLabelClass}>
+                      Password
+                    </label>
+                    <div className={fieldShellClass}>
+                      <MdOutlinePassword className="text-xl text-[color:var(--accent)]" aria-hidden="true" />
+                      <input
+                        id="register-password"
+                        type="password"
+                        autoComplete="new-password"
+                        placeholder="Create a password"
+                        value={form.password}
+                        onChange={(e) => setForm({ ...form, password: e.target.value })}
+                        className={fieldInputClass}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="register-confirm-password" className={fieldLabelClass}>
+                      Confirm Password
+                    </label>
+                    <div className={fieldShellClass}>
+                      <MdOutlinePassword className="text-xl text-[color:var(--accent)]" aria-hidden="true" />
+                      <input
+                        id="register-confirm-password"
+                        type="password"
+                        autoComplete="new-password"
+                        placeholder="Re-enter your password"
+                        value={form.confirmPassword}
+                        onChange={(e) =>
+                          setForm({ ...form, confirmPassword: e.target.value })
+                        }
+                        className={fieldInputClass}
+                      />
+                    </div>
+                  </div>
+
+                  <label className="flex items-start gap-3 rounded-2xl border border-[color:var(--border-subtle)] bg-[color:var(--surface)] px-4 py-3 text-sm text-[color:var(--text-secondary)]">
+                    <input
+                      type="checkbox"
+                      checked={form.acceptTerms}
+                      onChange={(e) =>
+                        setForm({ ...form, acceptTerms: e.target.checked })
+                      }
+                      className="mt-1 h-4 w-4 rounded border-[color:var(--border-strong)] text-[color:var(--accent)]"
+                    />
+                    <span>I accept the Terms of Service and Privacy Policy.</span>
+                  </label>
+
+                  {error ? (
+                    <p
+                      className="rounded-2xl border border-[color:color-mix(in_srgb,var(--danger)_24%,transparent)] bg-[color:var(--danger-soft)] px-4 py-3 text-sm text-[color:var(--danger)]"
+                      role="alert"
+                      aria-live="polite"
+                    >
+                      {error}
+                    </p>
+                  ) : null}
+
+                  <button type="submit" disabled={loading} className={primaryButtonClass}>
+                    {loading ? "Sending OTP..." : "Continue"}
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleVerify} className="space-y-5" noValidate>
+                  <div className="rounded-3xl border border-[color:color-mix(in_srgb,var(--accent)_24%,transparent)] bg-[color:var(--accent-soft)] px-4 py-4 text-sm text-[color:var(--accent)]">
+                    <p className="font-medium text-[color:var(--text-primary)]">Verification code sent</p>
+                    <p className="mt-1 leading-6">
+                      {challenge?.message ||
+                        `Enter the code sent to ${challenge?.maskedEmail ?? "your email"}.`}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label htmlFor="register-otp" className={fieldLabelClass}>
+                      One-Time Password
+                    </label>
+                    <div className={fieldShellClass}>
+                      <MdOutlineSms className="text-xl text-[color:var(--accent)]" aria-hidden="true" />
+                      <input
+                        id="register-otp"
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        placeholder="Enter the OTP"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        className={fieldInputClass}
+                      />
+                    </div>
+                  </div>
+
+                  {error ? (
+                    <p
+                      className="rounded-2xl border border-[color:color-mix(in_srgb,var(--danger)_24%,transparent)] bg-[color:var(--danger-soft)] px-4 py-3 text-sm text-[color:var(--danger)]"
+                      role="alert"
+                      aria-live="polite"
+                    >
+                      {error}
+                    </p>
+                  ) : null}
+
+                  <button type="submit" disabled={verifying} className={primaryButtonClass}>
+                    {verifying ? "Verifying..." : "Verify OTP"}
+                  </button>
+
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setChallenge(null);
+                        setOtp("");
+                        setError("");
+                      }}
+                      className={secondaryButtonClass}
+                    >
+                      Edit details
+                    </button>
+                    <button
+                      type="button"
+                      disabled={resending}
+                      onClick={() => void handleResend()}
+                      className={secondaryButtonClass}
+                    >
+                      {resending ? "Resending..." : "Resend OTP"}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              <p className="mt-6 border-t border-[color:var(--border-subtle)] pt-5 text-sm text-[color:var(--text-secondary)]">
+                Already have an account?
+                <button
+                  type="button"
+                  className="ml-1 font-semibold text-[color:var(--accent)] transition hover:text-[color:var(--accent-hover)]"
+                  onClick={() => navigate("/login")}
+                >
+                  Sign in
+                </button>
+              </p>
             </div>
-
-            <input
-              type="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="w-full p-3 border rounded-xl outline-none"
-            />
-
-            <input
-              type="password"
-              placeholder="Confirm Password"
-              value={form.confirmPassword}
-              onChange={(e) =>
-                setForm({ ...form, confirmPassword: e.target.value })
-              }
-              className="w-full p-3 border rounded-xl outline-none"
-            />
-
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={form.acceptTerms}
-                onChange={(e) =>
-                  setForm({ ...form, acceptTerms: e.target.checked })
-                }
-              />
-              <span className="text-sm text-gray-600">
-                I accept Terms & Privacy Policy
-              </span>
-            </div>
-
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition disabled:opacity-60"
-            >
-              {loading ? "Sending OTP..." : "Continue"}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleVerify} className="space-y-4">
-            <div className="rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-800">
-              {challenge?.message ||
-                `Enter the code sent to ${challenge?.maskedEmail ?? "your email"}.`}
-            </div>
-
-            <div className="flex items-center border rounded-xl p-2">
-              <MdOutlineSms />
-              <input
-                type="text"
-                placeholder="Enter OTP"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                className="flex-1 outline-none ml-2"
-              />
-            </div>
-
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-
-            <button
-              type="submit"
-              disabled={verifying}
-              className="w-full py-3 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition disabled:opacity-60"
-            >
-              {verifying ? "Verifying..." : "Verify OTP"}
-            </button>
-
-            <div className="flex items-center justify-between text-sm">
-              <button
-                type="button"
-                onClick={() => {
-                  setChallenge(null);
-                  setOtp("");
-                  setError("");
-                }}
-                className="text-gray-600 hover:underline cursor-pointer"
-              >
-                Edit details
-              </button>
-              <button
-                type="button"
-                disabled={resending}
-                onClick={() => void handleResend()}
-                className="text-blue-600 hover:underline cursor-pointer disabled:opacity-60"
-              >
-                {resending ? "Resending..." : "Resend OTP"}
-              </button>
-            </div>
-          </form>
-        )}
-
-        <p className="text-sm text-gray-600 mt-2">
-          Already have an account?
-          <button
-            className="text-blue-600 hover:underline font-medium cursor-pointer"
-            onClick={() => navigate("/login")}
-          >
-            &nbsp;Sign in here
-          </button>
-        </p>
+          </section>
+        </div>
       </div>
     </div>
   );

@@ -27,44 +27,39 @@ export function FilterListBox({
   return (
     <div className="relative">
       {label && (
-        <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-gray-500">
+        <label className="ui-field-label">
           {label}
         </label>
       )}
 
       <Listbox value={value} onChange={onChange}>
         <div className="relative">
-          {/* Button */}
           <ListboxButton
-            className={`w-full rounded-xl px-4 py-3 text-left text-sm transition-all duration-200 ${
-              value
-                ? "bg-white border border-gray-300 text-gray-900"
-                : "bg-white border border-gray-200 text-gray-400"
-            } hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-500`}
+            className={`ui-select pr-11 text-left text-sm font-medium ${
+              value ? "text-[color:var(--text-primary)]" : "text-[color:var(--text-muted)]"
+            }`}
           >
             <span className="block truncate pr-10">{selectedLabel}</span>
 
-            {/* Icons wrapper */}
             <span className="absolute inset-y-0 right-3 flex items-center gap-2">
               {value && (
                 <button
                   type="button"
                   onClick={(e) => {
-                    e.stopPropagation(); // prevent dropdown open
+                    e.stopPropagation();
                     onChange("");
                   }}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="rounded-full p-1 text-[color:var(--text-muted)] transition hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--accent)]"
                 >
                   <X className="h-4 w-4" />
                 </button>
               )}
 
-              <ChevronDown className="h-5 w-5 text-gray-400" />
+              <ChevronDown className="h-5 w-5 text-[color:var(--text-muted)]" />
             </span>
           </ListboxButton>
 
-          {/* Options */}
-          <ListboxOptions className="absolute left-0 w-full mt-2 max-h-60 overflow-auto rounded-xl border border-gray-100 bg-white shadow-lg z-50">
+          <ListboxOptions className="absolute left-0 z-50 mt-2 max-h-60 w-full overflow-auto rounded-[1.25rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface-strong)] p-1 shadow-[var(--shadow-md)]">
             {options.length > 0 ? (
               options.map((option) => (
                 <ListboxOption
@@ -74,11 +69,13 @@ export function FilterListBox({
                 >
                   {({ focus, selected }) => (
                     <li
-                      className={`flex items-center justify-between px-4 py-2.5 text-sm cursor-pointer transition-all ${
-                        focus ? "bg-orange-50 text-gray-900" : "text-gray-700"
+                      className={`flex cursor-pointer items-center justify-between rounded-[1rem] px-4 py-2.5 text-sm transition-all ${
+                        focus
+                          ? "bg-[color:var(--accent-soft)] text-[color:var(--text-primary)]"
+                          : "text-[color:var(--text-secondary)]"
                       } ${
                         selected
-                          ? "bg-orange-100 font-medium text-orange-600"
+                          ? "bg-[color:var(--accent-soft-strong)] font-semibold text-[color:var(--accent)]"
                           : ""
                       }`}
                     >
@@ -86,7 +83,7 @@ export function FilterListBox({
 
                       <Check
                         className={`h-4 w-4 transition-opacity ${
-                          selected ? "opacity-100 text-orange-600" : "opacity-0"
+                          selected ? "opacity-100 text-[color:var(--accent)]" : "opacity-0"
                         }`}
                       />
                     </li>
@@ -94,7 +91,7 @@ export function FilterListBox({
                 </ListboxOption>
               ))
             ) : (
-              <li className="px-4 py-3 text-center text-sm text-gray-400">
+              <li className="px-4 py-3 text-center text-sm text-[color:var(--text-muted)]">
                 No options available
               </li>
             )}

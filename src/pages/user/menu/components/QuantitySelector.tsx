@@ -15,46 +15,26 @@ export default function QuantitySelector({
   const increase = () => setQuantity(quantity + 1);
 
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-orange-50 p-2">
-      {/* Minus */}
+    <div className="flex items-center gap-3 rounded-[1.25rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface)] p-2 shadow-[var(--shadow-sm)]">
       <button
         type="button"
         aria-label="Decrease quantity"
         onClick={decrease}
         disabled={quantity <= min}
-        className="
-          cursor-pointer
-          h-10 w-10 rounded-lg
-          flex items-center justify-center
-          bg-white text-orange-500
-          shadow
-          hover:bg-orange-100
-          disabled:opacity-40 disabled:cursor-not-allowed
-          transition
-        "
+        className="flex h-10 w-10 items-center justify-center rounded-[1rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface-muted)] text-[color:var(--accent)] shadow-sm transition hover:bg-[color:var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-40"
       >
         <Minus className="h-4 w-4" />
       </button>
 
-      {/* Quantity */}
-      <span className="w-6 text-center text-lg font-bold text-gray-800 select-none">
+      <span className="w-6 select-none text-center text-lg font-bold text-[color:var(--text-primary)]">
         {quantity}
       </span>
 
-      {/* Plus */}
       <button
         type="button"
         aria-label="Increase quantity"
         onClick={increase}
-        className="
-          cursor-pointer
-          h-10 w-10 rounded-lg
-          flex items-center justify-center
-          bg-orange-500 text-white
-          shadow
-          hover:bg-orange-600
-          transition
-        "
+        className="flex h-10 w-10 items-center justify-center rounded-[1rem] bg-[color:var(--accent)] text-white shadow-sm transition hover:bg-[color:var(--accent-hover)]"
       >
         <Plus className="h-4 w-4" />
       </button>

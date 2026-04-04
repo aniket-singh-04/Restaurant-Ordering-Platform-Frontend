@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { HiOutlineMailOpen } from "react-icons/hi";
 import { FaPhone } from "react-icons/fa";
+import ThemeToggle from "../components/ThemeToggle";
 import { requestPasswordReset } from "../features/auth/api";
 import { getApiErrorMessage } from "../utils/apiErrorHelpers";
 import { isValidEmail, isValidPhone } from "../utils/validators";
@@ -66,73 +67,97 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-r from-orange-400 via-red-400 to-pink-400 px-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-xl">
-        <h2 className="text-2xl font-bold mb-2 text-center">Reset Password</h2>
-        <p className="text-sm text-gray-500 text-center mb-6">
-          Enter your email or phone number. We will send a password reset link to the
-          account email.
-        </p>
+    <div className="state-shell">
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="auth-theme-bar">
+          <ThemeToggle />
+        </div>
+        <div className="state-card px-6 py-8 sm:px-8">
+          <div className="mx-auto max-w-md">
+            <p className="ui-eyebrow text-center">Account Recovery</p>
+            <h2 className="mt-3 text-center font-display text-3xl font-semibold text-[color:var(--text-primary)]">
+              Reset Password
+            </h2>
+            <p className="mt-3 text-center text-sm text-[color:var(--text-secondary)]">
+              Enter your email or phone number. We will send a password reset link to the
+              account email.
+            </p>
 
-        {!requested ? (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex items-center border rounded-xl p-2">
-              <HiOutlineMailOpen />
-              <input
-                type="email"
-                placeholder="Enter Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 outline-none ml-2"
-              />
-            </div>
+            {!requested ? (
+              <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+                <div>
+                  <label className="ui-field-label" htmlFor="forgot-email">
+                    Email Address
+                  </label>
+                  <div className="ui-field-shell">
+                    <HiOutlineMailOpen className="text-[color:var(--accent)]" />
+                    <input
+                      id="forgot-email"
+                      type="email"
+                      placeholder="Enter email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
+                </div>
 
-            <div className="flex items-center border rounded-xl p-2">
-              <FaPhone />
-              <input
-                type="tel"
-                placeholder="Enter Phone Number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="flex-1 outline-none ml-2"
-              />
-            </div>
+                <div>
+                  <label className="ui-field-label" htmlFor="forgot-phone">
+                    Phone Number
+                  </label>
+                  <div className="ui-field-shell">
+                    <FaPhone className="text-[color:var(--accent)]" />
+                    <input
+                      id="forgot-phone"
+                      type="tel"
+                      placeholder="Enter phone number"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                    />
+                  </div>
+                </div>
 
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+                {error ? (
+                  <p className="rounded-2xl border border-[color:color-mix(in_srgb,var(--danger)_24%,transparent)] bg-[color:var(--danger-soft)] px-4 py-3 text-sm text-[color:var(--danger)]">
+                    {error}
+                  </p>
+                ) : null}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition disabled:opacity-60"
-            >
-              {loading ? "Sending..." : "Send Reset Link"}
-            </button>
-          </form>
-        ) : (
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
-              {successMessage}
-            </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="ui-button ui-button-pill w-full justify-center text-sm font-semibold disabled:opacity-60"
+                >
+                  {loading ? "Sending..." : "Send Reset Link"}
+                </button>
+              </form>
+            ) : (
+              <div className="mt-8 space-y-4">
+                <div className="rounded-2xl border border-[color:color-mix(in_srgb,var(--success)_24%,transparent)] bg-[color:var(--success-soft)] px-4 py-4 text-sm text-[color:var(--success)]">
+                  {successMessage}
+                </div>
 
-            <button
-              type="button"
-              onClick={() => navigate("/login")}
-              className="w-full rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
-            >
-              Back to login
-            </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/login")}
+                  className="ui-button-secondary ui-button-pill w-full justify-center text-sm font-semibold"
+                >
+                  Back to login
+                </button>
+              </div>
+            )}
+
+            {!requested && (
+              <button
+                type="button"
+                onClick={() => navigate("/login")}
+                className="mt-5 text-sm font-semibold text-[color:var(--accent)] transition hover:text-[color:var(--accent-hover)]"
+              >
+                Back to login
+              </button>
+            )}
           </div>
-        )}
-
-        {!requested && (
-          <button
-            type="button"
-            onClick={() => navigate("/login")}
-            className="mt-4 text-sm text-blue-600 hover:underline"
-          >
-            Back to login
-          </button>
-        )}
+        </div>
       </div>
     </div>
   );
