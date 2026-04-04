@@ -134,9 +134,9 @@ export default function OrdersManagementLive() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fff9f2] text-left">
-      <header className="border-b border-[#eedbc8] bg-white shadow-xs sticky top-0 z-10">
-        <div className="mx-auto max-w-7xl px-2 sm:px-3 py-2 sm:py-3">
+    <div className="min-h-screen text-left">
+      <header className="ui-card border-b border-[#eedbc8] bg-white shadow-xs sticky top-0 z-10">
+        <div className="mx-auto max-w-7xl">
           <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0 flex-1">
               <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#3b2f2f] truncate">Orders</h1>
@@ -156,7 +156,7 @@ export default function OrdersManagementLive() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      <main className="mx-auto mt-5 space-y-6">
         {/* Filter Section */}
         <div className="bg-white rounded-lg border border-[#e5d5c6] p-4 sm:p-5">
           <p className="text-xs uppercase font-bold tracking-widest text-[#8d7967] mb-3">Order Status</p>
@@ -167,8 +167,8 @@ export default function OrdersManagementLive() {
                 type="button"
                 onClick={() => setFilter(status)}
                 className={`cursor-pointer rounded-full px-4 py-2 text-sm font-semibold transition whitespace-nowrap ${filter === status
-                    ? "bg-[#ef6820] text-white shadow-md"
-                    : "border border-[#e5d5c6] bg-white text-[#3b2f2f] hover:border-[#ef6820]"
+                  ? "bg-[#ef6820] text-white shadow-md"
+                  : "border border-[#e5d5c6] bg-white text-[#3b2f2f] hover:border-[#ef6820]"
                   }`}
               >
                 {status}
@@ -198,13 +198,12 @@ export default function OrdersManagementLive() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 flex-wrap">
                           <h3 className="font-mono text-lg sm:text-xl font-bold text-[#3b2f2f]">#{order.id.slice(-6).toUpperCase()}</h3>
-                          <span className={`rounded-md px-3 py-1 text-xs font-bold text-white shrink-0 ${
-                            order.OrderStatus === "COMPLETED" ? "bg-emerald-600" :
+                          <span className={`rounded-md px-3 py-1 text-xs font-bold text-white shrink-0 ${order.OrderStatus === "COMPLETED" ? "bg-emerald-600" :
                             order.OrderStatus === "CANCELLED" ? "bg-red-600" :
-                            order.OrderStatus === "READY" ? "bg-blue-600" :
-                            order.OrderStatus === "PREPARING" ? "bg-amber-600" :
-                            "bg-slate-700"
-                          }`}>
+                              order.OrderStatus === "READY" ? "bg-blue-600" :
+                                order.OrderStatus === "PREPARING" ? "bg-amber-600" :
+                                  "bg-slate-700"
+                            }`}>
                             {order.OrderStatus}
                           </span>
                         </div>

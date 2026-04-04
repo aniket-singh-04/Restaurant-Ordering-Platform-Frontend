@@ -15,14 +15,14 @@ export default function MenuSearchBar({
   className = "",
 }: MenuSearchBarProps) {
   return (
-    <div className={`relative flex gap-3 ${className}`}>
-      <div className="relative flex-1">
-        <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[color:var(--text-muted)]" />
+    <div className={`relative flex flex-col gap-3 sm:flex-row ${className}`}>
+      <div className="relative min-w-0 flex-1 gap-2">
+        <Search className="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2" />
         <input
           value={value}
           onChange={onChange}
           placeholder="Search for dishes..."
-          className="ui-input h-12 pl-12 disabled:cursor-not-allowed disabled:opacity-50"
+          className="ui-input h-12 pl-11! disabled:cursor-not-allowed disabled:opacity-50"
         />
       </div>
 

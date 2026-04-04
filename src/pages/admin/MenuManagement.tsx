@@ -136,8 +136,8 @@ export default function MenuManagement() {
   const isPageLoading = authLoading || loading;
 
   return (
-    <div className="min-h-screen bg-[#fff9f2] space-y-8 text-left">
-      <div className="flex flex-col md:flex-row justify-between gap-4">
+    <div className="min-h-screen space-y-8 text-left">
+      <div className="ui-card flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-[#3b2f2f]">
             Menu Management
@@ -169,7 +169,7 @@ export default function MenuManagement() {
         </div>
       ) : null}
 
-      <div className="flex flex-col lg:flex-row gap-4">
+      <div className="ui-card flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1">
           <Search
             size={18}
@@ -190,7 +190,7 @@ export default function MenuManagement() {
             multiple
           >
             <div className="relative">
-              <ListboxButton className="cursor-pointer w-full rounded-xl border border-[#e5d5c6] bg-[#fff9f2] px-4 py-3 text-left focus:outline-none flex items-center justify-between">
+              <ListboxButton className="cursor-pointer w-full rounded-xl border border-[#e5d5c6] px-4 py-3 text-left focus:outline-none flex items-center justify-between">
                 <span className="truncate text-gray-600">
                   {selectedBranches.length > 0
                     ? user?.branchIds
@@ -207,7 +207,7 @@ export default function MenuManagement() {
                   user.branchIds.map(({ _id, name }) => (
                     <ListboxOption
                       key={_id}
-                      value={_id} 
+                      value={_id}
                       className={({ focus }) =>
                         `cursor-pointer select-none px-4 py-2 flex items-center justify-between ${focus ? "bg-orange-100 text-orange-700" : "text-gray-700"
                         }`
@@ -252,14 +252,14 @@ export default function MenuManagement() {
           <div className="text-center py-20 text-gray-500">Loading menu...</div>
         ) : pagedItems.length ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="ui-card grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {pagedItems.map((item) => (
                 <div
                   key={item._id ?? item.name}
                   className="bg-white rounded-xl shadow-sm hover:shadow-lg transition border border-orange-100 overflow-hidden"
                 >
                   <div className="h-44 overflow-hidden">
-                    
+
                     <MenuImageToggle
                       items={{
                         name: item.name,
@@ -319,7 +319,7 @@ export default function MenuManagement() {
               ))}
             </div>
 
-            <div className="flex items-center justify-between pt-4">
+            <div className="ui-card flex items-center justify-between pt-4">
               <p className="text-sm text-gray-500">
                 Page {page} of {totalPages}
               </p>

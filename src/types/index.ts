@@ -6,17 +6,36 @@ export interface Category {
   itemCount: number;
 }
 
+export const normalizeCategoryId = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const menuCategoryDefinitions = [
+  { name: "Core Meal", icon: "CM" },
+  { name: "Protein-Based", icon: "PB" },
+  { name: "Cuisine", icon: "C" },
+  { name: "Fast Food", icon: "FF" },
+  { name: "Desserts", icon: "D" },
+  { name: "Beverages", icon: "BV" },
+  { name: "Health", icon: "H" },
+  { name: "Breakfast", icon: "B" },
+  { name: "Specials", icon: "S" },
+] as const;
+
+export const menuCategoryNames = menuCategoryDefinitions.map(({ name }) => name);
+
 export const categories: Category[] = [
-  { id: "all", name: "All", icon: "ALL", itemCount: 12 },
-  { id: "core-meal", name: "Core Meal", icon: "CM", itemCount: 0 },
-  { id: "protein-based", name: "Protein-Based", icon: "PB", itemCount: 0 },
-  { id: "cuisine", name: "Cuisine", icon: "C", itemCount: 0 },
-  { id: "fast-food", name: "Fast Food", icon: "FF", itemCount: 0 },
-  { id: "desserts", name: "Desserts", icon: "D", itemCount: 0 },
-  { id: "beverages", name: "Beverages", icon: "BV", itemCount: 0 },
-  { id: "health", name: "Health", icon: "H", itemCount: 0 },
-  { id: "breakfast", name: "Breakfast", icon: "B", itemCount: 0 },
-  { id: "specials", name: "Specials", icon: "S", itemCount: 0 },
+  { id: "all", name: "All", icon: "ALL", itemCount: 0 },
+  ...menuCategoryDefinitions.map(({ name, icon }) => ({
+    id: normalizeCategoryId(name),
+    name,
+    icon,
+    itemCount: 0,
+  })),
 ];
 
 export interface AddOn {
@@ -70,4 +89,3 @@ export interface Menu {
   createdAt?: string;
   updatedAt?: string;
 }
-

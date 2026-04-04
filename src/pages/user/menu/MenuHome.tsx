@@ -77,7 +77,7 @@ export default function MenuHome() {
         animate={{ opacity: 1, y: 0 }}
         className="ui-hero mt-2 p-6 sm:p-7"
       >
-        <div className="relative z-10 max-w-md text-left sm:max-w-lg md:max-w-xl">
+        <div className="relative z-10 text-left">
           <p className="ui-eyebrow !text-white/72">Featured Experience</p>
           <h1 className="mb-1 mt-3 font-display text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             Discover Flavors <br /> in 3D
@@ -135,14 +135,14 @@ export default function MenuHome() {
           transition={{ delay: 0.3 }}
           className="ui-card"
         >
-          <div className="mb-5 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
+          <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-2">
               <TrendingUp className="h-5 w-5 text-[color:var(--accent)]" />
               <h2 className="font-display text-2xl font-semibold text-[color:var(--text-primary)]">Top Picks</h2>
             </div>
             <button
               type="button"
-              className="ui-button-secondary ui-button-pill px-4 text-sm font-semibold"
+              className="ui-button-secondary ui-button-pill w-full px-4 text-sm font-semibold sm:w-auto"
               onClick={() => navigate(buildQrMenuPath(qrId))}
             >
               View All

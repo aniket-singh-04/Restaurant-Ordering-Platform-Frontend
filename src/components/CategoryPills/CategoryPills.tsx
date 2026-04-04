@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { CategoryPillsProps } from "./types";
 
 export default function CategoryPills({
@@ -5,30 +6,55 @@ export default function CategoryPills({
   activeCategory,
   onSelect,
 }: CategoryPillsProps) {
+  const pillRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  useEffect(() => {
+    const activePill = pillRefs.current[activeCategory];
+    if (!activePill) {
+      return;
+    }
+
+    activePill.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+  }, [activeCategory, categories]);
+
   return (
-    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
-      {categories.map((category) => {
-        const isActive = activeCategory === category.id;
-        return (
-          <button
-            key={category.id}
-            onClick={() => onSelect(category.id)}
-            className={`
-              flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2.5
+    <div
+      className="scrollbar-thin min-w-0 max-w-full w-full overflow-x-auto overscroll-x-contain pb-2"
+      style={{ WebkitOverflowScrolling: "touch" }}
+      aria-label="Menu categories"
+    >
+      <div className="flex w-max snap-x snap-mandatory gap-2 pr-1">
+        {categories.map((category) => {
+          const isActive = activeCategory === category.id;
+          return (
+            <button
+              key={category.id}
+              ref={(node) => {
+                pillRefs.current[category.id] = node;
+              }}
+              type="button"
+              onClick={() => onSelect(category.id)}
+              aria-pressed={isActive}
+              className={`
+              flex shrink-0 snap-start items-center gap-2 whitespace-nowrap rounded-full px-4 py-2.5
               text-sm font-semibold transition-all duration-300 ease-out
               active:scale-95 focus:outline-none
-              ${
-                isActive
+              ${isActive
                   ? "warm-linear text-white shadow-[var(--shadow-glow)]"
                   : "border border-[color:var(--border-subtle)] bg-[color:var(--surface)] text-[color:var(--text-secondary)] hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
-              }
+                }
             `}
-          >
-            <span className="text-lg">{category.icon}</span>
-            <span>{category.name}</span>
-          </button>
-        );
-      })}
+            >
+              <span className="text-lg">{category.icon}</span>
+              <span>{category.name}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

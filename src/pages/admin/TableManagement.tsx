@@ -362,13 +362,13 @@ export default function TableManagement() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl border border-[#eadbca] bg-white p-6 shadow-sm">
+      <section className="ui-card bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-sm font-medium uppercase tracking-[0.2em] text-orange-600">
               Table QR Management
             </p>
-            <h1 className="mt-2 text-3xl font-semibold text-[#2f241d]">
+            <h1 className="mt-2 text-3xl font-semibold">
               Branch Table Operations & QR Control
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-[#6d5c4d]">
@@ -377,21 +377,21 @@ export default function TableManagement() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 rounded-2xl bg-[#fff8ef] p-4 text-center text-sm text-[#6d5c4d]">
+          <div className="grid grid-cols-2 gap-3 rounded-2xl p-4 text-center text-sm ">
             <div>
-              <p className="text-2xl font-semibold text-[#2f241d]">{branches.length}</p>
+              <p className="text-2xl font-semibold">{branches.length}</p>
               <p>Accessible Branches</p>
             </div>
             <div>
-              <p className="text-2xl font-semibold text-[#2f241d]">{totalTables}</p>
+              <p className="text-2xl font-semibold">{totalTables}</p>
               <p>Total QR Tables</p>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="rounded-3xl border border-[#eadbca] bg-[#fff8ef] p-6 shadow-sm">
-        <div className="mb-4 flex items-center gap-2 text-[#2f241d]">
+      <section className="ui-card p-6 shadow-sm">
+        <div className="mb-4 flex items-center gap-2">
           <Plus className="h-5 w-5 text-orange-500" />
           <h2 className="text-xl font-semibold">Create a New Table QR</h2>
         </div>
@@ -576,7 +576,7 @@ export default function TableManagement() {
       </section>
 
       {!branches.length && !loading ? (
-        <section className="rounded-3xl border border-dashed border-[#d9c1a8] bg-white px-6 py-8 text-center text-[#6d5c4d]">
+        <section className="ui-card bg-white px-6 py-8 text-center text-[#6d5c4d]">
           No accessible branches were found for your account yet.
         </section>
       ) : null}
@@ -588,11 +588,11 @@ export default function TableManagement() {
         return (
           <section
             key={branch.id}
-            className="rounded-3xl border border-[#eadbca] bg-white p-6 shadow-sm"
+            className="ui-card bg-white p-6 shadow-sm"
           >
             <div className="flex flex-col gap-3 border-b border-[#f0e3d5] pb-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <h2 className="text-2xl font-semibold text-[#2f241d]">{branch.name}</h2>
+                <h2 className="text-2xl font-semibold">{branch.name}</h2>
                 <p className="mt-1 text-sm text-[#6d5c4d]">
                   {branch.city ? `${branch.city} - ` : ""}
                   {tables.length} table QR codes
@@ -628,7 +628,7 @@ export default function TableManagement() {
                           <p className="text-xs uppercase tracking-[0.16em] text-orange-600">
                             Table QR
                           </p>
-                          <h3 className="mt-1 text-xl font-semibold text-[#2f241d]">
+                          <h3 className="mt-1 text-xl font-semibold">
                             Table {table.tableNumber}
                           </h3>
                         </div>
@@ -727,7 +727,7 @@ export default function TableManagement() {
                       </div>
 
                       <div className="rounded-2xl bg-white px-4 py-3 text-sm text-[#6d5c4d] shadow-sm">
-                        <p className="break-all font-medium text-[#2f241d]">{table.qrUrl}</p>
+                        <p className="break-all font-medium">{table.qrUrl}</p>
                         <p className="mt-1 text-xs">
                           Public QR ID: <span className="font-medium">{table.publicQrId}</span>
                         </p>
@@ -791,18 +791,18 @@ export default function TableManagement() {
                       </p>
 
                       <div className="mt-4 w-full flex justify-center">
-                        <div className="rounded-2xl bg-white p-3 shadow-inner">
+                        <div className="rounded-2xl bg-white shadow-inner">
                           <QRCode
                             value={table.qrUrl}
                             size={160}
                             bgColor="#ffffff"
                             fgColor="#1f1914"
-                            className="w-full h-auto max-w-40 sm:max-w-45 md:max-w-50"
+                            className="w-full rounded-sm h-auto max-w-40 sm:max-w-45 md:max-w-50"
                           />
                         </div>
                       </div>
 
-                      <p className="mt-4 text-sm font-semibold text-[#2f241d]">
+                      <p className="mt-4 text-sm font-semibold">
                         Table {table.tableNumber}
                       </p>
 

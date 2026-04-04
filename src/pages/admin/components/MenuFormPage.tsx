@@ -3,7 +3,7 @@ import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { CheckIcon, ChevronDownIcon, Plus, Trash2 } from "lucide-react"
 
-import { type Menu, type AddOn } from "../../../types"
+import { menuCategoryNames, type Menu, type AddOn } from "../../../types"
 import { api } from "../../../utils/api"
 import { getApiErrorMessage, getApiFieldErrors } from "../../../utils/apiErrorHelpers"
 import { useToast } from "../../../context/ToastContext"
@@ -227,7 +227,7 @@ export default function MenuFormPage() {
   const [previews, setPreviews] = useState<Record<ImageType, string>>(defaultPreviews)
   const [persistedImages, setPersistedImages] = useState<MenuImageSlots>(defaultPersistedImages)
 
-  const categories = ["Core Meal", "Protein-Based", "Cuisine", "Fast Food", "Desserts", "Beverages", "Health", "Breakfast", "Specials"]
+  const categories = menuCategoryNames
 
   const clearError = (field: string) => {
     setErrors(current => {

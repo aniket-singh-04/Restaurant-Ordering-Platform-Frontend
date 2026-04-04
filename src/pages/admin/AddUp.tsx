@@ -71,11 +71,11 @@ export default function AddUp() {
   };
 
 return (
-  <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100">
-    <div className="mx-auto max-w-5xl space-y-6">
+  <div className="min-h-screen ">
+    <div className="mx-auto space-y-6">
 
       {/* HEADER */}
-      <div className="flex items-center justify-between">
+      <div className="ui-card flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">
             Create Restaurant

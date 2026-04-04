@@ -80,50 +80,7 @@ export interface Order {
 // --------------------
 // Mock orders
 // --------------------
-const mockOrders: Order[] = [
-  {
-    id: 'ORD-1001',
-    items: [
-      { id: '1', menuItemId: '1', name: 'Butter Chicken', price: 380, quantity: 2, image: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=200', addOns: [] },
-      { id: '2', menuItemId: '2', name: 'Naan Bread', price: 45, quantity: 4, image: 'https://images.unsplash.com/photo-1604382355076-af4b0eb60143?w=200', addOns: [] },
-    ],
-    total: 940,
-    status: 'pending',
-    orderType: 'dine-in',
-    tableNumber: '5',
-    createdAt: new Date(Date.now() - 2 * 60000).toISOString(),
-    updatedAt: new Date().toISOString(),
-    paymentMethod: 'upi',
-    paymentStatus: 'completed',
-  },
-  {
-    id: 'ORD-1002',
-    items: [
-      { id: '3', menuItemId: '3', name: 'Margherita Pizza', price: 380, quantity: 1, image: 'https://images.unsplash.com/photo-1604382355076-af4b0eb60143?w=200', addOns: [] },
-    ],
-    total: 380,
-    status: 'preparing',
-    orderType: 'takeaway',
-    createdAt: new Date(Date.now() - 10 * 60000).toISOString(),
-    updatedAt: new Date().toISOString(),
-    paymentMethod: 'card',
-    paymentStatus: 'completed',
-  },
-  {
-    id: 'ORD-1003',
-    items: [
-      { id: '4', menuItemId: '4', name: 'Gourmet Burger', price: 320, quantity: 2, image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200', addOns: [] },
-    ],
-    total: 640,
-    status: 'ready',
-    orderType: 'dine-in',
-    tableNumber: '12',
-    createdAt: new Date(Date.now() - 20 * 60000).toISOString(),
-    updatedAt: new Date().toISOString(),
-    paymentMethod: 'cash',
-    paymentStatus: 'pending',
-  },
-];
+
 
 // --------------------
 // Status configuration
@@ -272,7 +229,7 @@ function OrderCard({ order, onUpdateStatus }: { order: Order; onUpdateStatus: (i
 // OrdersManagement page
 // --------------------
 export default function OrdersManagement() {
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [filter, setFilter] = useState<OrderStatus | 'all'>('all');
 
   const handleUpdateStatus = useCallback((id: string, newStatus: OrderStatus) => {
@@ -297,7 +254,7 @@ export default function OrdersManagement() {
   }, [orders]);
 
   return (
-    <div className="text-left space-y-6 bg-[#fff9f2] min-h-screen ">
+    <div className="text-left space-y-6 min-h-screen ">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
         <div>

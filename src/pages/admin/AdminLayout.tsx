@@ -91,14 +91,14 @@ export default function AdminLayout() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle compact className="hidden md:inline-flex" />
-            <button
+            {isSidebarOpen && <button
               type="button"
               onClick={() => setIsSidebarOpen(false)}
               className="ui-icon-button h-10 min-w-10 rounded-xl p-0 md:hidden"
               aria-label="Close navigation menu"
             >
               <X className="w-5 h-5 cursor-pointer" />
-            </button>
+            </button>}
           </div>
         </div>
 

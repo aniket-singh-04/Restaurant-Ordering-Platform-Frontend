@@ -1,3 +1,10 @@
+import {
+  Listbox,
+  ListboxButton,
+  ListboxOption,
+  ListboxOptions,
+} from "@headlessui/react";
+import { Check, ChevronDown } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { FaPhone } from "react-icons/fa";
 import { HiOutlineMailOpen } from "react-icons/hi";
@@ -31,7 +38,22 @@ interface RegisterForm {
   role: UserRole;
 }
 
-const roles: UserRole[] = ["CUSTOMER", "RESTRO_OWNER"];
+const roleOptions: Array<{
+  value: UserRole;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "CUSTOMER",
+    label: "Customer",
+    description: "Browse menus, place orders, and track your meals.",
+  },
+  {
+    value: "RESTRO_OWNER",
+    label: "Restaurant Owner",
+    description: "Manage menus, orders, tables, and restaurant operations.",
+  },
+];
 
 const fieldShellClass =
   "ui-field-shell";
@@ -236,6 +258,8 @@ export default function Register() {
   };
 
   const isOtpStep = Boolean(challenge?.challengeId);
+  const selectedRole =
+    roleOptions.find((option) => option.value === form.role) ?? roleOptions[0];
 
   return (
     <div className="auth-shell">
@@ -347,22 +371,75 @@ export default function Register() {
                     <label htmlFor="register-role" className={fieldLabelClass}>
                       Account Type
                     </label>
-                    <div className="ui-field-shell">
-                      <select
-                        id="register-role"
-                        value={form.role}
-                        onChange={(e) =>
-                          setForm({ ...form, role: e.target.value as UserRole })
-                        }
-                        className="w-full bg-transparent text-[15px] font-medium outline-none"
-                      >
-                        {roles.map((role) => (
-                          <option key={role} value={role}>
-                            {role === "RESTRO_OWNER" ? "Restaurant Owner" : "Customer"}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <Listbox
+                      value={form.role}
+                      onChange={(value: UserRole) => setForm({ ...form, role: value })}
+                    >
+                      <div className="relative">
+                        <ListboxButton
+                          id="register-role"
+                          className="ui-select relative text-left"
+                        >
+                          <span className="block pr-10 text-[15px] font-medium text-[color:var(--text-primary)]">
+                            {selectedRole.label}
+                          </span>
+                          <span className="mt-1 block pr-10 text-xs leading-5 text-[color:var(--text-muted)]">
+                            {selectedRole.description}
+                          </span>
+                          <ChevronDown
+                            className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--text-muted)]"
+                            aria-hidden="true"
+                          />
+                        </ListboxButton>
+
+                        <ListboxOptions className="absolute left-0 z-20 mt-2 max-h-64 w-full overflow-auto rounded-[1.25rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface-strong)] p-1 shadow-[var(--shadow-md)] focus:outline-none">
+                          {roleOptions.map((option) => (
+                            <ListboxOption
+                              key={option.value}
+                              value={option.value}
+                              className={({ focus }) =>
+                                `cursor-pointer rounded-[1rem] px-4 py-3 transition ${
+                                  focus
+                                    ? "bg-[color:var(--accent-soft)]"
+                                    : "text-[color:var(--text-secondary)]"
+                                }`
+                              }
+                            >
+                              {({ selected }) => (
+                                <div className="flex items-start justify-between gap-3">
+                                  <div>
+                                    <p
+                                      className={`text-sm font-semibold ${
+                                        selected
+                                          ? "text-[color:var(--accent)]"
+                                          : "text-[color:var(--text-primary)]"
+                                      }`}
+                                    >
+                                      {option.label}
+                                    </p>
+                                    <p className="mt-1 text-xs leading-5 text-[color:var(--text-muted)]">
+                                      {option.description}
+                                    </p>
+                                  </div>
+                                  <Check
+                                    className={`mt-0.5 h-4 w-4 shrink-0 ${
+                                      selected
+                                        ? "opacity-100 text-[color:var(--accent)]"
+                                        : "opacity-0"
+                                    }`}
+                                    aria-hidden="true"
+                                  />
+                                </div>
+                              )}
+                            </ListboxOption>
+                          ))}
+                        </ListboxOptions>
+                      </div>
+                    </Listbox>
+                    <p className="ui-helper-text">
+                      Choose Customer for ordering access or Restaurant Owner for
+                      operational tools.
+                    </p>
                   </div>
 
                   <div>

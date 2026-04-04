@@ -111,7 +111,7 @@ export default function AdminDashboard() {
           className="ui-icon-button warm-linear relative border-transparent p-3 text-white shadow-[var(--shadow-glow)]"
           aria-label="Open notifications"
         >
-          <Bell className="w-5 h-5 text-white" />
+          <Bell className="w-5 h-5" />
           <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-600 text-white text-xs flex items-center justify-center">
             3
           </span>

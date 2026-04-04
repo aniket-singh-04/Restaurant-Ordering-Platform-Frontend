@@ -1,5 +1,5 @@
 import type { MenuItem } from "../../../components/MenuCard/types";
-import type { Category } from "../../../types";
+import { normalizeCategoryId, type Category } from "../../../types";
 
 type MenuFilterOptions = {
   activeCategory: string;
@@ -12,10 +12,12 @@ export const filterMenuItems = (
   { activeCategory, searchQuery, showVegOnly = false }: MenuFilterOptions,
 ) => {
   const query = searchQuery.toLowerCase();
+  const normalizedActiveCategory = normalizeCategoryId(activeCategory);
 
   return items.filter((item) => {
     const matchesCategory =
-      activeCategory === "all" || item.category.toLowerCase() === activeCategory;
+      normalizedActiveCategory === "all" ||
+      normalizeCategoryId(item.category) === normalizedActiveCategory;
     const matchesSearch = item.name.toLowerCase().includes(query);
     const matchesVeg = showVegOnly ? item.isVeg : true;
 
@@ -32,4 +34,7 @@ export const getActiveCategoryTitle = (
 ) =>
   activeCategory === "all"
     ? "Full Menu"
-    : categories.find((category) => category.id === activeCategory)?.name;
+    : categories.find(
+        (category) =>
+          normalizeCategoryId(category.id) === normalizeCategoryId(activeCategory),
+      )?.name;

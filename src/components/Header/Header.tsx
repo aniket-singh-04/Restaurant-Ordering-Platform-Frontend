@@ -31,6 +31,15 @@ export default function Header() {
     : isQrRoute
       ? undefined
       : table;
+  const locationEyebrow = isQrSession ? "Scanned branch" : "Deliver to";
+  const locationTitle = isQrSession
+    ? qrContext?.branch.name ?? "Scanned branch"
+    : `Table #${tableNumber ?? "--"}`;
+  const locationSubtitle = isQrSession
+    ? `Table #${tableNumber ?? "--"}`
+    : "Tap to browse the menu";
+  const iconButtonClass =
+    "ui-icon-button h-9 w-9 min-h-9 min-w-9 shrink-0 sm:h-auto sm:w-auto sm:min-h-[2.9rem] sm:min-w-[2.9rem]";
 
   useEffect(() => {
     const { table: storedTable } = getStoredRestaurantSelection();
@@ -64,58 +73,61 @@ export default function Header() {
   };
 
   return (
-    <div className="sticky top-0 z-40 border-b border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--surface)_82%,transparent)] px-4 py-3 backdrop-blur-xl">
-      <div className="app-container flex items-center justify-between gap-4">
+    <div className="sticky top-0 z-40 border-b border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--surface)_82%,transparent)] px-3 py-2 backdrop-blur-xl sm:px-4 sm:py-1">
+      <div className="app-container flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <button
           type="button"
-          className="flex min-w-0 items-center gap-3 rounded-full border border-[color:var(--border-subtle)] bg-[color:var(--surface)] px-2.5 py-2 text-left shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5"
+          className="flex min-w-0 w-fit max-w-full self-start items-center gap-2.5 rounded-[1.35rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface)] px-2 py-1.5 pr-3 text-left shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 sm:w-auto sm:gap-3 sm:rounded-full sm:px-2.5 sm:py-2"
           onClick={() => navigate(buildQrHomePath(qrId))}
         >
-          <span className="flex h-11 w-11 items-center justify-center rounded-full warm-linear shadow-[var(--shadow-glow)]">
-            <MapPin className="text-white" />
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full warm-linear shadow-[var(--shadow-glow)] sm:h-11 sm:w-11">
+            <MapPin className="h-4.5 w-4.5 text-white sm:h-5 sm:w-5" />
           </span>
 
           <span className="min-w-0">
-            <span className="block text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-[color:var(--text-muted)]">
-              {isQrSession ? "Scanned branch" : "Deliver to"}
+            <span className="block text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)] sm:text-[0.7rem] sm:tracking-[0.22em]">
+              {locationEyebrow}
             </span>
-            <span className="block truncate text-sm font-semibold text-[color:var(--text-primary)]">
-              {isQrSession ? qrContext?.branch.name ?? "Scanned branch" : `Table #${tableNumber ?? "--"}`}
+            <span className="block truncate text-[0.84rem] font-semibold text-[color:var(--text-primary)] sm:text-sm">
+              {locationTitle}
             </span>
-            <span className="block truncate text-xs text-[color:var(--text-secondary)]">
-              {isQrSession ? `Table #${tableNumber ?? "--"}` : "Tap to browse the menu"}
+            <span className="hidden truncate text-xs text-[color:var(--text-secondary)] sm:block">
+              {locationSubtitle}
             </span>
           </span>
         </button>
 
-        <div className="flex items-center gap-2">
-          <ThemeToggle compact />
+        <div className="scrollbar-thin flex w-full items-center gap-1.5 overflow-x-auto pb-1 sm:w-auto sm:flex-wrap sm:justify-end sm:gap-2 sm:overflow-visible sm:pb-0">
+          <ThemeToggle
+            compact
+            className="h-9 w-9 min-h-9 min-w-9 shrink-0 rounded-full px-0 sm:h-10 sm:w-10 sm:min-h-10 sm:min-w-10"
+          />
           <button
             type="button"
-            className="ui-icon-button warm-linear border-transparent text-white shadow-[var(--shadow-glow)]"
+            className={`${iconButtonClass} warm-linear border-transparent text-white shadow-[var(--shadow-glow)]`}
             onClick={() => {
               void handleQrAction();
             }}
             aria-label="Copy QR session link"
           >
-            <QrCode size={18} />
+            <QrCode size={17} />
           </button>
           <button
             type="button"
-            className="ui-icon-button warm-linear relative border-transparent text-white shadow-[var(--shadow-glow)]"
+            className={`${iconButtonClass} warm-linear relative border-transparent text-white shadow-[var(--shadow-glow)]`}
             onClick={() => navigate(buildQrCartPath(qrId))}
             aria-label="Open cart"
           >
-            <ShoppingCart size={18} />
+            <ShoppingCart size={17} />
             {totalItems > 0 && (
-              <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[color:var(--danger)] px-1 text-[10px] font-semibold text-white">
+              <span className="absolute -right-1 -top-1 inline-flex h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full bg-[color:var(--danger)] px-1 text-[9px] font-semibold text-white sm:h-5 sm:min-w-5 sm:text-[10px]">
                 {totalItems}
               </span>
             )}
           </button>
           <button
             type="button"
-            className="ui-icon-button"
+            className={iconButtonClass}
             onClick={() =>
               navigate(user ? "/orders" : "/login", {
                 state: {
@@ -125,11 +137,11 @@ export default function Header() {
             }
             aria-label="Open orders"
           >
-            <ClipboardList size={18} />
+            <ClipboardList size={17} />
           </button>
           <button
             type="button"
-            className="ui-icon-button"
+            className={iconButtonClass}
             onClick={() =>
               navigate(user ? "/profile" : "/login", {
                 state: {
@@ -139,7 +151,7 @@ export default function Header() {
             }
             aria-label="Open profile"
           >
-            <CgProfile size={19} />
+            <CgProfile size={18} />
           </button>
         </div>
       </div>

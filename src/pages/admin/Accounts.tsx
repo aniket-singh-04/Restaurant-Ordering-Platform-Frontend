@@ -670,8 +670,8 @@ export default function Accounts() {
   };
 
   return (
-    <div className="min-h-screen space-y-8 bg-gray-50 text-left">
-      <div className="flex flex-col gap-2">
+    <div className="min-h-screen space-y-8 text-left">
+      <div className="ui-card *:flex flex-col gap-2">
         <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
           Restaurant Accounts
         </h1>
@@ -687,7 +687,7 @@ export default function Accounts() {
         </div>
       )}
 
-      <section className="mx-auto max-w-6xl space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+      <section className="mx-auto space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
         <div className="flex items-center justify-between gap-3 border-b pb-2">
           <h2 className="text-lg font-semibold text-gray-800">Restaurant Info</h2>
           {restaurant && (
@@ -809,7 +809,7 @@ export default function Accounts() {
         )}
       </section>
 
-      <section className="mx-auto max-w-6xl space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+      <section className="mx-auto space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
         <div className="flex flex-col gap-1 border-b pb-2">
           <h2 className="text-lg font-semibold text-gray-800">Branch Management</h2>
           <p className="text-sm text-gray-500">
@@ -1345,7 +1345,7 @@ export default function Accounts() {
         )}
       </section>
 
-      <section className="mx-auto max-w-6xl space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+      <section className="mx-auto space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
         <div className="flex flex-col gap-1 border-b pb-2">
           <h2 className="text-lg font-semibold text-gray-800">User Management</h2>
           <p className="text-sm text-gray-500">

@@ -379,9 +379,9 @@ export default function Subscriptions() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fff9f2] text-left">
-      <header className="border-b border-[#eedbc8] bg-white shadow-xs sticky top-0 z-10">
-        <div className="mx-auto max-w-7xl px-2 sm:px-3 py-2 sm:py-3">
+    <div className="min-h-screen text-left">
+      <header className="ui-card border-b border-[#eedbc8] bg-white shadow-xs sticky top-0 z-10">
+        <div className="mx-auto max-w-7xl ">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h1 className="font-serif text-4xl font-bold text-[#3b2f2f]">Subscriptions</h1>
@@ -393,7 +393,7 @@ export default function Subscriptions() {
             <button
               type="button"
               onClick={() => void refreshAll()}
-              className="w-fit cursor-pointer inline-flex items-center gap-2 rounded-xl border border-[#ef6820] px-4 py-2.5 text-sm font-medium text-[#ef6820] transition hover:bg-white"
+              className="w-fit cursor-pointer inline-flex items-center gap-2 rounded-lg border border-[#ef6820] px-4 py-2.5 text-sm font-medium text-[#ef6820] transition hover:bg-white"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh
@@ -402,7 +402,7 @@ export default function Subscriptions() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-6 py-8 space-y-8">
+      <main className="mx-auto max-w-7xl py-8 space-y-8">
 
         <section className="rounded-2xl border border-[#eedbc8] bg-white p-8 shadow-sm">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
