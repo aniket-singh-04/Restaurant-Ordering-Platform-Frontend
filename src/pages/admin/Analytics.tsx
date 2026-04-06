@@ -33,23 +33,23 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: keyof typeof buttonVariants;
 };
 
-function Button({
-  children,
-  variant = 'default',
-  className = '',
-  type = 'button',
-  ...props
-}: ButtonProps) {
-  return (
-    <button
-      type={type}
-      className={`${buttonBase} ${buttonVariants[variant] || ''} ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-}
+// function Button({
+//   children,
+//   variant = 'default',
+//   className = '',
+//   type = 'button',
+//   ...props
+// }: ButtonProps) {
+//   return (
+//     <button
+//       type={type}
+//       className={`${buttonBase} ${buttonVariants[variant] || ''} ${className}`}
+//       {...props}
+//     >
+//       {children}
+//     </button>
+//   );
+// }
 
 // --------------------
 // Formatting helpers
@@ -165,7 +165,7 @@ export default function Analytics() {
           <h1 className="font-display text-3xl font-bold">Analytics</h1>
           <p className="text-gray-600">Track your restaurant's performance</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        {/* <div className="flex flex-wrap gap-2">
           <Button variant="outline">
             <Calendar className="w-4 h-4 mr-2" />
             This Week
@@ -173,7 +173,7 @@ export default function Analytics() {
           <Button variant="warm">
             Download Report
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {/* Stats Grid */}

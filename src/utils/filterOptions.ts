@@ -51,8 +51,8 @@ export const orderSourceOptions = [
 export const paymentCollectionModeOptions = [
   { value: "", label: "All collection modes" },
   { value: "ONLINE_ADVANCE", label: "Online Advance" },
+  { value: "ONLINE_FULL", label: "Online Full Payment" },
   { value: "CASH_CONFIRMED_BY_STAFF", label: "Cash by Staff" },
-  { value: "SETTLE_ON_READY", label: "Settle on Ready" },
 ];
 
 export const userRoleOptions = [

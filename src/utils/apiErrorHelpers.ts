@@ -56,6 +56,13 @@ export const getApiFieldErrors = (error: unknown) => {
   return nextErrors;
 };
 
+export const getApiFormErrors = (error: unknown) => {
+  const errorBody = getErrorBody(error);
+  return (errorBody?.details?.formErrors ?? []).filter(
+    (message): message is string => typeof message === "string" && message.trim().length > 0,
+  );
+};
+
 export const getApiRequestId = (error: unknown) => {
   const errorBody = getErrorBody(error);
   return typeof errorBody?.requestId === "string" ? errorBody.requestId : undefined;

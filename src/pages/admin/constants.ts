@@ -9,6 +9,7 @@ import {
   User,
   UserPen,
   UtensilsCrossed,
+  Contact2Icon,
 } from "lucide-react";
 import { MdManageAccounts } from "react-icons/md";
 import type { UserRole } from "../../features/auth/types";
@@ -66,5 +67,11 @@ export const adminNavItems: AdminNavItem[] = [
     icon: UserPen,
     label: "Profile",
     roles: ["ADMIN", "RESTRO_OWNER", "BRANCH_OWNER","STAFF"],
+  },
+  {
+    to: "/contact-us",
+    icon: Contact2Icon,
+    label: "Contact",
+    roles: ["RESTRO_OWNER", "BRANCH_OWNER"],
   },
 ];

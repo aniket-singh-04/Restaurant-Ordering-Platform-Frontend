@@ -40,6 +40,17 @@ const countdownLabel = (deadline?: string, now = Date.now()) => {
   return `${minutes}m ${seconds.toString().padStart(2, "0")}s`;
 };
 
+const formatPaymentModeLabel = (mode?: string | null) => {
+  if (mode === "ONLINE_ADVANCE") return "Online advance";
+  if (mode === "ONLINE_FULL") return "Online full payment";
+  if (mode === "CASH_CONFIRMED_BY_STAFF") return "Cash by staff";
+  if (mode === "SETTLE_ON_READY") return "Settle on ready";
+  return mode ?? "—";
+};
+
+const getPaidAmountLabel = (mode?: string | null) =>
+  mode === "ONLINE_FULL" ? "Paid Online" : "Advance Paid";
+
 export default function OrdersManagementLive() {
   const { user } = useAuth();
   const { pushToast } = useToast();
@@ -236,7 +247,7 @@ export default function OrdersManagementLive() {
                       </div>
                       <div className="rounded-md bg-[#fffaf5] px-3 py-3 border border-[#f0e3d5]">
                         <p className="text-xs font-bold uppercase tracking-widest text-[#8d7967]">Mode</p>
-                        <p className="mt-2 text-sm font-semibold text-[#3b2f2f] truncate">{order.paymentSummary?.mode ?? "—"}</p>
+                        <p className="mt-2 text-sm font-semibold text-[#3b2f2f] truncate">{formatPaymentModeLabel(order.paymentSummary?.mode)}</p>
                       </div>
                     </div>
 
@@ -244,7 +255,7 @@ export default function OrdersManagementLive() {
                     <div className="rounded-md bg-[#fffaf5] px-4 py-3 border border-[#f0e3d5]">
                       <div className="grid grid-cols-3 gap-4">
                         <div>
-                          <p className="text-xs font-bold uppercase tracking-widest text-[#8d7967]">Advance Paid</p>
+                          <p className="text-xs font-bold uppercase tracking-widest text-[#8d7967]">{getPaidAmountLabel(order.paymentSummary?.mode)}</p>
                           <p className="mt-1.5 text-sm font-semibold text-[#3b2f2f]">{formatMinorAmount(order.paymentSummary?.advanceReceived)}</p>
                         </div>
                         <div>
@@ -266,7 +277,7 @@ export default function OrdersManagementLive() {
                           {order.itemsSnapshot?.map((item) => (
                             <div
                               key={`${order.id}-${item.itemId}-${item.nameSnapshot}`}
-                              className="rounded-lg border border-[#f0e3d5] p-3 hover:shadow-sm transition-shadow"
+                              className="rounded-md border border-[#f0e3d5] p-3 hover:shadow-sm transition-shadow"
                             >
                               <div className="flex items-start justify-between gap-3 mb-2">
                                 <div className="flex-1 min-w-0">

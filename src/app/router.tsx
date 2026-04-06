@@ -25,6 +25,7 @@ const Login = lazy(() => import("../pages/Login"));
 const ForgotPassword = lazy(() => import("../pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("../pages/ResetPassword"));
 const VerifyEmail = lazy(() => import("../pages/VerifyEmail"));
+const ContactUs = lazy(() => import("../pages/ContactUs"));
 const PlatformAdminDashboard = lazy(() => import("../pages/platform-admin/Dashboard"));
 const PlatformAdminLayout = lazy(() => import("../pages/platform-admin/Layout"));
 const PlatformAdminLogin = lazy(() => import("../pages/platform-admin/Login"));
@@ -118,6 +119,10 @@ export const router = createBrowserRouter([
   {
     path: "/register",
     element: withPublicRoute(<Register />),
+  },
+  {
+    path: "/contact-us",
+    element: <ContactUs />,
   },
   {
     path: "/menu",

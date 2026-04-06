@@ -15,10 +15,14 @@ export type RestaurantPaymentConnection = {
   lastSyncedAt?: string | null;
 };
 
+export type SupportedPaymentConnectionBusinessType =
+  | "proprietorship"
+  | "partnership";
+
 export type RestaurantPaymentConnectionOnboardingPayload = {
-  businessType: string;
-  businessCategory: string;
-  businessSubcategory: string;
+  businessType: SupportedPaymentConnectionBusinessType;
+  businessCategory: "food";
+  businessSubcategory: "restaurant";
   customerFacingBusinessName?: string;
   businessAddress: {
     street1: string;
@@ -29,7 +33,7 @@ export type RestaurantPaymentConnectionOnboardingPayload = {
     country: string;
   };
   legalInfo: {
-    pan: string;
+    pan?: string;
     gst?: string;
   };
   bankAccount: {

@@ -841,6 +841,48 @@ a {
   border-color: color-mix(in srgb, var(--accent) 60%, white) !important;
 }
 
+@media (max-width: 640px) {
+  .app-page {
+    padding: 0.85rem;
+  }
+
+  .ui-page-stack {
+    gap: 0.95rem;
+  }
+
+  .ui-card {
+    padding: 0.9rem;
+  }
+
+  .ui-field-shell {
+    gap: 0.7rem;
+    padding: 0.8rem 0.9rem;
+  }
+
+  .ui-input,
+  .ui-select,
+  .ui-textarea {
+    padding: 0.82rem 0.9rem;
+  }
+
+  .ui-button-pill {
+    padding: 0.68rem 0.95rem;
+  }
+
+  .auth-shell,
+  .state-shell {
+    padding: 0.85rem;
+  }
+
+  .auth-theme-bar {
+    margin-bottom: 0.75rem;
+  }
+
+  .auth-body {
+    padding: 1.25rem;
+  }
+}
+
 @media (max-width: 960px) {
   .auth-grid {
     grid-template-columns: 1fr;

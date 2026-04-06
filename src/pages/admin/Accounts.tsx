@@ -277,7 +277,7 @@ export default function Accounts() {
       nextErrors.supportPhone = "Support phone must be exactly 10 digits.";
     }
 
-    if (value.gstNumber.trim() && !isValidGst(value.gstNumber)) {
+    if (value.gstNumber?.trim() && !isValidGst(value.gstNumber)) {
       nextErrors.gstNumber = "Enter a valid GST number.";
     }
 
@@ -394,7 +394,7 @@ export default function Accounts() {
       ...restaurant,
       name: restaurant.name.trim(),
       legalName: restaurant.legalName.trim(),
-      gstNumber: restaurant.gstNumber.trim().toUpperCase(),
+      gstNumber: restaurant.gstNumber?.trim().toUpperCase() || "",
       supportEmail: restaurant.supportEmail.trim(),
       supportPhone: restaurant.supportPhone.trim(),
     };
@@ -688,7 +688,7 @@ export default function Accounts() {
         </div>
       )}
 
-      <section className="mx-auto space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+      <section className="mx-auto space-y-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-8">
         <div className="flex items-center justify-between gap-3 border-b pb-2">
           <h2 className="text-lg font-semibold text-gray-800">Restaurant Info</h2>
           {restaurant && (
@@ -810,7 +810,7 @@ export default function Accounts() {
         )}
       </section>
 
-      <section className="mx-auto space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+      <section className="mx-auto space-y-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-8">
         <div className="flex flex-col gap-1 border-b pb-2">
           <h2 className="text-lg font-semibold text-gray-800">Branch Management</h2>
           <p className="text-sm text-gray-500">
@@ -819,7 +819,7 @@ export default function Accounts() {
           </p>
         </div>
 
-        <form onSubmit={handleCreateBranch} className="space-y-4 rounded-2xl border border-[#e5d5c6] bg-[#fff9f2] p-5">
+        <form onSubmit={handleCreateBranch} className="space-y-4 rounded-2xl border border-[#e5d5c6] bg-[#fff9f2] p-4">
           <div className="flex items-center justify-between gap-3">
             <h3 className="font-semibold text-gray-900">Add Branch</h3>
             <span className="text-xs text-gray-500">{branches.length} branches loaded</span>
@@ -1019,7 +1019,7 @@ export default function Accounts() {
               return (
                 <article
                   key={branch.id}
-                  className="rounded-2xl border border-[#e5d5c6] bg-[#fff9f2] p-5 shadow-sm"
+                  className="rounded-2xl border border-[#e5d5c6] bg-[#fff9f2] p-4 shadow-sm"
                 >
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
@@ -1348,7 +1348,7 @@ export default function Accounts() {
         )}
       </section>
 
-      <section className="mx-auto space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+      <section className="mx-auto space-y-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm md:p-8">
         <div className="flex flex-col gap-1 border-b pb-2">
           <h2 className="text-lg font-semibold text-gray-800">User Management</h2>
           <p className="text-sm text-gray-500">
@@ -1357,7 +1357,7 @@ export default function Accounts() {
           </p>
         </div>
 
-        <form onSubmit={handleCreateUser} className="space-y-4 rounded-2xl border border-[#e5d5c6] bg-[#fff9f2] p-5">
+        <form onSubmit={handleCreateUser} className="space-y-4 rounded-2xl border border-[#e5d5c6] bg-[#fff9f2] p-4">
           <div className="flex items-center justify-between gap-3">
             <h3 className="font-semibold text-gray-900">Add Team Member</h3>
             <span className="text-xs text-gray-500">{users.length} users loaded</span>
@@ -1571,7 +1571,7 @@ export default function Accounts() {
             {users.map((managedUser) => (
               <article
                 key={managedUser.id}
-                className="rounded-2xl border border-[#e5d5c6] bg-[#fff9f2] p-5 shadow-sm"
+                className="rounded-2xl border border-[#e5d5c6] bg-[#fff9f2] p-4 shadow-sm"
               >
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div>

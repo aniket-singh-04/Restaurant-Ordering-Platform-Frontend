@@ -73,11 +73,11 @@ export default function Header() {
   };
 
   return (
-    <div className="sticky top-0 z-40 border-b border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--surface)_82%,transparent)] px-3 py-2 backdrop-blur-xl sm:px-4 sm:py-1">
-      <div className="app-container flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+    <div className="sticky top-0 z-40 border-b border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--surface)_82%,transparent)] px-2.5 py-1.5 backdrop-blur-xl sm:px-4 sm:py-1">
+      <div className="app-container flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <button
           type="button"
-          className="flex min-w-0 w-fit max-w-full self-start items-center gap-2.5 rounded-[1.35rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface)] px-2 py-1.5 pr-3 text-left shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 sm:w-auto sm:gap-3 sm:rounded-full sm:px-2.5 sm:py-2"
+          className="flex min-w-0 w-fit max-w-full self-start items-center gap-2 rounded-[1.35rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface)] px-2 py-1.5 pr-2.5 text-left shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 sm:w-auto sm:gap-3 sm:rounded-full sm:px-2.5 sm:py-2"
           onClick={() => navigate(buildQrHomePath(qrId))}
         >
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full warm-linear shadow-[var(--shadow-glow)] sm:h-11 sm:w-11">
@@ -97,7 +97,7 @@ export default function Header() {
           </span>
         </button>
 
-        <div className="scrollbar-thin flex w-full items-center gap-1.5 overflow-x-auto pb-1 sm:w-auto sm:flex-wrap sm:justify-end sm:gap-2 sm:overflow-visible sm:pb-0">
+        <div className="scrollbar-thin flex w-full items-center gap-1.5 overflow-x-auto pb-0.5 sm:w-auto sm:flex-wrap sm:justify-end sm:gap-2 sm:overflow-visible sm:pb-0">
           <ThemeToggle
             compact
             className="h-9 w-9 min-h-9 min-w-9 shrink-0 rounded-full px-0 sm:h-10 sm:w-10 sm:min-h-10 sm:min-w-10"

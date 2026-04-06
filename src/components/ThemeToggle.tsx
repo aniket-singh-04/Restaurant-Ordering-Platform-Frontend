@@ -26,9 +26,9 @@ export default function ThemeToggle({
       ) : (
         <Moon className="theme-toggle__icon" aria-hidden="true" />
       )}
-      {!compact ? (
+      {/* {!compact ? (
         <span>{isDark ? "Light mode" : "Dark mode"}</span>
-      ) : null}
+      ) : null} */}
     </button>
   );
 }

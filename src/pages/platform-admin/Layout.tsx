@@ -37,10 +37,10 @@ export default function PlatformAdminLayout() {
   const [isOpen, setIsOpen] = useState(false);
 
 return (
-  <div className="panel-shell flex h-screen overflow-hidden">
+  <div className="panel-shell min-h-screen md:flex md:items-start">
 
     {/* Mobile Header */}
-    <div className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between border-b border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--surface)_85%,transparent)] px-4 py-3 shadow-[var(--shadow-sm)] backdrop-blur-xl md:hidden">
+    <div className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between border-b border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--surface)_85%,transparent)] px-3 py-2.5 shadow-[var(--shadow-sm)] backdrop-blur-xl md:hidden">
       <h1 className="font-display text-lg font-semibold tracking-tight">Owner Console</h1>
 
       <div className="flex items-center gap-2">
@@ -65,13 +65,14 @@ return (
 
     {/* Sidebar */}
     <aside
-      className={`fixed md:static z-50 top-0 left-0 h-screen w-60 shrink-0 transform transition-transform duration-300
+      className={`fixed top-0 left-0 z-50 h-screen w-60 shrink-0 transform transition-transform duration-300
+      md:sticky md:top-0 md:self-start
       ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
     >
       <div className="panel-sidebar flex h-full flex-col border-r">
 
         {/* Header */}
-        <div className="border-b border-[color:var(--border-subtle)] px-6 py-3">
+        <div className="border-b border-[color:var(--border-subtle)] px-5 py-3 md:px-6">
           <p className="text-xs font-medium uppercase tracking-widest text-[color:var(--text-muted)]">
             Platform
           </p>
@@ -86,18 +87,18 @@ return (
 
           <div className="mt-4 flex items-center gap-2">
             <ThemeToggle compact className="hidden md:inline-flex" />
-            <button
+            {isOpen && <button
               type="button"
               onClick={() => setIsOpen(false)}
               className="ui-icon-button h-10 min-w-10 rounded-lg p-0 md:hidden"
             >
               <X className="h-5 w-5 text-[color:var(--text-primary)]" />
-            </button>
+            </button>}
           </div>
         </div>
 
         {/* Nav (Scrollable if needed) */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <nav className="flex-1 space-y-1 overflow-y-auto px-2.5 py-3 md:px-3 md:py-4">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -119,7 +120,7 @@ return (
         </nav>
 
         {/* Logout (Sticky bottom) */}
-        <div className="border-t border-[color:var(--border-subtle)] p-4">
+        <div className="border-t border-[color:var(--border-subtle)] p-3 md:p-4">
           <button
             type="button"
             className="ui-button ui-button-pill flex w-full items-center justify-center gap-2 py-3 text-sm font-semibold"
@@ -137,9 +138,9 @@ return (
     </aside>
 
     {/* Main */}
-    <main className="flex-1 overflow-y-auto p-2 md:p-4 mt-14 md:mt-0">
+    <main className="mt-14 min-w-0 flex-1 p-1.5 md:mt-0 md:p-4">
       <div className="max-w-7xl mx-auto">
-        <div className="panel-content p-2 md:p-3">
+        <div className="panel-content p-1.5 md:p-3">
           <Outlet />
         </div>
       </div>

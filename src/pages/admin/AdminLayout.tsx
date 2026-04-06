@@ -32,9 +32,7 @@ export default function AdminLayout() {
   }, [user]);
 
   return (
-
-
-    <div className="panel-shell min-h-screen md:flex">
+    <div className="panel-shell min-h-screen md:flex md:items-start">
       {/* Mobile Header */}
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--surface)_85%,transparent)] px-4 py-3 text-[color:var(--text-primary)] shadow-[var(--shadow-sm)] backdrop-blur-xl md:hidden">
         <div className="flex items-center gap-3">
@@ -74,7 +72,7 @@ export default function AdminLayout() {
       {/* Sidebar */}
       <aside
         id="admin-sidebar"
-        className={`panel-sidebar fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r text-[color:var(--text-primary)] transform transition-transform duration-300 md:static md:w-64 md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        className={`panel-sidebar fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r text-[color:var(--text-primary)] transform transition-transform duration-300 md:sticky md:top-0 md:h-screen md:w-64 md:self-start md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
           }`}
         aria-label="Admin navigation"
       >
@@ -103,7 +101,7 @@ export default function AdminLayout() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="scrollbar-thin flex-1 space-y-1 overflow-y-auto p-4">
           {visibleItems.map((item) => (
             <NavLink
               key={item.to}
@@ -137,7 +135,7 @@ export default function AdminLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 md:p-6">
+      <main className="min-w-0 flex-1 p-4 md:p-6">
         <Outlet />
       </main>
     </div>

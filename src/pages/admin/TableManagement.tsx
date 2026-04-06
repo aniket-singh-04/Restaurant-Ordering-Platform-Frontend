@@ -593,7 +593,7 @@ export default function TableManagement() {
                 {Array.from({ length: 2 }).map((__, cardIndex) => (
                   <article
                     key={cardIndex}
-                    className="grid gap-5 rounded-3xl border border-[#f0e3d5] bg-[#fffaf5] p-5 lg:grid-cols-[minmax(0,1fr)_220px]"
+                    className="grid gap-5 rounded-3xl border border-[#f0e3d5] bg-[#fffaf5] p-4 lg:grid-cols-[minmax(0,1fr)_220px]"
                   >
                     <div className="space-y-4">
                       <div className="flex items-start justify-between gap-3">
@@ -631,7 +631,7 @@ export default function TableManagement() {
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-center justify-center rounded-2xl border border-[#eedbc8] bg-linear-to-b from-white to-[#fff7f0] p-5 shadow-sm">
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-[#eedbc8] bg-linear-to-b from-white to-[#fff7f0] p-4 shadow-sm">
                       <SkeletonBlock className="h-4 w-24" />
                       <SkeletonBlock className="mt-4 h-40 w-40 rounded-2xl" />
                       <SkeletonBlock className="mt-4 h-5 w-28" />
@@ -688,7 +688,7 @@ export default function TableManagement() {
                 {tables.map((table) => (
                   <article
                     key={table.id}
-                    className="w-full grid gap-5 rounded-3xl border border-[#f0e3d5] bg-[#fffaf5] p-5 lg:grid-cols-[minmax(0,1fr)_220px]"
+                    className="w-full grid gap-5 rounded-3xl border border-[#f0e3d5] bg-[#fffaf5] p-4 lg:grid-cols-[minmax(0,1fr)_220px]"
                   >
                     <div className="space-y-4">
                       <div className="flex items-start justify-between gap-3">
@@ -853,7 +853,7 @@ export default function TableManagement() {
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-center justify-center rounded-2xl border border-[#eedbc8] bg-linear-to-b from-white to-[#fff7f0] p-5 shadow-sm">
+                    <div className="flex flex-col items-center justify-center rounded-2xl border border-[#eedbc8]  p-4 shadow-sm">
                       <p className="text-xs uppercase tracking-widest text-orange-600">
                         Scan Preview
                       </p>
@@ -865,7 +865,7 @@ export default function TableManagement() {
                             size={160}
                             bgColor="#ffffff"
                             fgColor="#1f1914"
-                            className="w-full rounded-sm h-auto max-w-40 sm:max-w-45 md:max-w-50"
+                            className="w-full rounded-sm h-auto max-w-40 sm:max-w-45 md:max-w-50 border-2 border-white"
                           />
                         </div>
                       </div>
@@ -874,7 +874,7 @@ export default function TableManagement() {
                         Table {table.tableNumber}
                       </p>
 
-                      <p className="mt-1 text-center text-xs text-[#6d5c4d] max-w-55">
+                      <p className="mt-1 text-center text-xs  max-w-55">
                         Guests can scan this QR to view the menu instantly.
                       </p>
                     </div>

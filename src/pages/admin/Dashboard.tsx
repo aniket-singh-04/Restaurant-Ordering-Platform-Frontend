@@ -21,6 +21,7 @@ import {
   sortOrdersByNewest,
 } from "./orderInsights";
 import { LoadingListRows, LoadingMetricCards } from "../../components/LoadingState";
+import { useNavigate } from "react-router-dom";
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -82,6 +83,7 @@ export default function AdminDashboard() {
   const overview = useRestaurantOverview(user?.restroId);
   const branchOrders = useBranchOrders(user?.branchIds?.[0]?._id);
   const isStatsLoading = overview.isLoading || branchOrders.isLoading;
+  const navigate = useNavigate();
 
   const stats: Stat[] = [
     {
@@ -235,7 +237,7 @@ export default function AdminDashboard() {
             <h2 className="font-serif font-semibold text-lg text-[#3b2f2f]">
               Recent Orders
             </h2>
-            <button type="button" className="text-[color:var(--accent)] font-semibold">
+            <button type="button" className="text-[color:var(--accent)] font-semibold" onClick={() => navigate("/admin/orders")}>
               View All
             </button>
           </div>

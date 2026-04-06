@@ -62,8 +62,8 @@ type OrderPayload = {
   orderType: "DINE_IN" | "TAKEAWAY";
   paymentMode:
     | "ONLINE_ADVANCE"
-    | "CASH_CONFIRMED_BY_STAFF"
-    | "SETTLE_ON_READY";
+    | "ONLINE_FULL"
+    | "CASH_CONFIRMED_BY_STAFF";
   notes?: string;
   items: Array<{
     menuId: string;

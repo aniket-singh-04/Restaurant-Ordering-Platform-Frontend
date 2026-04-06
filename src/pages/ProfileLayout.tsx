@@ -263,8 +263,8 @@ export default function ProfileLayout() {
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#fff9f2] p-6">
-        <div className="rounded-2xl bg-white p-6 text-center shadow">
+      <div className="flex min-h-screen items-center justify-center bg-[#fff9f2] p-4">
+        <div className="rounded-2xl bg-white p-4 text-center shadow">
           No user found.
         </div>
       </div>
@@ -296,7 +296,7 @@ export default function ProfileLayout() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[280px,1fr]">
-          <section className="rounded-2xl border border-[#f0e3d5] bg-white p-6 shadow-md hover:shadow-lg transition-shadow">
+          <section className="rounded-2xl border border-[#f0e3d5] bg-white p-4 shadow-md hover:shadow-lg transition-shadow">
             <div className="flex flex-col items-center gap-4 text-center">
               <div className="flex h-24 w-24 items-center justify-center rounded-full bg-linear-to-br from-[#fff5ed] to-[#ffe5cc] border-3 border-[#ef6820]">
                 <CgProfile size={56} className="text-[#ef6820]" />
@@ -374,7 +374,7 @@ export default function ProfileLayout() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-[#f0e3d5] bg-white p-6 shadow-md hover:shadow-lg transition-shadow">
+          <section className="rounded-2xl border border-[#f0e3d5] bg-white p-4 shadow-md hover:shadow-lg transition-shadow">
             <div className="flex flex-col gap-2 border-b border-[#f0e3d5] pb-4">
               <h2 className="text-xl sm:text-2xl font-bold text-[#3b2f2f]">Update Account</h2>
               <p className="text-xs sm:text-sm text-[#6b665f]">
@@ -478,7 +478,7 @@ export default function ProfileLayout() {
           </section>
         </div>
 
-        <section className="rounded-3xl border border-orange-100 bg-white p-6 shadow-sm">
+        <section className="rounded-3xl border border-orange-100 bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-2 border-b border-[#f0e3d5] pb-4">
             <h2 className="text-xl sm:text-2xl font-bold text-[#3b2f2f]">Order History</h2>
             <p className="text-xs sm:text-sm text-[#6b665f]">

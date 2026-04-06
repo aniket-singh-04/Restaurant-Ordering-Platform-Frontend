@@ -102,9 +102,9 @@ export default function Footer() {
 
   return (
     <footer className="border-t border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--surface)_76%,transparent)] backdrop-blur-xl">
-      <div className="app-container px-4 py-10 sm:px-6 sm:py-12">
-        <section className="overflow-hidden rounded-[2rem] border border-[color:var(--border-subtle)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--surface)_94%,transparent),color-mix(in_srgb,var(--surface-muted)_88%,transparent))] p-5 shadow-[var(--shadow-md)] sm:p-7">
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.85fr)]">
+      <div className="app-container px-3 py-8 sm:px-6 sm:py-12">
+        <section className="overflow-hidden rounded-[2rem] border border-[color:var(--border-subtle)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--surface)_94%,transparent),color-mix(in_srgb,var(--surface-muted)_88%,transparent))] p-4 shadow-[var(--shadow-md)] sm:p-7">
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.85fr)]">
             <div className="min-w-0">
               <div className="inline-flex items-center gap-2 rounded-full border border-[color:color-mix(in_srgb,var(--accent)_24%,transparent)] bg-[color:var(--accent-soft)] px-3 py-1.5 text-sm font-semibold text-[color:var(--accent)]">
                 <Sparkles className="h-4 w-4" />
@@ -180,7 +180,7 @@ export default function Footer() {
         </section>
 
         <section
-          className={`mt-8 grid gap-8 text-left ${
+          className={`mt-6 grid gap-6 text-left sm:mt-8 ${
             canManageOperations ? "lg:grid-cols-4" : "md:grid-cols-3"
           }`}
         >
@@ -206,6 +206,14 @@ export default function Footer() {
               className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--accent)] transition hover:text-[color:var(--accent-hover)]"
             >
               Continue into the menu
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+
+            <Link
+              to="/contact-us"
+              className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--text-secondary)] transition hover:text-[color:var(--accent)]"
+            >
+              Contact us
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -258,9 +266,9 @@ export default function Footer() {
           ) : null}
         </section>
 
-        <div className="my-8 h-px bg-[color:var(--border-subtle)]" />
+        <div className="my-6 h-px bg-[color:var(--border-subtle)] sm:my-8" />
 
-        <div className="flex flex-col gap-3 text-center text-xs text-[color:var(--text-secondary)] sm:flex-row sm:items-center sm:justify-between sm:text-left sm:text-sm">
+        <div className="flex flex-col gap-2.5 text-center text-xs text-[color:var(--text-secondary)] sm:flex-row sm:items-center sm:justify-between sm:text-left sm:text-sm">
           <span>© {new Date().getFullYear()} Orderly. Frontend and backend flows are aligned.</span>
 
           <div className="flex flex-wrap justify-center gap-3 sm:justify-end sm:gap-5">

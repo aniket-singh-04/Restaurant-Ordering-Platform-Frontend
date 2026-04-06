@@ -34,9 +34,25 @@ const sortByRecent = (orders: OrderRecord[]) =>
     return rightDate - leftDate;
   });
 
+const formatPaymentModeLabel = (mode?: string | null) => {
+  if (mode === "ONLINE_ADVANCE") return "Online advance";
+  if (mode === "ONLINE_FULL") return "Online full payment";
+  if (mode === "CASH_CONFIRMED_BY_STAFF") return "Cash by staff";
+  if (mode === "SETTLE_ON_READY") return "Settle on ready";
+  return mode ?? "N/A";
+};
+
+const getPaidAmountLabel = (mode?: string | null) =>
+  mode === "ONLINE_FULL" ? "Paid online" : "Advance paid";
+
+const getAdvanceActionLabel = (mode?: string | null) =>
+  mode === "ONLINE_FULL" ? "Pay Full Amount Online" : "Pay Advance Online";
+
 const renderSettlementCopy = (order: OrderRecord) => {
   if (order.paymentSummary?.canInitiateAdvancePayment) {
-    return "Pay the required advance online to move this order into the kitchen queue.";
+    return order.paymentSummary?.mode === "ONLINE_FULL"
+      ? "Pay the full order total online to move this order into the kitchen queue."
+      : "Pay the required advance online to move this order into the kitchen queue.";
   }
 
   if (order.paymentSummary?.canInitiateFinalOnlinePayment) {
@@ -114,7 +130,9 @@ const OrderCard = ({
 
       <div className="mt-5 grid gap-3 md:grid-cols-4">
         <div className="rounded-2xl bg-[color:var(--surface-muted)] px-4 py-3">
-          <p className="text-xs uppercase tracking-wide text-[#8d7967]">Advance paid</p>
+          <p className="text-xs uppercase tracking-wide text-[#8d7967]">
+            {getPaidAmountLabel(order.paymentSummary?.mode)}
+          </p>
           <p className="mt-1 font-semibold text-[#3b2f2f]">
             {formatMinorAmount(order.paymentSummary?.advanceReceived)}
           </p>
@@ -128,7 +146,7 @@ const OrderCard = ({
         <div className="rounded-2xl bg-[color:var(--surface-muted)] px-4 py-3">
           <p className="text-xs uppercase tracking-wide text-[#8d7967]">Mode</p>
           <p className="mt-1 font-semibold text-[#3b2f2f]">
-            {order.paymentSummary?.mode ?? "N/A"}
+            {formatPaymentModeLabel(order.paymentSummary?.mode)}
           </p>
         </div>
         <div className="rounded-2xl bg-[color:var(--surface-muted)] px-4 py-3">
@@ -199,7 +217,9 @@ const OrderCard = ({
             className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <CreditCard className="h-4 w-4" />
-            {actionLoading ? "Opening payment..." : "Pay Advance Online"}
+            {actionLoading
+              ? "Opening payment..."
+              : getAdvanceActionLabel(order.paymentSummary?.mode)}
           </button>
         )}
 
@@ -324,7 +344,9 @@ export default function OrdersPage() {
       pushToast({
         title:
           purpose === "ADVANCE"
-            ? "Advance payment completed"
+            ? order.paymentSummary?.mode === "ONLINE_FULL"
+              ? "Full payment completed"
+              : "Advance payment completed"
             : "Final settlement completed",
         variant: "success",
       });

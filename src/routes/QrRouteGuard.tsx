@@ -29,7 +29,7 @@ export default function QrRouteGuard({ children }: { children: ReactNode }) {
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange-500">
           Table QR Detected
         </p>
-        <h1 className="mt-3 text-3xl font-semibold text-[#2f241d]">
+        <h1 className="mt-3 text-3xl font-semibold">
           Login required to open this menu
         </h1>
         <p className="mt-3 text-sm leading-6 text-[#6d5c4d]">

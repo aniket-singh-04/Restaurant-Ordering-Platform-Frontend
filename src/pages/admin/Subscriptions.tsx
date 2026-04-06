@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
+import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
+import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { useRazorpayCheckout } from "../../hooks/useRazorpayCheckout";
@@ -18,166 +20,22 @@ import {
   useSubscriptionPlans,
   verifySubscription,
 } from "../../features/subscriptions/api";
-import { getApiErrorMessage } from "../../utils/apiErrorHelpers";
+import {
+  getApiErrorMessage,
+  getApiFieldErrors,
+  getApiFormErrors,
+  getApiRequestId,
+} from "../../utils/apiErrorHelpers";
 import { formatPrice } from "../../utils/formatPrice";
-import { isValidEmail, isValidGst, isValidPhone } from "../../utils/validators";
+import {
+  buildPaymentConnectionPayload,
+  createPaymentConnectionForm,
+  PAYMENT_CONNECTION_BUSINESS_TYPE_OPTIONS,
+  sanitizePaymentConnectionForm,
+  validatePaymentConnectionForm,
+} from "../../features/restaurants/paymentConnectionForm";
 
 const formatMinorAmount = (value?: number) => formatPrice((value ?? 0) / 100);
-const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
-const IFSC_REGEX = /^[A-Z]{4}0[A-Z0-9]{6}$/;
-const ACCOUNT_NUMBER_REGEX = /^[0-9]{6,18}$/;
-
-const createPaymentConnectionForm = (
-  user: { name?: string; email?: string; phone?: string } | null | undefined,
-): RestaurantPaymentConnectionOnboardingPayload => ({
-  businessType: "partnership",
-  businessCategory: "food",
-  businessSubcategory: "restaurant",
-  customerFacingBusinessName: "",
-  businessAddress: {
-    street1: "",
-    street2: "",
-    city: "",
-    state: "",
-    postalCode: "",
-    country: "IN",
-  },
-  legalInfo: {
-    pan: "",
-    gst: "",
-  },
-  bankAccount: {
-    accountNumber: "",
-    ifscCode: "",
-    beneficiaryName: user?.name ?? "",
-  },
-  stakeholder: {
-    name: user?.name ?? "",
-    email: user?.email ?? "",
-    phone: user?.phone ?? "",
-    pan: "",
-    percentageOwnership: 100,
-    address: {
-      street1: "",
-      street2: "",
-      city: "",
-      state: "",
-      postalCode: "",
-      country: "IN",
-    },
-  },
-  acceptTerms: false,
-});
-
-const validatePaymentConnectionForm = (
-  form: RestaurantPaymentConnectionOnboardingPayload,
-) => {
-  const errors: Record<string, string> = {};
-  const setError = (field: string, message: string) => {
-    if (!errors[field]) {
-      errors[field] = message;
-    }
-  };
-
-  if (form.businessType.trim().length < 2) {
-    setError("businessType", "Business type is required.");
-  }
-  if (form.businessCategory.trim().length < 2) {
-    setError("businessCategory", "Business category is required.");
-  }
-  if (form.businessSubcategory.trim().length < 2) {
-    setError("businessSubcategory", "Business subcategory is required.");
-  }
-  if (
-    form.customerFacingBusinessName?.trim() &&
-    form.customerFacingBusinessName.trim().length < 2
-  ) {
-    setError(
-      "customerFacingBusinessName",
-      "Customer-facing business name must be at least 2 characters.",
-    );
-  }
-
-  if (form.businessAddress.street1.trim().length < 3) {
-    setError("businessAddress.street1", "Business address is required.");
-  }
-  if (form.businessAddress.city.trim().length < 2) {
-    setError("businessAddress.city", "Business city is required.");
-  }
-  if (form.businessAddress.state.trim().length < 2) {
-    setError("businessAddress.state", "Business state is required.");
-  }
-  if (form.businessAddress.postalCode.trim().length < 4) {
-    setError("businessAddress.postalCode", "Business postal code is required.");
-  }
-
-  if (!PAN_REGEX.test(form.legalInfo.pan.trim().toUpperCase())) {
-    setError("legalInfo.pan", "Enter a valid business PAN.");
-  }
-  if (form.legalInfo.gst?.trim() && !isValidGst(form.legalInfo.gst)) {
-    setError("legalInfo.gst", "Enter a valid GST number.");
-  }
-
-  if (!ACCOUNT_NUMBER_REGEX.test(form.bankAccount.accountNumber.trim())) {
-    setError(
-      "bankAccount.accountNumber",
-      "Account number must be 6-18 digits.",
-    );
-  }
-  if (!IFSC_REGEX.test(form.bankAccount.ifscCode.trim().toUpperCase())) {
-    setError("bankAccount.ifscCode", "Enter a valid IFSC code.");
-  }
-  if (form.bankAccount.beneficiaryName.trim().length < 2) {
-    setError("bankAccount.beneficiaryName", "Beneficiary name is required.");
-  }
-
-  if (form.stakeholder.name.trim().length < 2) {
-    setError("stakeholder.name", "Stakeholder name is required.");
-  }
-  if (!isValidEmail(form.stakeholder.email)) {
-    setError("stakeholder.email", "Enter a valid stakeholder email.");
-  }
-  if (!isValidPhone(form.stakeholder.phone)) {
-    setError("stakeholder.phone", "Stakeholder phone must be exactly 10 digits.");
-  }
-  if (!PAN_REGEX.test(form.stakeholder.pan.trim().toUpperCase())) {
-    setError("stakeholder.pan", "Enter a valid stakeholder PAN.");
-  }
-  if (
-    !Number.isFinite(form.stakeholder.percentageOwnership) ||
-    form.stakeholder.percentageOwnership < 1 ||
-    form.stakeholder.percentageOwnership > 100
-  ) {
-    setError(
-      "stakeholder.percentageOwnership",
-      "Ownership percentage must be between 1 and 100.",
-    );
-  }
-  if (form.stakeholder.address.street1.trim().length < 3) {
-    setError("stakeholder.address.street1", "Stakeholder address is required.");
-  }
-  if (form.stakeholder.address.city.trim().length < 2) {
-    setError("stakeholder.address.city", "Stakeholder city is required.");
-  }
-  if (form.stakeholder.address.state.trim().length < 2) {
-    setError("stakeholder.address.state", "Stakeholder state is required.");
-  }
-  if (form.stakeholder.address.postalCode.trim().length < 4) {
-    setError(
-      "stakeholder.address.postalCode",
-      "Stakeholder postal code is required.",
-    );
-  }
-
-  if (!form.acceptTerms) {
-    setError(
-      "acceptTerms",
-      "Accept the Razorpay Route onboarding terms before submitting.",
-    );
-  }
-
-  return errors;
-};
 
 export default function Subscriptions() {
   const { user } = useAuth();
@@ -192,15 +50,19 @@ export default function Subscriptions() {
   const [trialStarting, setTrialStarting] = useState(false);
   const [paymentConnectLoading, setPaymentConnectLoading] = useState<null | "start" | "complete">(null);
   const [paymentConnectionErrors, setPaymentConnectionErrors] = useState<Record<string, string>>({});
+  const [paymentConnectionFormMessages, setPaymentConnectionFormMessages] = useState<string[]>([]);
+  const [paymentConnectionRequestId, setPaymentConnectionRequestId] = useState<string | null>(null);
   const [paymentConnectionForm, setPaymentConnectionForm] =
     useState<RestaurantPaymentConnectionOnboardingPayload>(() =>
-      createPaymentConnectionForm(user),
+      sanitizePaymentConnectionForm(createPaymentConnectionForm(user)),
     );
   const canManageBilling = user?.role === "ADMIN" || user?.role === "RESTRO_OWNER";
 
   useEffect(() => {
-    setPaymentConnectionForm(createPaymentConnectionForm(user));
+    setPaymentConnectionForm(sanitizePaymentConnectionForm(createPaymentConnectionForm(user)));
     setPaymentConnectionErrors({});
+    setPaymentConnectionFormMessages([]);
+    setPaymentConnectionRequestId(null);
   }, [user?.name, user?.email, user?.phone]);
 
   const paymentConnectionQuery = useQuery({
@@ -213,6 +75,35 @@ export default function Subscriptions() {
     () => (plansQuery.data ?? []).filter((plan) => plan.billingCycle === billingCycle),
     [billingCycle, plansQuery.data],
   );
+  const isProprietorship = paymentConnectionForm.businessType === "proprietorship";
+  const businessPanLabel = isProprietorship ? "Proprietor PAN (Optional)" : "Business PAN";
+  const businessPanHelperText = isProprietorship
+    ? "Leave this blank to reuse the proprietor PAN from the stakeholder section."
+    : "Enter the partnership firm's PAN used for business KYC.";
+
+  const paymentConnectionSummaryMessages = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...paymentConnectionFormMessages,
+          ...Object.values(paymentConnectionErrors),
+        ]),
+      ),
+    [paymentConnectionErrors, paymentConnectionFormMessages],
+  );
+
+  const getPaymentConnectionFieldError = (field: string) => paymentConnectionErrors[field];
+
+  const getPaymentConnectionInputClass = (field: string) =>
+    `mt-2 w-full rounded-lg border bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${getPaymentConnectionFieldError(field)
+      ? "border-red-300 focus:ring-red-200"
+      : "border-[#e5d5c6] focus:ring-orange-400"
+    }`;
+
+  const renderPaymentConnectionFieldError = (field: string) => {
+    const message = getPaymentConnectionFieldError(field);
+    return message ? <p className="mt-2 text-sm text-red-600">{message}</p> : null;
+  };
 
   const refreshAll = async () => {
     await Promise.all([
@@ -330,13 +221,21 @@ export default function Subscriptions() {
       return;
     }
 
+    let sanitizedPaymentConnectionForm = paymentConnectionForm;
+
     if (mode === "start") {
-      const nextErrors = validatePaymentConnectionForm(paymentConnectionForm);
-      if (Object.keys(nextErrors).length) {
-        setPaymentConnectionErrors(nextErrors);
+      const validationResult = validatePaymentConnectionForm(paymentConnectionForm);
+      sanitizedPaymentConnectionForm = validationResult.sanitizedForm;
+      setPaymentConnectionForm(validationResult.sanitizedForm);
+
+      if (Object.keys(validationResult.errors).length) {
+        setPaymentConnectionErrors(validationResult.errors);
+        setPaymentConnectionFormMessages([]);
+        setPaymentConnectionRequestId(null);
         pushToast({
           title: "Complete required onboarding details",
-          description: Object.values(nextErrors)[0] ?? "Please review the onboarding form.",
+          description:
+            Object.values(validationResult.errors)[0] ?? "Please review the onboarding form.",
           variant: "warning",
         });
         return;
@@ -344,11 +243,16 @@ export default function Subscriptions() {
     }
 
     setPaymentConnectionErrors({});
+    setPaymentConnectionFormMessages([]);
+    setPaymentConnectionRequestId(null);
     setPaymentConnectLoading(mode);
     try {
       const response =
         mode === "start"
-          ? await startRestaurantPaymentConnection(user.restroId, paymentConnectionForm)
+          ? await startRestaurantPaymentConnection(
+            user.restroId,
+            buildPaymentConnectionPayload(sanitizedPaymentConnectionForm),
+          )
           : await completeRestaurantPaymentConnection(user.restroId);
 
       await refreshAll();
@@ -361,9 +265,20 @@ export default function Subscriptions() {
         variant: "success",
       });
     } catch (error) {
+      const fieldErrors = getApiFieldErrors(error);
+      const formErrors = getApiFormErrors(error);
+      const requestId = getApiRequestId(error);
+
+      setPaymentConnectionErrors(fieldErrors);
+      setPaymentConnectionFormMessages(formErrors);
+      setPaymentConnectionRequestId(requestId ?? null);
+
       pushToast({
         title: "Payment connection update failed",
-        description: getApiErrorMessage(error, "Please try again."),
+        description:
+          formErrors[0] ??
+          Object.values(fieldErrors)[0] ??
+          getApiErrorMessage(error, "Please try again."),
         variant: "error",
       });
     } finally {
@@ -375,7 +290,13 @@ export default function Subscriptions() {
     updater: (current: RestaurantPaymentConnectionOnboardingPayload) => RestaurantPaymentConnectionOnboardingPayload,
   ) => {
     setPaymentConnectionErrors({});
+    setPaymentConnectionFormMessages([]);
+    setPaymentConnectionRequestId(null);
     setPaymentConnectionForm((current) => updater(current));
+  };
+
+  const commitSanitizedPaymentConnectionForm = () => {
+    setPaymentConnectionForm((current) => sanitizePaymentConnectionForm(current));
   };
 
   return (
@@ -404,7 +325,7 @@ export default function Subscriptions() {
 
       <main className="mx-auto max-w-7xl py-8 space-y-8">
 
-        <section className="rounded-2xl border border-[#eedbc8] bg-white p-8 shadow-sm">
+        <section className="rounded-2xl border border-[#eedbc8] bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex-1">
               <h2 className="text-2xl font-bold text-[#3b2f2f]">Access Status</h2>
@@ -447,7 +368,7 @@ export default function Subscriptions() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-[#eedbc8] bg-white p-8 shadow-sm">
+        <section className="rounded-2xl border border-[#eedbc8] bg-white p-4 shadow-sm">
           <div className="mb-8">
             <h2 className="text-2xl font-bold text-[#3b2f2f]">Pricing Plans</h2>
             <p className="mt-2 text-sm text-[#6b665f]">Select your preferred billing cycle and subscribe</p>
@@ -480,7 +401,7 @@ export default function Subscriptions() {
             {plans.map((plan) => (
               <article
                 key={plan.id}
-                className="rounded-2xl border border-[#f0e3d5] p-6 shadow-sm hover:shadow-md transition-shadow"
+                className="rounded-2xl border border-[#f0e3d5] p-4 shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div className="flex-1">
@@ -521,11 +442,11 @@ export default function Subscriptions() {
         </section>
 
         <section className="space-y-8">
-          <div className="grid gap-8 lg:grid-cols-2">
-            <div className="rounded-2xl border border-[#eedbc8] bg-white p-8 shadow-sm">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-[#eedbc8] bg-white p-4 shadow-sm">
               <h2 className="text-2xl font-bold text-[#3b2f2f]">Current Subscription</h2>
               {currentQuery.data ? (
-                <div className="mt-6 rounded-xl border border-[#f0e3d5] bg-[#fffaf5] p-6">
+                <div className="mt-6 rounded-xl border border-[#f0e3d5] bg-[#fffaf5] p-4">
                   <div className="mb-6 pb-6 border-b border-[#f0e3d5]">
                     <p className="text-xs uppercase font-semibold tracking-widest text-[#8d7967]">Active Plan</p>
                     <h3 className="mt-3 text-2xl font-bold text-[#3b2f2f]">
@@ -598,9 +519,9 @@ export default function Subscriptions() {
               )}
             </div>
 
-            <div className="rounded-2xl border border-[#eedbc8] bg-white p-8 shadow-sm">
+            <div className="rounded-2xl border border-[#eedbc8] bg-white p-4 shadow-sm">
               <h2 className="text-2xl font-bold text-[#3b2f2f]">Payment Connection</h2>
-              <div className="mt-6 rounded-xl border border-[#f0e3d5] bg-[#fffaf5] p-6 space-y-6">
+              <div className="mt-6 rounded-xl border border-[#f0e3d5] bg-[#fffaf5] p-4 space-y-6">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="rounded-lg bg-white p-4 border border-[#f0e3d5]">
                     <p className="text-xs uppercase font-semibold tracking-widest text-[#8d7967]">Status</p>
@@ -665,7 +586,7 @@ export default function Subscriptions() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[#eedbc8] bg-white p-8 shadow-sm">
+          <div className="rounded-2xl border border-[#eedbc8] bg-white p-4 shadow-sm">
             <h2 className="text-2xl font-bold text-[#3b2f2f]">Subscription History</h2>
             <div className="mt-6 space-y-3">
               {(historyQuery.data ?? []).length > 0 ? (
@@ -707,29 +628,34 @@ export default function Subscriptions() {
             </div>
           </div>
         </section>
-        <section className="rounded-2xl border border-[#eedbc8] bg-white p-8 shadow-sm">
+        <section className="rounded-2xl border border-[#eedbc8] bg-white p-4 shadow-sm">
           <h2 className="text-2xl font-bold text-[#3b2f2f]">Razorpay Onboarding Details</h2>
           <p className="mt-2 text-sm text-[#6b665f]">Complete all required information for payment processing</p>
 
-          <div className="mt-8 rounded-xl border border-[#f0e3d5] bg-[#fffaf5] p-6 space-y-8">
+          <div className="mt-8 rounded-xl border border-[#f0e3d5] bg-[#fffaf5] p-4 space-y-8">
             <div className="rounded-lg border border-sky-200 bg-sky-50 px-5 py-4 text-sm text-sky-900">
               Review the restaurant profile in Account Management before submitting onboarding.
               Razorpay account creation also uses the restaurant support email, support phone, and legal name saved there.
             </div>
 
-            {Object.keys(paymentConnectionErrors).length > 0 && (
+            {paymentConnectionSummaryMessages.length > 0 && (
               <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4">
                 <p className="text-sm font-semibold text-red-900">
                   Please review the onboarding details below.
                 </p>
                 <ul className="mt-3 space-y-2 text-sm text-red-800">
-                  {Array.from(new Set(Object.values(paymentConnectionErrors))).map((message) => (
+                  {paymentConnectionSummaryMessages.map((message) => (
                     <li key={message} className="flex items-start gap-2">
                       <span className="mt-1 text-red-500">•</span>
                       <span>{message}</span>
                     </li>
                   ))}
                 </ul>
+                {paymentConnectionRequestId ? (
+                  <p className="mt-3 text-xs font-medium text-red-700">
+                    Reference ID: {paymentConnectionRequestId}
+                  </p>
+                ) : null}
               </div>
             )}
 
@@ -739,22 +665,79 @@ export default function Subscriptions() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Business Type</label>
-                  <input
+                  <Listbox
                     value={paymentConnectionForm.businessType}
-                    onChange={(event) =>
-                      updateForm((current) => ({
-                        ...current,
-                        businessType: event.target.value,
-                      }))
+                    onChange={(value: RestaurantPaymentConnectionOnboardingPayload["businessType"]) =>
+                      updateForm((current) => {
+                        const currentStakeholder = current.stakeholder || {};
+
+                        return {
+                          ...current,
+                          businessType: value,
+                          stakeholder: {
+                            ...currentStakeholder,
+                            percentageOwnership:
+                              value === "proprietorship"
+                                ? 100
+                                : currentStakeholder.percentageOwnership ?? 0,
+                          },
+                        };
+                      })
                     }
-                    placeholder="e.g., partnership"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
-                  />
+                  >
+                    <div className="relative">
+                      {/* Button */}
+                      <ListboxButton
+                        className={`${getPaymentConnectionInputClass("businessType")} flex items-center justify-between`}
+                      >
+                        <span>
+                          {
+                            PAYMENT_CONNECTION_BUSINESS_TYPE_OPTIONS.find(
+                              (opt) => opt.value === paymentConnectionForm.businessType
+                            )?.label || "Select business type"
+                          }
+                        </span>
+                        <ChevronDownIcon className="h-4 w-4 text-gray-500" />
+                      </ListboxButton>
+
+                      {/* Options */}
+                      <ListboxOptions className="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-xl border border-[#e5d5c6] bg-white shadow-lg focus:outline-none">
+                        {PAYMENT_CONNECTION_BUSINESS_TYPE_OPTIONS.map((option) => (
+                          <ListboxOption
+                            key={option.value}
+                            value={option.value}
+                            className={({ active }) =>
+                              `cursor-pointer select-none px-4 py-2 flex items-center justify-between ${active ? "bg-orange-100 text-orange-700" : "text-gray-700"
+                              }`
+                            }
+                          >
+                            {({ selected }) => (
+                              <>
+                                <span>{option.label}</span>
+                                {selected && (
+                                  <CheckIcon className="h-4 w-4 text-orange-500" />
+                                )}
+                              </>
+                            )}
+                          </ListboxOption>
+                        ))}
+                      </ListboxOptions>
+                    </div>
+                  </Listbox>
+                  <p className="mt-2 text-xs text-[#6b665f]">
+                    {
+                      PAYMENT_CONNECTION_BUSINESS_TYPE_OPTIONS.find(
+                        (option) => option.value === paymentConnectionForm.businessType,
+                      )?.description
+                    }
+                  </p>
+                  {renderPaymentConnectionFieldError("businessType")}
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Business Name</label>
                   <input
                     value={paymentConnectionForm.customerFacingBusinessName ?? ""}
+                    onBlur={commitSanitizedPaymentConnectionForm}
                     onChange={(event) =>
                       updateForm((current) => ({
                         ...current,
@@ -762,8 +745,9 @@ export default function Subscriptions() {
                       }))
                     }
                     placeholder="Customer-facing name"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    className={getPaymentConnectionInputClass("customerFacingBusinessName")}
                   />
+                  {renderPaymentConnectionFieldError("customerFacingBusinessName")}
                 </div>
               </div>
 
@@ -772,29 +756,23 @@ export default function Subscriptions() {
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Category</label>
                   <input
                     value={paymentConnectionForm.businessCategory}
-                    onChange={(event) =>
-                      updateForm((current) => ({
-                        ...current,
-                        businessCategory: event.target.value,
-                      }))
-                    }
-                    placeholder="e.g., food"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    readOnly
+                    className="mt-2 w-full rounded-lg border border-[#f0e3d5] bg-[#fffaf5] px-4 py-2.5 text-sm text-[#5f5146] focus:outline-none"
                   />
+                  <p className="mt-2 text-xs text-[#6b665f]">
+                    Locked to the restaurant platform&apos;s supported category.
+                  </p>
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Subcategory</label>
                   <input
                     value={paymentConnectionForm.businessSubcategory}
-                    onChange={(event) =>
-                      updateForm((current) => ({
-                        ...current,
-                        businessSubcategory: event.target.value,
-                      }))
-                    }
-                    placeholder="e.g., restaurant"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    readOnly
+                    className="mt-2 w-full rounded-lg border border-[#f0e3d5] bg-[#fffaf5] px-4 py-2.5 text-sm text-[#5f5146] focus:outline-none"
                   />
+                  <p className="mt-2 text-xs text-[#6b665f]">
+                    Locked to the restaurant platform&apos;s supported subcategory.
+                  </p>
                 </div>
               </div>
             </div>
@@ -806,6 +784,7 @@ export default function Subscriptions() {
                 <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Street Address 1</label>
                 <input
                   value={paymentConnectionForm.businessAddress.street1}
+                  onBlur={commitSanitizedPaymentConnectionForm}
                   onChange={(event) =>
                     updateForm((current) => ({
                       ...current,
@@ -816,13 +795,15 @@ export default function Subscriptions() {
                     }))
                   }
                   placeholder="Registered business address 1"
-                  className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className={getPaymentConnectionInputClass("businessAddress.street1")}
                 />
+                {renderPaymentConnectionFieldError("businessAddress.street1")}
               </div>
               <div>
                 <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Street Address 2</label>
                 <input
-                  value={paymentConnectionForm.businessAddress.street2}
+                  value={paymentConnectionForm.businessAddress.street2 ?? ""}
+                  onBlur={commitSanitizedPaymentConnectionForm}
                   onChange={(event) =>
                     updateForm((current) => ({
                       ...current,
@@ -833,8 +814,9 @@ export default function Subscriptions() {
                     }))
                   }
                   placeholder="Registered business address 2"
-                  className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className={getPaymentConnectionInputClass("businessAddress.street2")}
                 />
+                {renderPaymentConnectionFieldError("businessAddress.street2")}
               </div>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-3">
@@ -842,6 +824,7 @@ export default function Subscriptions() {
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">City</label>
                   <input
                     value={paymentConnectionForm.businessAddress.city}
+                    onBlur={commitSanitizedPaymentConnectionForm}
                     onChange={(event) =>
                       updateForm((current) => ({
                         ...current,
@@ -852,13 +835,15 @@ export default function Subscriptions() {
                       }))
                     }
                     placeholder="City"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    className={getPaymentConnectionInputClass("businessAddress.city")}
                   />
+                  {renderPaymentConnectionFieldError("businessAddress.city")}
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">State</label>
                   <input
                     value={paymentConnectionForm.businessAddress.state}
+                    onBlur={commitSanitizedPaymentConnectionForm}
                     onChange={(event) =>
                       updateForm((current) => ({
                         ...current,
@@ -869,8 +854,9 @@ export default function Subscriptions() {
                       }))
                     }
                     placeholder="State"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    className={getPaymentConnectionInputClass("businessAddress.state")}
                   />
+                  {renderPaymentConnectionFieldError("businessAddress.state")}
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Postal Code</label>
@@ -881,13 +867,15 @@ export default function Subscriptions() {
                         ...current,
                         businessAddress: {
                           ...current.businessAddress,
-                          postalCode: event.target.value,
+                          postalCode: event.target.value.replace(/\D/g, "").slice(0, 6),
                         },
                       }))
                     }
                     placeholder="PIN code"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    inputMode="numeric"
+                    className={getPaymentConnectionInputClass("businessAddress.postalCode")}
                   />
+                  {renderPaymentConnectionFieldError("businessAddress.postalCode")}
                 </div>
               </div>
             </div>
@@ -897,21 +885,25 @@ export default function Subscriptions() {
               <h3 className="text-lg font-bold text-[#3b2f2f] mb-4">Legal Information</h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Business PAN</label>
+                  <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">{businessPanLabel}</label>
                   <input
-                    value={paymentConnectionForm.legalInfo.pan}
+                    value={paymentConnectionForm.legalInfo.pan ?? ""}
                     onChange={(event) =>
                       updateForm((current) => ({
                         ...current,
                         legalInfo: {
                           ...current.legalInfo,
-                          pan: event.target.value,
+                          pan: event.target.value.replace(/\s+/g, "").toUpperCase(),
                         },
                       }))
                     }
                     placeholder="PAN number"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    autoCapitalize="characters"
+                    className={getPaymentConnectionInputClass("legalInfo.pan")}
                   />
+                  {renderPaymentConnectionFieldError("legalInfo.pan") ?? (
+                    <p className="mt-2 text-xs text-[#6b665f]">{businessPanHelperText}</p>
+                  )}
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">GST Number (Optional)</label>
@@ -922,13 +914,19 @@ export default function Subscriptions() {
                         ...current,
                         legalInfo: {
                           ...current.legalInfo,
-                          gst: event.target.value,
+                          gst: event.target.value.replace(/\s+/g, "").toUpperCase(),
                         },
                       }))
                     }
                     placeholder="GST number"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    autoCapitalize="characters"
+                    className={getPaymentConnectionInputClass("legalInfo.gst")}
                   />
+                  {renderPaymentConnectionFieldError("legalInfo.gst") ?? (
+                    <p className="mt-2 text-xs text-[#6b665f]">
+                      Leave GST empty if the business does not have a GSTIN.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -946,13 +944,15 @@ export default function Subscriptions() {
                         ...current,
                         bankAccount: {
                           ...current.bankAccount,
-                          accountNumber: event.target.value,
+                          accountNumber: event.target.value.replace(/\D/g, "").slice(0, 18),
                         },
                       }))
                     }
                     placeholder="Account number"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    inputMode="numeric"
+                    className={getPaymentConnectionInputClass("bankAccount.accountNumber")}
                   />
+                  {renderPaymentConnectionFieldError("bankAccount.accountNumber")}
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">IFSC Code</label>
@@ -963,18 +963,21 @@ export default function Subscriptions() {
                         ...current,
                         bankAccount: {
                           ...current.bankAccount,
-                          ifscCode: event.target.value,
+                          ifscCode: event.target.value.replace(/\s+/g, "").toUpperCase(),
                         },
                       }))
                     }
                     placeholder="IFSC"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    autoCapitalize="characters"
+                    className={getPaymentConnectionInputClass("bankAccount.ifscCode")}
                   />
+                  {renderPaymentConnectionFieldError("bankAccount.ifscCode")}
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Beneficiary Name</label>
                   <input
                     value={paymentConnectionForm.bankAccount.beneficiaryName}
+                    onBlur={commitSanitizedPaymentConnectionForm}
                     onChange={(event) =>
                       updateForm((current) => ({
                         ...current,
@@ -985,20 +988,24 @@ export default function Subscriptions() {
                       }))
                     }
                     placeholder="Account holder name"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    className={getPaymentConnectionInputClass("bankAccount.beneficiaryName")}
                   />
+                  {renderPaymentConnectionFieldError("bankAccount.beneficiaryName")}
                 </div>
               </div>
             </div>
 
             {/* Owner Information */}
             <div className="border-t border-[#f0e3d5] pt-8">
-              <h3 className="text-lg font-bold text-[#3b2f2f] mb-4">Business Owner / Stakeholder</h3>
+              <h3 className="text-lg font-bold text-[#3b2f2f] mb-4">
+                {isProprietorship ? "Proprietor Details" : "Partner / Stakeholder"}
+              </h3>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Full Name</label>
                   <input
                     value={paymentConnectionForm.stakeholder.name}
+                    onBlur={commitSanitizedPaymentConnectionForm}
                     onChange={(event) =>
                       updateForm((current) => ({
                         ...current,
@@ -1009,13 +1016,15 @@ export default function Subscriptions() {
                       }))
                     }
                     placeholder="Owner name"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    className={getPaymentConnectionInputClass("stakeholder.name")}
                   />
+                  {renderPaymentConnectionFieldError("stakeholder.name")}
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Email</label>
                   <input
                     value={paymentConnectionForm.stakeholder.email}
+                    onBlur={commitSanitizedPaymentConnectionForm}
                     onChange={(event) =>
                       updateForm((current) => ({
                         ...current,
@@ -1026,8 +1035,9 @@ export default function Subscriptions() {
                       }))
                     }
                     placeholder="Email address"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    className={getPaymentConnectionInputClass("stakeholder.email")}
                   />
+                  {renderPaymentConnectionFieldError("stakeholder.email")}
                 </div>
               </div>
 
@@ -1041,13 +1051,15 @@ export default function Subscriptions() {
                         ...current,
                         stakeholder: {
                           ...current.stakeholder,
-                          phone: event.target.value,
+                          phone: event.target.value.replace(/\D/g, "").slice(0, 10),
                         },
                       }))
                     }
                     placeholder="Phone number"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    inputMode="numeric"
+                    className={getPaymentConnectionInputClass("stakeholder.phone")}
                   />
+                  {renderPaymentConnectionFieldError("stakeholder.phone")}
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">PAN Number</label>
@@ -1058,13 +1070,15 @@ export default function Subscriptions() {
                         ...current,
                         stakeholder: {
                           ...current.stakeholder,
-                          pan: event.target.value,
+                          pan: event.target.value.replace(/\s+/g, "").toUpperCase(),
                         },
                       }))
                     }
                     placeholder="PAN"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    autoCapitalize="characters"
+                    className={getPaymentConnectionInputClass("stakeholder.pan")}
                   />
+                  {renderPaymentConnectionFieldError("stakeholder.pan")}
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Ownership %</label>
@@ -1073,6 +1087,7 @@ export default function Subscriptions() {
                     min={1}
                     max={100}
                     value={paymentConnectionForm.stakeholder.percentageOwnership}
+                    disabled={isProprietorship}
                     onChange={(event) =>
                       updateForm((current) => ({
                         ...current,
@@ -1083,8 +1098,15 @@ export default function Subscriptions() {
                       }))
                     }
                     placeholder="0-100"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    className={getPaymentConnectionInputClass("stakeholder.percentageOwnership")}
                   />
+                  {renderPaymentConnectionFieldError("stakeholder.percentageOwnership") ?? (
+                    <p className="mt-2 text-xs text-[#6b665f]">
+                      {isProprietorship
+                        ? "Fixed at 100% for proprietorship onboarding."
+                        : "Enter the stakeholder ownership share used for compliance review."}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -1096,6 +1118,7 @@ export default function Subscriptions() {
                 <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Street Address</label>
                 <input
                   value={paymentConnectionForm.stakeholder.address.street1}
+                  onBlur={commitSanitizedPaymentConnectionForm}
                   onChange={(event) =>
                     updateForm((current) => ({
                       ...current,
@@ -1109,8 +1132,9 @@ export default function Subscriptions() {
                     }))
                   }
                   placeholder="Residential address"
-                  className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  className={getPaymentConnectionInputClass("stakeholder.address.street1")}
                 />
+                {renderPaymentConnectionFieldError("stakeholder.address.street1")}
               </div>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-3">
@@ -1118,6 +1142,7 @@ export default function Subscriptions() {
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">City</label>
                   <input
                     value={paymentConnectionForm.stakeholder.address.city}
+                    onBlur={commitSanitizedPaymentConnectionForm}
                     onChange={(event) =>
                       updateForm((current) => ({
                         ...current,
@@ -1131,13 +1156,15 @@ export default function Subscriptions() {
                       }))
                     }
                     placeholder="City"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    className={getPaymentConnectionInputClass("stakeholder.address.city")}
                   />
+                  {renderPaymentConnectionFieldError("stakeholder.address.city")}
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">State</label>
                   <input
                     value={paymentConnectionForm.stakeholder.address.state}
+                    onBlur={commitSanitizedPaymentConnectionForm}
                     onChange={(event) =>
                       updateForm((current) => ({
                         ...current,
@@ -1151,8 +1178,9 @@ export default function Subscriptions() {
                       }))
                     }
                     placeholder="State"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    className={getPaymentConnectionInputClass("stakeholder.address.state")}
                   />
+                  {renderPaymentConnectionFieldError("stakeholder.address.state")}
                 </div>
                 <div>
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Postal Code</label>
@@ -1165,14 +1193,16 @@ export default function Subscriptions() {
                           ...current.stakeholder,
                           address: {
                             ...current.stakeholder.address,
-                            postalCode: event.target.value,
+                            postalCode: event.target.value.replace(/\D/g, "").slice(0, 6),
                           },
                         },
                       }))
                     }
                     placeholder="PIN code"
-                    className="mt-2 w-full rounded-lg border border-[#e5d5c6] bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                    inputMode="numeric"
+                    className={getPaymentConnectionInputClass("stakeholder.address.postalCode")}
                   />
+                  {renderPaymentConnectionFieldError("stakeholder.address.postalCode")}
                 </div>
               </div>
             </div>
@@ -1198,11 +1228,7 @@ export default function Subscriptions() {
               <p className="mt-2 text-xs text-[#6b665f]">
                 This confirmation is required before we submit the onboarding request.
               </p>
-              {paymentConnectionErrors.acceptTerms ? (
-                <p className="mt-2 text-sm text-red-600">
-                  {paymentConnectionErrors.acceptTerms}
-                </p>
-              ) : null}
+              {renderPaymentConnectionFieldError("acceptTerms")}
             </div>
 
             {/* Action Buttons */}
