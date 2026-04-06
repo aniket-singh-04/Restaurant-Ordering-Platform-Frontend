@@ -1,10 +1,10 @@
-import type { ButtonHTMLAttributes } from 'react';
+// import type { ButtonHTMLAttributes } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useMemo } from 'react';
 import {
   TrendingUp, DollarSign, ShoppingBag,
-  Clock, Calendar, ArrowUp, ArrowDown,
+  Clock, ArrowUp, ArrowDown,
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -19,19 +19,19 @@ import { buildRankedOrderItems } from './orderInsights';
 // --------------------
 // Local Button component
 // --------------------
-const buttonBase =
-  'ui-button-pill flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200';
-const buttonVariants = {
-  default: 'ui-button-secondary',
-  secondary: 'ui-button-secondary',
-  destructive: 'ui-button-danger',
-  warm: 'ui-button',
-  outline: 'ui-button-ghost',
-} as const;
+// const buttonBase =
+//   'ui-button-pill flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200';
+// const buttonVariants = {
+//   default: 'ui-button-secondary',
+//   secondary: 'ui-button-secondary',
+//   destructive: 'ui-button-danger',
+//   warm: 'ui-button',
+//   outline: 'ui-button-ghost',
+// } as const;
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: keyof typeof buttonVariants;
-};
+// type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+//   variant?: keyof typeof buttonVariants;
+// };
 
 // function Button({
 //   children,

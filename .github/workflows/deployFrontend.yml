@@ -38,18 +38,17 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Build Project
-        run: npm run build
-
-      - name: Verify Build Output
-        run: ls -la dist
-
       - name: Audit & Fix Vulnerabilities
         run: |
           echo "Checking for npm vulnerabilities..."
           npm audit || echo "Vulnerabilities found, applying fix"
           npm audit fix --force || echo "Force fix applied"
 
+      - name: Build Project
+        run: npm run build
+
+      # - name: Verify Build Output
+      #   run: ls -la dist
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
