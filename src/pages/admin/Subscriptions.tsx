@@ -661,13 +661,18 @@ export default function Subscriptions() {
                 </div>
 
                 {(paymentConnectionQuery.data?.requirements ?? []).length > 0 && (
-                  <div className="min-w-0 overflow-hidden rounded-lg border border-amber-200 bg-amber-50 px-4 py-4 sm:px-5">
-                    <p className="text-sm font-semibold text-amber-900">Documentation needed:</p>
-                    <ul className="mt-3 space-y-2 text-sm text-amber-800">
+                  <div className="min-w-0 w-full overflow-hidden rounded-lg border border-amber-200 bg-amber-50 px-4 py-4 sm:px-5">
+                    <p className="text-sm font-semibold text-amber-900">
+                      Documentation needed:
+                    </p>
+
+                    <ul className="mt-3 scrollbar-thin space-y-2 text-sm text-amber-800 wrap-break-word max-h-40 overflow-y-auto">
                       {paymentConnectionQuery.data?.requirements?.map((requirement) => (
-                        <li key={requirement} className="flex items-start gap-2">
+                        <li key={requirement} className="flex items-start gap-2 min-w-0">
                           <span className="text-amber-600 mt-1">•</span>
-                          <span>{requirement}</span>
+                          <span className="break-all whitespace-normal pr-2">
+                            {requirement}
+                          </span>
                         </li>
                       ))}
                     </ul>
