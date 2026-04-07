@@ -15,6 +15,18 @@ export type RestaurantPaymentConnection = {
   lastSyncedAt?: string | null;
 };
 
+export type PaymentConnectionPreview = {
+  mode: "PATCH" | "REINITIATE";
+  changedFields: string[];
+  immutableFields: string[];
+  warnings: string[];
+  providerLockWarnings: string[];
+  requiresConfirmation: boolean;
+  confirmationToken: string;
+  confirmationHash: string;
+  confirmationExpiresAt: string;
+};
+
 export type SupportedPaymentConnectionBusinessType =
   | "proprietorship"
   | "partnership";
@@ -68,10 +80,25 @@ export const getRestaurantPaymentConnection = async (restaurantId: string) => {
 
 export const startRestaurantPaymentConnection = async (
   restaurantId: string,
-  payload: RestaurantPaymentConnectionOnboardingPayload,
+  payload: RestaurantPaymentConnectionOnboardingPayload & {
+    confirmationToken?: string;
+    forceReinitiate?: boolean;
+    reinitiateReason?: string;
+  },
 ) => {
   const response = await api.post<{ data: RestaurantPaymentConnection }>(
     `/api/v1/restaurants/${restaurantId}/payment-connection/onboard`,
+    payload,
+  );
+  return response.data;
+};
+
+export const previewRestaurantPaymentConnection = async (
+  restaurantId: string,
+  payload: RestaurantPaymentConnectionOnboardingPayload,
+) => {
+  const response = await api.post<{ data: PaymentConnectionPreview }>(
+    `/api/v1/restaurants/${restaurantId}/payment-connection/preview`,
     payload,
   );
   return response.data;

@@ -9,6 +9,8 @@ import { useRazorpayCheckout } from "../../hooks/useRazorpayCheckout";
 import {
   completeRestaurantPaymentConnection,
   getRestaurantPaymentConnection,
+  previewRestaurantPaymentConnection,
+  type PaymentConnectionPreview,
   type RestaurantPaymentConnectionOnboardingPayload,
   startRestaurantPaymentConnection,
 } from "../../features/restaurants/api";
@@ -26,6 +28,7 @@ import {
   getApiFormErrors,
   getApiRequestId,
 } from "../../utils/apiErrorHelpers";
+import { ApiError } from "../../utils/api";
 import { formatPrice } from "../../utils/formatPrice";
 import {
   buildPaymentConnectionPayload,
@@ -48,10 +51,15 @@ export default function Subscriptions() {
   const [billingCycle, setBillingCycle] = useState<"MONTHLY" | "YEARLY">("MONTHLY");
   const [actionPlanId, setActionPlanId] = useState<string | null>(null);
   const [trialStarting, setTrialStarting] = useState(false);
-  const [paymentConnectLoading, setPaymentConnectLoading] = useState<null | "start" | "complete">(null);
+  const [paymentConnectLoading, setPaymentConnectLoading] = useState<
+    null | "preview" | "start" | "complete"
+  >(null);
   const [paymentConnectionErrors, setPaymentConnectionErrors] = useState<Record<string, string>>({});
   const [paymentConnectionFormMessages, setPaymentConnectionFormMessages] = useState<string[]>([]);
   const [paymentConnectionRequestId, setPaymentConnectionRequestId] = useState<string | null>(null);
+  const [paymentConnectionPreviewState, setPaymentConnectionPreviewState] =
+    useState<PaymentConnectionPreview | null>(null);
+  const [reinitiateReason, setReinitiateReason] = useState("");
   const [paymentConnectionForm, setPaymentConnectionForm] =
     useState<RestaurantPaymentConnectionOnboardingPayload>(() =>
       sanitizePaymentConnectionForm(createPaymentConnectionForm(user)),
@@ -63,6 +71,8 @@ export default function Subscriptions() {
     setPaymentConnectionErrors({});
     setPaymentConnectionFormMessages([]);
     setPaymentConnectionRequestId(null);
+    setPaymentConnectionPreviewState(null);
+    setReinitiateReason("");
   }, [user?.name, user?.email, user?.phone]);
 
   const paymentConnectionQuery = useQuery({
@@ -202,7 +212,60 @@ export default function Subscriptions() {
     }
   };
 
-  const handlePaymentConnection = async (mode: "start" | "complete") => {
+  const extractPreviewFromError = (error: unknown): PaymentConnectionPreview | null => {
+    if (!(error instanceof ApiError) || !error.details || typeof error.details !== "object") {
+      return null;
+    }
+
+    const preview = (error.details as { details?: Partial<PaymentConnectionPreview> }).details;
+    if (
+      !preview ||
+      typeof preview !== "object" ||
+      typeof preview.mode !== "string" ||
+      typeof preview.confirmationToken !== "string"
+    ) {
+      return null;
+    }
+
+    return {
+      mode: preview.mode === "REINITIATE" ? "REINITIATE" : "PATCH",
+      changedFields: Array.isArray(preview.changedFields) ? preview.changedFields : [],
+      immutableFields: Array.isArray(preview.immutableFields) ? preview.immutableFields : [],
+      warnings: Array.isArray(preview.warnings) ? preview.warnings : [],
+      providerLockWarnings: Array.isArray(preview.providerLockWarnings)
+        ? preview.providerLockWarnings
+        : [],
+      requiresConfirmation: Boolean(preview.requiresConfirmation),
+      confirmationToken: preview.confirmationToken,
+      confirmationHash: typeof preview.confirmationHash === "string" ? preview.confirmationHash : "",
+      confirmationExpiresAt:
+        typeof preview.confirmationExpiresAt === "string"
+          ? preview.confirmationExpiresAt
+          : new Date().toISOString(),
+    };
+  };
+
+  const applyPaymentConnectionErrorState = (error: unknown) => {
+    const fieldErrors = getApiFieldErrors(error);
+    const formErrors = getApiFormErrors(error);
+    const requestId = getApiRequestId(error);
+    const preview = extractPreviewFromError(error);
+
+    setPaymentConnectionErrors(fieldErrors);
+    setPaymentConnectionFormMessages(formErrors);
+    setPaymentConnectionRequestId(requestId ?? null);
+
+    if (preview) {
+      setPaymentConnectionPreviewState(preview);
+    }
+
+    return {
+      fieldErrors,
+      formErrors,
+    };
+  };
+
+  const handlePaymentConnection = async (mode: "preview" | "complete") => {
     if (!canManageBilling) {
       pushToast({
         title: "Access restricted",
@@ -223,7 +286,7 @@ export default function Subscriptions() {
 
     let sanitizedPaymentConnectionForm = paymentConnectionForm;
 
-    if (mode === "start") {
+    if (mode === "preview") {
       const validationResult = validatePaymentConnectionForm(paymentConnectionForm);
       sanitizedPaymentConnectionForm = validationResult.sanitizedForm;
       setPaymentConnectionForm(validationResult.sanitizedForm);
@@ -245,33 +308,84 @@ export default function Subscriptions() {
     setPaymentConnectionErrors({});
     setPaymentConnectionFormMessages([]);
     setPaymentConnectionRequestId(null);
+    if (mode === "preview") {
+      setPaymentConnectionPreviewState(null);
+    }
     setPaymentConnectLoading(mode);
     try {
-      const response =
-        mode === "start"
-          ? await startRestaurantPaymentConnection(
-            user.restroId,
-            buildPaymentConnectionPayload(sanitizedPaymentConnectionForm),
-          )
-          : await completeRestaurantPaymentConnection(user.restroId);
+      if (mode === "preview") {
+        const response = await previewRestaurantPaymentConnection(
+          user.restroId,
+          buildPaymentConnectionPayload(sanitizedPaymentConnectionForm),
+        );
+        setPaymentConnectionPreviewState(response);
+        pushToast({
+          title: "Review onboarding changes",
+          description:
+            response.mode === "REINITIATE"
+              ? "Some requested fields require re-initiating onboarding. Review the confirmation section before submitting."
+              : "Preview generated. Review the changes and confirm submission when ready.",
+          variant: "success",
+        });
+      } else {
+        await completeRestaurantPaymentConnection(user.restroId);
+        await refreshAll();
+        pushToast({
+          title: "Payouts enabled",
+          description:
+            "Online food-order payments can now route to the restaurant payout account.",
+          variant: "success",
+        });
+      }
+    } catch (error) {
+      const { fieldErrors, formErrors } = applyPaymentConnectionErrorState(error);
 
+      pushToast({
+        title: "Payment connection update failed",
+        description:
+          formErrors[0] ??
+          Object.values(fieldErrors)[0] ??
+          getApiErrorMessage(error, "Please try again."),
+        variant: "error",
+      });
+    } finally {
+      setPaymentConnectLoading(null);
+    }
+  };
+
+  const confirmPaymentConnectionPreview = async () => {
+    if (!canManageBilling || !user?.restroId || !paymentConnectionPreviewState) {
+      return;
+    }
+
+    const payload = buildPaymentConnectionPayload(paymentConnectionForm);
+    setPaymentConnectionErrors({});
+    setPaymentConnectionFormMessages([]);
+    setPaymentConnectionRequestId(null);
+    setPaymentConnectLoading("start");
+
+    try {
+      const response = await startRestaurantPaymentConnection(user.restroId, {
+        ...payload,
+        confirmationToken: paymentConnectionPreviewState.confirmationToken,
+        forceReinitiate: paymentConnectionPreviewState.mode === "REINITIATE",
+        reinitiateReason:
+          paymentConnectionPreviewState.mode === "REINITIATE"
+            ? reinitiateReason.trim() || undefined
+            : undefined,
+      });
+
+      setPaymentConnectionPreviewState(null);
+      setReinitiateReason("");
       await refreshAll();
       pushToast({
-        title: mode === "start" ? "Onboarding prepared" : "Payouts enabled",
+        title: "Onboarding submitted",
         description:
-          mode === "start"
-            ? response.onboardingLink || "Open the connection card to continue onboarding."
-            : "Online food-order payments can now route to the restaurant payout account.",
+          response.onboardingLink || "The payment connection draft has been updated successfully.",
         variant: "success",
       });
     } catch (error) {
-      const fieldErrors = getApiFieldErrors(error);
-      const formErrors = getApiFormErrors(error);
-      const requestId = getApiRequestId(error);
-
-      setPaymentConnectionErrors(fieldErrors);
-      setPaymentConnectionFormMessages(formErrors);
-      setPaymentConnectionRequestId(requestId ?? null);
+      const { fieldErrors, formErrors } = applyPaymentConnectionErrorState(error);
 
       pushToast({
         title: "Payment connection update failed",
@@ -292,10 +406,12 @@ export default function Subscriptions() {
     setPaymentConnectionErrors({});
     setPaymentConnectionFormMessages([]);
     setPaymentConnectionRequestId(null);
+    setPaymentConnectionPreviewState(null);
     setPaymentConnectionForm((current) => updater(current));
   };
 
   const commitSanitizedPaymentConnectionForm = () => {
+    setPaymentConnectionPreviewState(null);
     setPaymentConnectionForm((current) => sanitizePaymentConnectionForm(current));
   };
 
@@ -443,7 +559,7 @@ export default function Subscriptions() {
 
         <section className="space-y-8">
           <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-2xl border border-[#eedbc8] bg-white p-4 shadow-sm">
+            <div className="min-w-0 rounded-2xl border border-[#eedbc8] bg-white p-4 shadow-sm">
               <h2 className="text-2xl font-bold text-[#3b2f2f]">Current Subscription</h2>
               {currentQuery.data ? (
                 <div className="mt-6 rounded-xl border border-[#f0e3d5] bg-[#fffaf5] p-4">
@@ -545,7 +661,7 @@ export default function Subscriptions() {
                 </div>
 
                 {(paymentConnectionQuery.data?.requirements ?? []).length > 0 && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4">
+                  <div className="min-w-0 overflow-hidden rounded-lg border border-amber-200 bg-amber-50 px-4 py-4 sm:px-5">
                     <p className="text-sm font-semibold text-amber-900">Documentation needed:</p>
                     <ul className="mt-3 space-y-2 text-sm text-amber-800">
                       {paymentConnectionQuery.data?.requirements?.map((requirement) => (
@@ -563,12 +679,14 @@ export default function Subscriptions() {
                     <button
                       type="button"
                       disabled={paymentConnectLoading !== null || !user?.restroId}
-                      onClick={() => void handlePaymentConnection("start")}
+                      onClick={() => void handlePaymentConnection("preview")}
                       className="flex-1 cursor-pointer rounded-xl border-2 border-[#ef6820] px-4 py-2.5 text-sm font-semibold text-[#ef6820] transition hover:bg-orange-50 disabled:opacity-60"
                     >
-                      {paymentConnectLoading === "start"
-                        ? "Submitting..."
-                        : "Submit Onboarding"}
+                      {paymentConnectLoading === "preview"
+                        ? "Reviewing..."
+                        : paymentConnectionPreviewState
+                          ? "Preview Ready"
+                          : "Review Onboarding"}
                     </button>
                     <button
                       type="button"
@@ -658,6 +776,83 @@ export default function Subscriptions() {
                 ) : null}
               </div>
             )}
+
+            {paymentConnectionPreviewState ? (
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-emerald-900">
+                      Confirmation required: {paymentConnectionPreviewState.mode}
+                    </p>
+                    <p className="mt-1 text-sm text-emerald-800">
+                      Review the detected changes below before submitting the Razorpay Route update.
+                    </p>
+                  </div>
+                  <p className="text-xs font-medium text-emerald-700">
+                    Expires {new Date(paymentConnectionPreviewState.confirmationExpiresAt).toLocaleString()}
+                  </p>
+                </div>
+
+                {paymentConnectionPreviewState.changedFields.length > 0 ? (
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-emerald-800">
+                      Changed Fields
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {paymentConnectionPreviewState.changedFields.map((field) => (
+                        <span
+                          key={field}
+                          className="rounded-full border border-2 px-3 py-1 text-xs font-medium text-emerald-800"
+                        >
+                          {field}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {paymentConnectionPreviewState.immutableFields.length > 0 ? (
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold uppercase tracking-widest text-amber-900">
+                      Re-initiation Triggers
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {paymentConnectionPreviewState.immutableFields.map((field) => (
+                        <span
+                          key={field}
+                          className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-900"
+                        >
+                          {field}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+
+                {[...paymentConnectionPreviewState.warnings, ...paymentConnectionPreviewState.providerLockWarnings].length ? (
+                  <div className="mt-4 space-y-2 text-sm text-emerald-900">
+                    {[...paymentConnectionPreviewState.warnings, ...paymentConnectionPreviewState.providerLockWarnings].map((message) => (
+                      <p key={message}>• {message}</p>
+                    ))}
+                  </div>
+                ) : null}
+
+                {paymentConnectionPreviewState.mode === "REINITIATE" ? (
+                  <div className="mt-4">
+                    <label className="text-xs font-semibold uppercase tracking-widest text-emerald-800">
+                      Re-initiation Reason
+                    </label>
+                    <textarea
+                      value={reinitiateReason}
+                      onChange={(event) => setReinitiateReason(event.target.value)}
+                      placeholder="Optional note for why this payout onboarding is being re-initiated."
+                      rows={3}
+                      className="mt-2 w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm text-[#3b2f2f] outline-none focus:ring-2 focus:ring-emerald-200"
+                    />
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
 
             {/* Business Information */}
             <div>
@@ -1236,13 +1431,31 @@ export default function Subscriptions() {
               <button
                 type="button"
                 disabled={paymentConnectLoading !== null || !user?.restroId || !canManageBilling}
-                onClick={() => void handlePaymentConnection("start")}
+                onClick={() => void handlePaymentConnection("preview")}
                 className="flex-1 cursor-pointer rounded-lg border-2 border-[#ef6820] px-6 py-3 text-sm font-semibold text-[#ef6820] transition hover:bg-orange-50 disabled:opacity-60"
               >
-                {paymentConnectLoading === "start"
-                  ? "Submitting..."
-                  : "Submit Onboarding Form"}
+                {paymentConnectLoading === "preview"
+                  ? "Reviewing..."
+                  : paymentConnectionPreviewState
+                    ? "Refresh Preview"
+                    : "Review Onboarding Form"}
               </button>
+              {paymentConnectionPreviewState ? (
+                <button
+                  type="button"
+                  disabled={paymentConnectLoading !== null || !user?.restroId || !canManageBilling}
+                  onClick={() => void confirmPaymentConnectionPreview()}
+                  className="flex-1 cursor-pointer rounded-lg bg-emerald-700 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-60"
+                >
+                  {paymentConnectLoading === "start"
+                    ? paymentConnectionPreviewState.mode === "REINITIATE"
+                      ? "Re-initiating..."
+                      : "Submitting..."
+                    : paymentConnectionPreviewState.mode === "REINITIATE"
+                      ? "Confirm Re-initiation"
+                      : "Confirm Submission"}
+                </button>
+              ) : null}
               <button
                 type="button"
                 disabled={paymentConnectLoading !== null || !user?.restroId || !canManageBilling}

@@ -3,6 +3,7 @@ import {
   BadgeIndianRupee,
   Building2,
   ClipboardList,
+  FileSpreadsheet,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -28,6 +29,7 @@ const navItems: NavItem[] = [
   { to: "/platform/restaurants", label: "Restaurants", icon: Building2 },
   { to: "/platform/orders", label: "Orders", icon: ClipboardList },
   { to: "/platform/payments", label: "Payments", icon: BadgeIndianRupee },
+  { to: "/platform/reports", label: "Reports", icon: FileSpreadsheet },
   { to: "/platform/subscriptions", label: "Subscriptions", icon: Shield },
 ];
 

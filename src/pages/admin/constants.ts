@@ -3,6 +3,7 @@ import {
   BarChart3,
   ClipboardList,
   CreditCard,
+  FileSpreadsheet,
   LayoutDashboard,
   // Settings,
   Table2Icon,
@@ -36,6 +37,12 @@ export const adminNavItems: AdminNavItem[] = [
     to: "/admin/analytics",
     icon: BarChart3,
     label: "Analytics",
+    roles: ["ADMIN", "RESTRO_OWNER"],
+  },
+  {
+    to: "/admin/reports",
+    icon: FileSpreadsheet,
+    label: "Reports",
     roles: ["ADMIN", "RESTRO_OWNER"],
   },
   // {

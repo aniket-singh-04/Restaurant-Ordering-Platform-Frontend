@@ -37,7 +37,11 @@ export const REALTIME_ENABLED = normalizeBoolean(
 );
 
 export const SOCKET_URL = (() => {
-  const rawSocketUrl = import.meta.env.VITE_SOCKET_URL?.trim();
+  const rawSocketUrl =
+    import.meta.env.VITE_SOCKET_URL?.trim() ||
+    import.meta.env.VITE_API_BASE_URL?.trim() ||
+    import.meta.env.VITE_API_URL?.trim() ||
+    defaultApiBaseUrl;
 
   if (!REALTIME_ENABLED || !rawSocketUrl) {
     return "";

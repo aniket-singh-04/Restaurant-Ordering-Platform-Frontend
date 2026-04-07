@@ -31,11 +31,13 @@ const PlatformAdminLayout = lazy(() => import("../pages/platform-admin/Layout"))
 const PlatformAdminLogin = lazy(() => import("../pages/platform-admin/Login"));
 const PlatformAdminOrders = lazy(() => import("../pages/platform-admin/Orders"));
 const PlatformAdminPayments = lazy(() => import("../pages/platform-admin/Payments"));
+const PlatformAdminReports = lazy(() => import("../pages/platform-admin/Reports"));
 const PlatformAdminRestaurants = lazy(() => import("../pages/platform-admin/Restaurants"));
 const PlatformAdminSubscriptions = lazy(() => import("../pages/platform-admin/Subscriptions"));
 const PlatformAdminUsers = lazy(() => import("../pages/platform-admin/Users"));
 const ProfilePage = lazy(() => import("../pages/ProfilePage"));
 const OrdersManagement = lazy(() => import("../pages/admin/OrdersManagementLive"));
+const Reports = lazy(() => import("../pages/admin/Reports"));
 const Analytics = lazy(() => import("../pages/admin/Analytics"));
 // const Settings = lazy(() => import("../pages/admin/Settings"));
 const MenuFormPage = lazy(() => import("../pages/admin/components/MenuFormPage"));
@@ -180,6 +182,10 @@ export const router = createBrowserRouter([
         path: "analytics",
         element: <Analytics />,
       },
+      {
+        path: "reports",
+        element: withProtectedRoute(<Reports />, SUBSCRIPTION_MANAGEMENT_ROLES),
+      },
       // {
       //   path: "settings",
       //   element: <Settings />,
@@ -221,6 +227,10 @@ export const router = createBrowserRouter([
       {
         path: "payments",
         element: <PlatformAdminPayments />,
+      },
+      {
+        path: "reports",
+        element: <PlatformAdminReports />,
       },
       {
         path: "subscriptions",

@@ -2,7 +2,14 @@ import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headless
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import QRCode from "react-qr-code";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
-import { Copy, ExternalLink, Pencil, Plus, RefreshCcw, Trash2 } from "lucide-react";
+import {
+  Copy,
+  ExternalLink,
+  Pencil,
+  Plus,
+  RefreshCcw,
+  Trash2,
+} from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import {
@@ -15,9 +22,11 @@ import type { AuthUser } from "../../features/auth/types";
 import type {
   CreateTablePayload,
   Table,
+  TableOccupancyStatus,
   UpdateTablePayload,
 } from "../../types/table";
 import { TableStatus } from "../../types/table";
+import { getSocket } from "../../lib/socket";
 import {
   getApiErrorMessage,
   getApiRequestId,
@@ -45,6 +54,33 @@ type CreateFormState = CreateTablePayload & {
 };
 
 const TABLE_STATUS_OPTIONS = Object.values(TableStatus);
+
+const occupancyToneClass: Record<string, string> = {
+  FREE: "bg-emerald-100 text-emerald-700",
+  OCCUPIED: "bg-amber-100 text-amber-800",
+  COOLDOWN: "bg-sky-100 text-sky-700",
+};
+
+const formatOccupancyLabel = (status?: TableOccupancyStatus) => {
+  if (status === "OCCUPIED") return "Occupied";
+  if (status === "COOLDOWN") return "Cooldown";
+  return "Free";
+};
+
+const formatCooldownRemaining = (cooldownEndsAt?: string, now = Date.now()) => {
+  if (!cooldownEndsAt) {
+    return null;
+  }
+
+  const remainingMs = new Date(cooldownEndsAt).getTime() - now;
+  if (remainingMs <= 0) {
+    return "Releasing soon";
+  }
+
+  const minutes = Math.floor(remainingMs / 60000);
+  const seconds = Math.floor((remainingMs % 60000) / 1000);
+  return `${minutes}m ${seconds.toString().padStart(2, "0")}s`;
+};
 
 const formatApiError = (error: unknown, fallback: string) => {
   const message = getApiErrorMessage(error, fallback);
@@ -80,9 +116,24 @@ export default function TableManagement() {
   const [creating, setCreating] = useState(false);
   const [savingTableId, setSavingTableId] = useState<string | null>(null);
   const [deletingTableId, setDeletingTableId] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
 
   const totalTables = useMemo(
     () => Object.values(tablesByBranch).reduce((sum, tables) => sum + tables.length, 0),
+    [tablesByBranch],
+  );
+  const occupiedTables = useMemo(
+    () =>
+      Object.values(tablesByBranch)
+        .flat()
+        .filter((table) => table.occupancyStatus === "OCCUPIED").length,
+    [tablesByBranch],
+  );
+  const cooldownTables = useMemo(
+    () =>
+      Object.values(tablesByBranch)
+        .flat()
+        .filter((table) => table.occupancyStatus === "COOLDOWN").length,
     [tablesByBranch],
   );
   const showInitialLoading = loading && branches.length === 0;
@@ -196,6 +247,44 @@ export default function TableManagement() {
   useEffect(() => {
     void loadTables();
   }, [loadTables]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    const socket = getSocket();
+    if (!socket) {
+      return;
+    }
+
+    if (user.restroId) {
+      socket.emit("restaurant.subscribe", { restaurantId: user.restroId });
+    }
+
+    for (const branch of branches) {
+      socket.emit("branch.subscribe", { branchId: branch.id });
+    }
+
+    const handleRealtimeRefresh = () => {
+      void loadTables();
+    };
+
+    socket.on("table.occupancy.updated", handleRealtimeRefresh);
+    socket.on("order.status.changed", handleRealtimeRefresh);
+    socket.on("orders.updated", handleRealtimeRefresh);
+
+    return () => {
+      socket.off("table.occupancy.updated", handleRealtimeRefresh);
+      socket.off("order.status.changed", handleRealtimeRefresh);
+      socket.off("orders.updated", handleRealtimeRefresh);
+    };
+  }, [branches, loadTables, user]);
 
   const handleCreateTable = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -379,7 +468,7 @@ export default function TableManagement() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 rounded-2xl p-4 text-center text-sm ">
+          <div className="grid grid-cols-2 gap-3 rounded-2xl p-4 text-center text-sm md:grid-cols-4">
             <div>
               <p className="text-2xl font-semibold">{branches.length}</p>
               <p>Accessible Branches</p>
@@ -387,6 +476,14 @@ export default function TableManagement() {
             <div>
               <p className="text-2xl font-semibold">{totalTables}</p>
               <p>Total QR Tables</p>
+            </div>
+            <div>
+              <p className="text-2xl font-semibold">{occupiedTables}</p>
+              <p>Occupied Now</p>
+            </div>
+            <div>
+              <p className="text-2xl font-semibold">{cooldownTables}</p>
+              <p>In Cooldown</p>
             </div>
           </div>
         </div>
@@ -652,6 +749,13 @@ export default function TableManagement() {
       {!showInitialLoading && branches.map((branch) => {
         const tables = tablesByBranch[branch.id] ?? [];
         const branchError = branchErrors[branch.id];
+        const branchTableLimit = tables[0]?.branchMaxTableCount ?? tables.length;
+        const branchOccupiedCount = tables.filter(
+          (table) => table.occupancyStatus === "OCCUPIED",
+        ).length;
+        const branchCooldownCount = tables.filter(
+          (table) => table.occupancyStatus === "COOLDOWN",
+        ).length;
 
         return (
           <section
@@ -663,7 +767,10 @@ export default function TableManagement() {
                 <h2 className="text-2xl font-semibold">{branch.name}</h2>
                 <p className="mt-1 text-sm text-[#6d5c4d]">
                   {branch.city ? `${branch.city} - ` : ""}
-                  {tables.length} table QR codes
+                  {tables.length} / {branchTableLimit || tables.length} tables configured
+                </p>
+                <p className="mt-1 text-xs text-[#8d7967]">
+                  {branchOccupiedCount} occupied, {branchCooldownCount} cooling down
                 </p>
               </div>
               <span className="rounded-full w-fit bg-[#fff4e6] px-3 py-1 text-xs font-medium uppercase tracking-[0.16em] text-orange-600">
@@ -714,6 +821,22 @@ export default function TableManagement() {
                         >
                           {table.status.charAt(0) + table.status.slice(1).toLowerCase()}
                         </span>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                            occupancyToneClass[table.occupancyStatus ?? "FREE"] ??
+                            occupancyToneClass.FREE
+                          }`}
+                        >
+                          {formatOccupancyLabel(table.occupancyStatus)}
+                        </span>
+                        {table.cooldownEndsAt ? (
+                          <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#6d5c4d]">
+                            {formatCooldownRemaining(table.cooldownEndsAt, now)}
+                          </span>
+                        ) : null}
                       </div>
 
                       <div className="grid gap-4 sm:grid-cols-2">
@@ -799,6 +922,24 @@ export default function TableManagement() {
                         <p className="mt-1 text-xs">
                           Public QR ID: <span className="font-medium">{table.publicQrId}</span>
                         </p>
+                        <p className="mt-1 text-xs">
+                          Occupancy version: <span className="font-medium">{table.occupancyVersion ?? 0}</span>
+                        </p>
+                        {table.activeOrderId ? (
+                          <p className="mt-1 text-xs">
+                            Active order: <span className="font-medium">#{table.activeOrderId.slice(-6).toUpperCase()}</span>
+                          </p>
+                        ) : null}
+                        {table.occupiedAt ? (
+                          <p className="mt-1 text-xs">
+                            Occupied at: {new Date(table.occupiedAt).toLocaleString()}
+                          </p>
+                        ) : null}
+                        {table.cooldownEndsAt ? (
+                          <p className="mt-1 text-xs">
+                            Cooldown ends: {new Date(table.cooldownEndsAt).toLocaleString()}
+                          </p>
+                        ) : null}
                         {table.updatedAt ? (
                           <p className="mt-1 text-xs">Updated: {new Date(table.updatedAt).toLocaleString()}</p>
                         ) : null}

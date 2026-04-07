@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, Clock, RefreshCw, X } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Clock, RefreshCw, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import {
@@ -11,6 +11,11 @@ import {
   useRestaurantOrders,
   type OrderRecord,
 } from "../../features/orders/api";
+import {
+  listOrderPayments,
+  type OrderRefundLogRecord,
+  type OrderRefundPolicy,
+} from "../../features/payments/api";
 import { LoadingOrderCards } from "../../components/LoadingState";
 import { formatPrice } from "../../utils/formatPrice";
 
@@ -51,6 +56,17 @@ const formatPaymentModeLabel = (mode?: string | null) => {
 const getPaidAmountLabel = (mode?: string | null) =>
   mode === "ONLINE_FULL" ? "Paid Online" : "Advance Paid";
 
+const getEstimatedRefundPercent = (orderStatus: string) =>
+  ["PREPARING", "READY", "COMPLETED"].includes(orderStatus) ? 25 : 100;
+
+type RefundDetailsState = {
+  loading?: boolean;
+  open?: boolean;
+  policy?: OrderRefundPolicy;
+  logs?: OrderRefundLogRecord[];
+  error?: string;
+};
+
 export default function OrdersManagementLive() {
   const { user } = useAuth();
   const { pushToast } = useToast();
@@ -64,6 +80,9 @@ export default function OrdersManagementLive() {
   const [filter, setFilter] = useState<string>("ALL");
   const [actionOrderId, setActionOrderId] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [refundDetailsByOrder, setRefundDetailsByOrder] = useState<
+    Record<string, RefundDetailsState>
+  >({});
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -82,6 +101,62 @@ export default function OrdersManagementLive() {
 
   const refreshOrders = async () => {
     await queryClient.invalidateQueries({ queryKey: ["orders"] });
+  };
+
+  const toggleRefundDetails = async (orderId: string) => {
+    const current = refundDetailsByOrder[orderId];
+    if (current?.open) {
+      setRefundDetailsByOrder((state) => ({
+        ...state,
+        [orderId]: {
+          ...state[orderId],
+          open: false,
+        },
+      }));
+      return;
+    }
+
+    if (current?.policy || current?.error) {
+      setRefundDetailsByOrder((state) => ({
+        ...state,
+        [orderId]: {
+          ...state[orderId],
+          open: true,
+        },
+      }));
+      return;
+    }
+
+    setRefundDetailsByOrder((state) => ({
+      ...state,
+      [orderId]: {
+        ...(state[orderId] ?? {}),
+        loading: true,
+        open: true,
+      },
+    }));
+
+    try {
+      const details = await listOrderPayments(orderId);
+      setRefundDetailsByOrder((state) => ({
+        ...state,
+        [orderId]: {
+          loading: false,
+          open: true,
+          policy: details.refundPolicy,
+          logs: details.refundLogs,
+        },
+      }));
+    } catch (error) {
+      setRefundDetailsByOrder((state) => ({
+        ...state,
+        [orderId]: {
+          loading: false,
+          open: true,
+          error: error instanceof Error ? error.message : "Unable to load refund details.",
+        },
+      }));
+    }
   };
 
   const runAction = async (orderId: string, action: () => Promise<unknown>, successMessage: string) => {
@@ -196,6 +271,10 @@ export default function OrdersManagementLive() {
           <div className="space-y-4">
             {filteredOrders.map((order) => {
               const nextCountdown = countdownLabel(order.acceptanceDeadlineAt, now);
+              const estimatedRefundPercent = getEstimatedRefundPercent(order.OrderStatus);
+              const estimatedRefundAmount =
+                Math.round((order.totalsSnapshot?.grandTotal ?? 0) * (estimatedRefundPercent / 100));
+              const refundDetails = refundDetailsByOrder[order.id];
 
               return (
                 <article
@@ -249,6 +328,105 @@ export default function OrdersManagementLive() {
                         <p className="text-xs font-bold uppercase tracking-widest text-[#8d7967]">Mode</p>
                         <p className="mt-2 text-sm font-semibold text-[#3b2f2f] truncate">{formatPaymentModeLabel(order.paymentSummary?.mode)}</p>
                       </div>
+                    </div>
+
+                    <div className="rounded-md border border-[#f0e3d5] bg-[#fffaf5] px-4 py-3">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-widest text-[#8d7967]">
+                            Refund Eligibility
+                          </p>
+                          <p className="mt-1.5 text-sm font-semibold text-[#3b2f2f]">
+                            Estimated {estimatedRefundPercent}% refund
+                          </p>
+                          <p className="mt-1 text-xs text-[#6b665f]">
+                            Current estimate: {formatMinorAmount(estimatedRefundAmount)} based on {order.OrderStatus}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void toggleRefundDetails(order.id);
+                          }}
+                          className="inline-flex items-center gap-2 rounded-md border border-[#d8c0a7] px-3 py-2 text-xs font-semibold text-[#5d4d3f] transition hover:bg-white"
+                        >
+                          {refundDetails?.open ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )}
+                          Refund timeline
+                        </button>
+                      </div>
+
+                      {refundDetails?.open ? (
+                        <div className="mt-4 space-y-3 border-t border-[#f0e3d5] pt-4">
+                          {refundDetails.loading ? (
+                            <p className="text-sm text-[#6b665f]">Loading refund details...</p>
+                          ) : refundDetails.error ? (
+                            <p className="text-sm text-red-600">{refundDetails.error}</p>
+                          ) : (
+                            <>
+                              <div className="grid gap-3 sm:grid-cols-4">
+                                <div className="rounded-md bg-white px-3 py-3 border border-[#f0e3d5]">
+                                  <p className="text-xs font-bold uppercase tracking-widest text-[#8d7967]">Policy</p>
+                                  <p className="mt-1.5 text-sm font-semibold text-[#3b2f2f]">
+                                    {((refundDetails.policy?.refundPercentBps ?? 0) / 100).toFixed(0)}%
+                                  </p>
+                                </div>
+                                <div className="rounded-md bg-white px-3 py-3 border border-[#f0e3d5]">
+                                  <p className="text-xs font-bold uppercase tracking-widest text-[#8d7967]">Base Total</p>
+                                  <p className="mt-1.5 text-sm font-semibold text-[#3b2f2f]">
+                                    {formatMinorAmount(refundDetails.policy?.baseOrderAmount)}
+                                  </p>
+                                </div>
+                                <div className="rounded-md bg-white px-3 py-3 border border-[#f0e3d5]">
+                                  <p className="text-xs font-bold uppercase tracking-widest text-[#8d7967]">Refundable</p>
+                                  <p className="mt-1.5 text-sm font-semibold text-[#3b2f2f]">
+                                    {formatMinorAmount(refundDetails.policy?.capturedRefundableAmount)}
+                                  </p>
+                                </div>
+                                <div className="rounded-md bg-white px-3 py-3 border border-[#f0e3d5]">
+                                  <p className="text-xs font-bold uppercase tracking-widest text-[#8d7967]">Requested</p>
+                                  <p className="mt-1.5 text-sm font-semibold text-[#3b2f2f]">
+                                    {formatMinorAmount(refundDetails.policy?.requestedAmount)}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {(refundDetails.logs ?? []).length ? (
+                                <div className="space-y-2">
+                                  {(refundDetails.logs ?? []).map((log) => (
+                                    <div
+                                      key={log.id}
+                                      className="rounded-md border border-[#f0e3d5] bg-white px-3 py-3"
+                                    >
+                                      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                        <p className="text-sm font-semibold text-[#3b2f2f]">
+                                          {log.actionType.replaceAll("_", " ")}
+                                        </p>
+                                        <p className="text-xs text-[#8d7967]">
+                                          {log.createdAt
+                                            ? new Date(log.createdAt).toLocaleString()
+                                            : "Pending"}
+                                        </p>
+                                      </div>
+                                      <p className="mt-1 text-sm text-[#6b665f]">{log.message}</p>
+                                      <p className="mt-1 text-xs font-medium text-[#8d7967]">
+                                        Status: {log.status}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-[#6b665f]">
+                                  No refund actions have been logged for this order yet.
+                                </p>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      ) : null}
                     </div>
 
                     {/* Payment Summary */}

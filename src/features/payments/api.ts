@@ -19,6 +19,25 @@ export type PaymentAttemptRecord = {
   }>;
 };
 
+export type OrderRefundPolicy = {
+  refundPercentBps: number;
+  baseOrderAmount: number;
+  capturedRefundableAmount: number;
+  requestedAmount: number;
+  eligible: boolean;
+};
+
+export type OrderRefundLogRecord = {
+  id: string;
+  refundId: string;
+  orderId: string;
+  actionType: string;
+  status: string;
+  message: string;
+  metadata?: Record<string, unknown>;
+  createdAt?: string;
+};
+
 export type PaymentCheckoutPayload = {
   keyId?: string;
   amount: number;
@@ -79,6 +98,14 @@ export const failOrderPayment = async (
 };
 
 export const listOrderPayments = async (orderId: string) => {
-  const response = await api.get<{ data: PaymentAttemptRecord[] }>(`/api/v1/payments/orders/${orderId}`);
-  return response.data;
+  const response = await api.get<{
+    data: PaymentAttemptRecord[];
+    refundPolicy?: OrderRefundPolicy;
+    refundLogs?: OrderRefundLogRecord[];
+  }>(`/api/v1/payments/orders/${orderId}`);
+  return {
+    payments: response.data,
+    refundPolicy: response.refundPolicy,
+    refundLogs: response.refundLogs ?? [],
+  };
 };

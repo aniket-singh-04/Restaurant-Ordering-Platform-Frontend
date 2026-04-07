@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigate, useParams, useNavigate } from "react-router-dom";
 import { Star, Clock, Leaf, Flame } from "lucide-react";
 import Header from "./components/Header";
@@ -9,7 +10,11 @@ import AddToCartButton from "./components/AddToCartButton";
 import { formatPrice } from "../../../utils/formatPrice";
 import { useCart } from "../../../context/CartContext";
 import { isAdminPanelRole } from "../../../features/auth/access";
-import { useMenuItem } from "../../../features/menu/api";
+import {
+  upsertMenuRating,
+  useMenuItem,
+  useMyMenuRating,
+} from "../../../features/menu/api";
 import { useAuth } from "../../../context/AuthContext";
 import FullPageLoader from "../../../components/FullPageLoader";
 import MenuImageToggle from "../../MenuImageToggle";
@@ -19,12 +24,15 @@ import {
   useResolvedQrId,
 } from "../../../features/qr-context/navigation";
 import { useActiveQrContext } from "../../../features/qr-context/useActiveQrContext";
+import { useToast } from "../../../context/ToastContext";
 
 export default function MenuItemDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addItem } = useCart();
   const { user } = useAuth();
+  const { pushToast } = useToast();
+  const queryClient = useQueryClient();
   const qrId = useResolvedQrId();
   const shouldBlockCustomerMenu = Boolean(!qrId && user && isAdminPanelRole(user.role));
   const qrContextQuery = useActiveQrContext(qrId);
@@ -35,15 +43,51 @@ export default function MenuItemDetail() {
     { id: string; name: string; price: number }[]
   >([]);
   const [specialInstructions, setSpecialInstructions] = useState("");
+  const [draftRating, setDraftRating] = useState(0);
+  const [draftReview, setDraftReview] = useState("");
 
   const menuItemQuery = useMenuItem(shouldBlockCustomerMenu ? undefined : id);
   const item = useMemo(() => menuItemQuery.data, [menuItemQuery.data]);
+  const canUseRatings = Boolean(item?.id && user?.role === "CUSTOMER");
+  const ratingQuery = useMyMenuRating(item?.id, canUseRatings);
+  const ratingMutation = useMutation({
+    mutationFn: (payload: { rating: number; review?: string }) =>
+      upsertMenuRating(item?.id ?? "", payload),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["menu-item", item?.id] }),
+        queryClient.invalidateQueries({ queryKey: ["menu-rating", item?.id] }),
+        queryClient.invalidateQueries({ queryKey: ["menu"] }),
+      ]);
+      pushToast({
+        title: "Rating saved",
+        description: "Your feedback now helps other guests choose with confidence.",
+        variant: "success",
+      });
+    },
+    onError: (error) => {
+      pushToast({
+        title: "Rating could not be saved",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "error",
+      });
+    },
+  });
 
   useEffect(() => {
     if (!shouldBlockCustomerMenu && !menuItemQuery.isLoading && !item) {
       navigate(buildQrMenuPath(qrId));
     }
   }, [item, menuItemQuery.isLoading, navigate, qrId, shouldBlockCustomerMenu]);
+
+  useEffect(() => {
+    if (!ratingQuery.data?.myRating) {
+      return;
+    }
+
+    setDraftRating(ratingQuery.data.myRating.rating ?? 0);
+    setDraftReview(ratingQuery.data.myRating.review ?? "");
+  }, [ratingQuery.data?.myRating]);
 
   if (shouldBlockCustomerMenu) {
     return <Navigate to="/admin" replace />;
@@ -106,6 +150,10 @@ export default function MenuItemDetail() {
   );
 
   const totalPrice = (item.price + addOnsTotal) * quantity;
+  const ratingSummary = ratingQuery.data?.summary ?? {
+    avgRating: item.avgRating ?? item.rating ?? 0,
+    totalRatings: item.totalRatings ?? 0,
+  };
 
   const handleAddToCart = () => {
     addItem({
@@ -123,6 +171,17 @@ export default function MenuItemDetail() {
       specialInstructions: specialInstructions || undefined,
     });
     navigate(buildQrCartPath(qrId));
+  };
+
+  const handleSubmitRating = async () => {
+    if (!item?.id || draftRating < 1) {
+      return;
+    }
+
+    await ratingMutation.mutateAsync({
+      rating: draftRating,
+      review: draftReview.trim() || undefined,
+    });
   };
 
   return (
@@ -165,7 +224,10 @@ export default function MenuItemDetail() {
                 <div className="flex flex-wrap items-center gap-4 text-sm text-[color:var(--text-secondary)]">
                   <div className="flex items-center gap-1">
                     <Star className="h-5 w-5 text-[color:var(--chart-3)]" />
-                    {(item.rating ?? 0).toFixed(1)}
+                    {(ratingSummary.avgRating ?? 0).toFixed(1)}
+                    <span className="text-xs text-[color:var(--text-secondary)]">
+                      ({ratingSummary.totalRatings ?? 0})
+                    </span>
                   </div>
 
                   <div className="flex items-center gap-1">
@@ -195,6 +257,95 @@ export default function MenuItemDetail() {
                 <p className="leading-relaxed text-[color:var(--text-secondary)]">
                   {item.description}
                 </p>
+
+                <div className="rounded-[1.5rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface-muted)] p-5">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--text-secondary)]">
+                        Guest Rating
+                      </p>
+                      <p className="mt-2 text-2xl font-extrabold text-[color:var(--text-primary)]">
+                        {(ratingSummary.avgRating ?? 0).toFixed(1)}
+                        <span className="ml-2 text-sm font-medium text-[color:var(--text-secondary)]">
+                          / 5 from {ratingSummary.totalRatings ?? 0} ratings
+                        </span>
+                      </p>
+                    </div>
+                    {ratingQuery.data?.myRating ? (
+                      <div className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-[color:var(--text-secondary)]">
+                        Your rating: {ratingQuery.data.myRating.rating}/5
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-4">
+                    {!canUseRatings ? (
+                      <p className="text-sm text-[color:var(--text-secondary)]">
+                        Customer accounts can rate menu items after ordering.
+                      </p>
+                    ) : ratingQuery.isLoading ? (
+                      <p className="text-sm text-[color:var(--text-secondary)]">
+                        Checking rating eligibility...
+                      </p>
+                    ) : !ratingQuery.data?.eligible ? (
+                      <p className="text-sm text-[color:var(--text-secondary)]">
+                        Complete an order with this item first, then you can leave a rating here.
+                      </p>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="flex flex-wrap gap-2">
+                          {Array.from({ length: 5 }, (_, index) => {
+                            const nextRating = index + 1;
+                            const isActive = nextRating <= draftRating;
+
+                            return (
+                              <button
+                                key={nextRating}
+                                type="button"
+                                onClick={() => setDraftRating(nextRating)}
+                                className={`rounded-full border px-3 py-2 transition ${
+                                  isActive
+                                    ? "border-amber-300 bg-amber-50 text-amber-600"
+                                    : "border-[color:var(--border-subtle)] bg-white text-[color:var(--text-secondary)]"
+                                }`}
+                              >
+                                <Star className={`h-4 w-4 ${isActive ? "fill-current" : ""}`} />
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        <textarea
+                          value={draftReview}
+                          onChange={(event) => setDraftReview(event.target.value)}
+                          placeholder="Optional: share a quick note about this dish."
+                          rows={3}
+                          className="w-full rounded-2xl border border-[color:var(--border-subtle)] bg-white px-4 py-3 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent)]"
+                        />
+
+                        <div className="flex flex-wrap items-center gap-3">
+                          <button
+                            type="button"
+                            disabled={draftRating < 1 || ratingMutation.isPending}
+                            onClick={() => {
+                              void handleSubmitRating();
+                            }}
+                            className="ui-button ui-button-pill px-5 py-3 text-sm font-semibold disabled:opacity-60"
+                          >
+                            {ratingMutation.isPending
+                              ? "Saving..."
+                              : ratingQuery.data?.myRating
+                                ? "Update Rating"
+                                : "Submit Rating"}
+                          </button>
+                          <p className="text-xs text-[color:var(--text-secondary)]">
+                            One rating per guest. You can update it later.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 {item.addOns.length > 0 && (
                   <AddOnsSelector

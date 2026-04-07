@@ -24,6 +24,9 @@ export interface MenuItem {
   isVeg: boolean;
   isSpicy: boolean;
   rating: number;
+  avgRating?: number;
+  totalRatings?: number;
+  myRating?: number | null;
   prepTime: string;
   addOns: AddOn[];
   has3DModel: boolean;

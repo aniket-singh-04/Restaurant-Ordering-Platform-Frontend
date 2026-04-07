@@ -2,6 +2,23 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "../../utils/api";
 import type { MenuItem, multiImage } from "../../components/MenuCard/types";
 
+export type MenuRatingRecord = {
+  id: string;
+  menuId: string;
+  restaurantId?: string;
+  branchId?: string;
+  userId?: string;
+  rating: number;
+  review?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type MenuRatingSummary = {
+  avgRating: number;
+  totalRatings: number;
+};
+
 type MenuApiItem = {
   _id?: string;
   id?: string;
@@ -14,7 +31,10 @@ type MenuApiItem = {
   category: string;
   isVeg?: boolean;
   isSpicy?: boolean;
-  rating?: { average?: number };
+  rating?: { average?: number; count?: number };
+  avgRating?: number;
+  totalRatings?: number;
+  myRating?: { rating?: number } | number | null;
   preparationTimeMinutes?: number;
   addOns?: Array<{ code?: string; name: string; price?: number; priceDeltaMinor?: number }>;
   has3DModel?: boolean;
@@ -43,7 +63,13 @@ const mapMenuItem = (item: MenuApiItem): MenuItem => ({
   category: item.category,
   isVeg: item.isVeg ?? false,
   isSpicy: item.isSpicy ?? false,
-  rating: item.rating?.average ?? 4.5,
+  rating: item.avgRating ?? item.rating?.average ?? 0,
+  avgRating: item.avgRating ?? item.rating?.average ?? 0,
+  totalRatings: item.totalRatings ?? item.rating?.count ?? 0,
+  myRating:
+    typeof item.myRating === "number"
+      ? item.myRating
+      : item.myRating?.rating ?? null,
   prepTime: `${item.preparationTimeMinutes ?? 15} min`,
   addOns:
     item.addOns?.map((addOn, index) => ({
@@ -84,3 +110,35 @@ export const useMenuItem = (menuId?: string) =>
       return mapMenuItem(response.data);
     },
   });
+
+export const useMyMenuRating = (menuId?: string, enabled = true) =>
+  useQuery({
+    queryKey: ["menu-rating", menuId],
+    enabled: Boolean(menuId) && enabled,
+    queryFn: async () => {
+      const response = await api.get<{
+        data: {
+          eligible: boolean;
+          myRating: MenuRatingRecord | null;
+          summary: MenuRatingSummary;
+        };
+      }>(`/api/v1/menu/${menuId}/ratings/me`);
+      return response.data;
+    },
+  });
+
+export const upsertMenuRating = async (
+  menuId: string,
+  payload: {
+    rating: number;
+    review?: string;
+  },
+) => {
+  const response = await api.post<{
+    data: {
+      myRating: MenuRatingRecord | null;
+      summary: MenuRatingSummary;
+    };
+  }>(`/api/v1/menu/${menuId}/ratings`, payload);
+  return response.data;
+};
