@@ -64,8 +64,32 @@ class WebSocketRealtimeClient implements RealtimeClient {
   private socket: WebSocket | null = null;
   private listeners = new Map<string, Set<RealtimeHandler>>();
   private outboundQueue: string[] = [];
+  private persistentMessages = new Map<string, string>();
   private reconnectTimer: number | null = null;
+  private heartbeatTimer: number | null = null;
   private shouldReconnect = false;
+
+  private isSubscriptionEvent(event: string) {
+    return event === "restaurant.subscribe" ||
+      event === "branch.subscribe" ||
+      event === "order.subscribe";
+  }
+
+  private buildMessage(event: string, payload?: unknown) {
+    return payload && typeof payload === "object" && !Array.isArray(payload)
+      ? JSON.stringify({
+          ...(payload as Record<string, unknown>),
+          action: event,
+        })
+      : JSON.stringify({
+          action: event,
+          payload,
+        });
+  }
+
+  private buildPersistentKey(event: string, payload?: unknown) {
+    return `${event}:${JSON.stringify(payload ?? null)}`;
+  }
 
   private buildUrl() {
     const rawUrl = SOCKET_URL.trim();
@@ -100,6 +124,35 @@ class WebSocketRealtimeClient implements RealtimeClient {
       window.clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
+  }
+
+  private clearHeartbeatTimer() {
+    if (this.heartbeatTimer !== null) {
+      window.clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+  }
+
+  private replayPersistentMessages() {
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      return;
+    }
+
+    for (const message of this.persistentMessages.values()) {
+      this.socket.send(message);
+    }
+  }
+
+  private startHeartbeat() {
+    this.clearHeartbeatTimer();
+
+    this.heartbeatTimer = window.setInterval(() => {
+      if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+        return;
+      }
+
+      this.socket.send(JSON.stringify({ action: "ping" }));
+    }, 4 * 60 * 1000);
   }
 
   private scheduleReconnect() {
@@ -161,6 +214,8 @@ class WebSocketRealtimeClient implements RealtimeClient {
 
     socket.onopen = () => {
       this.flushOutboundQueue();
+      this.replayPersistentMessages();
+      this.startHeartbeat();
     };
 
     socket.onmessage = (event) => {
@@ -170,6 +225,7 @@ class WebSocketRealtimeClient implements RealtimeClient {
     };
 
     socket.onclose = () => {
+      this.clearHeartbeatTimer();
       this.socket = null;
       this.scheduleReconnect();
     };
@@ -190,16 +246,11 @@ class WebSocketRealtimeClient implements RealtimeClient {
   }
 
   emit(event: string, payload?: unknown) {
-    const message =
-      payload && typeof payload === "object" && !Array.isArray(payload)
-        ? JSON.stringify({
-            ...(payload as Record<string, unknown>),
-            action: event,
-          })
-        : JSON.stringify({
-            action: event,
-            payload,
-          });
+    const message = this.buildMessage(event, payload);
+
+    if (this.isSubscriptionEvent(event)) {
+      this.persistentMessages.set(this.buildPersistentKey(event, payload), message);
+    }
 
     this.queueOrSend(message);
   }
@@ -230,7 +281,9 @@ class WebSocketRealtimeClient implements RealtimeClient {
   disconnect() {
     this.shouldReconnect = false;
     this.clearReconnectTimer();
+    this.clearHeartbeatTimer();
     this.outboundQueue = [];
+    this.persistentMessages.clear();
 
     if (this.socket) {
       this.socket.close();
