@@ -3,6 +3,18 @@ const DEFAULT_PROD_API_BASE_URL = "https://api.mealtap.in";
 
 const normalizeUrl = (value: string) => value.replace(/\/+$/, "");
 
+const normalizeRealtimeTransport = (
+  value: string | undefined,
+): "socketio" | "websocket" | "" => {
+  const normalized = value?.trim().toLowerCase();
+
+  if (normalized === "socketio" || normalized === "websocket") {
+    return normalized;
+  }
+
+  return "";
+};
+
 const normalizeBoolean = (value: string | undefined, defaultValue: boolean) => {
   const normalized = value?.trim().toLowerCase();
 
@@ -48,6 +60,21 @@ export const SOCKET_URL = (() => {
   }
 
   return normalizeUrl(rawSocketUrl);
+})();
+
+export const REALTIME_TRANSPORT = (() => {
+  const explicitTransport = normalizeRealtimeTransport(
+    import.meta.env.VITE_REALTIME_TRANSPORT,
+  );
+  if (explicitTransport) {
+    return explicitTransport;
+  }
+
+  if (SOCKET_URL.startsWith("ws://") || SOCKET_URL.startsWith("wss://")) {
+    return "websocket" as const;
+  }
+
+  return "socketio" as const;
 })();
 
 export const buildApiUrl = (path: string) => {
