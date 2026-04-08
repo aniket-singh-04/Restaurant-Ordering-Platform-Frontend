@@ -8,7 +8,6 @@ import type { AuthUser, UserRole } from "../features/auth/types";
 import { mapAuthUser } from "../features/auth/user";
 import { api, ApiError } from "../utils/api";
 import { authStore, useAuthStore } from "../features/auth/store";
-import { connectSocket, disconnectSocket } from "../lib/socket";
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -86,15 +85,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(storeUser);
     }
   }, [storeUser]);
-
-  useEffect(() => {
-    if (user) {
-      connectSocket();
-      return;
-    }
-
-    disconnectSocket();
-  }, [user]);
 
   const logout = async (): Promise<void> => {
     const response = await api.post<any>("/api/v1/auth/logout");

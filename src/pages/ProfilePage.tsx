@@ -12,7 +12,6 @@ import {
   requestPasswordChangeOtp,
 } from "../features/auth/api";
 import { useMyOrders } from "../features/orders/api";
-import { useLiveOrderSync } from "../features/orders/useLiveOrderSync";
 import { api } from "../utils/api";
 import {
   getApiErrorMessage,
@@ -62,8 +61,6 @@ export default function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [requestingOtp, setRequestingOtp] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
-
-  useLiveOrderSync();
 
   useEffect(() => {
     setForm(createForm(user));

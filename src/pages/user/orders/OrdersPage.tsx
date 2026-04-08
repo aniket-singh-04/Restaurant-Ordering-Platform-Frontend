@@ -11,7 +11,6 @@ import {
   type OrderRecord,
   useMyOrders,
 } from "../../../features/orders/api";
-import { useLiveOrderSync } from "../../../features/orders/useLiveOrderSync";
 import {
   confirmOrderPayment,
   failOrderPayment,
@@ -266,8 +265,6 @@ export default function OrdersPage() {
   const ordersQuery = useMyOrders();
   const [actionOrderId, setActionOrderId] = useState<string | null>(null);
   const [actionKind, setActionKind] = useState<string | null>(null);
-
-  useLiveOrderSync();
 
   const highlightedOrderId = useMemo(
     () => new URLSearchParams(location.search).get("order"),

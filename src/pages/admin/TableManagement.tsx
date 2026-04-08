@@ -26,7 +26,6 @@ import type {
   UpdateTablePayload,
 } from "../../types/table";
 import { TableStatus } from "../../types/table";
-import { getSocket } from "../../lib/socket";
 import {
   getApiErrorMessage,
   getApiRequestId,
@@ -252,39 +251,6 @@ export default function TableManagement() {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
-
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
-
-    const socket = getSocket();
-    if (!socket) {
-      return;
-    }
-
-    if (user.restroId) {
-      socket.emit("restaurant.subscribe", { restaurantId: user.restroId });
-    }
-
-    for (const branch of branches) {
-      socket.emit("branch.subscribe", { branchId: branch.id });
-    }
-
-    const handleRealtimeRefresh = () => {
-      void loadTables();
-    };
-
-    socket.on("table.occupancy.updated", handleRealtimeRefresh);
-    socket.on("order.status.changed", handleRealtimeRefresh);
-    socket.on("orders.updated", handleRealtimeRefresh);
-
-    return () => {
-      socket.off("table.occupancy.updated", handleRealtimeRefresh);
-      socket.off("order.status.changed", handleRealtimeRefresh);
-      socket.off("orders.updated", handleRealtimeRefresh);
-    };
-  }, [branches, loadTables, user]);
 
   const handleCreateTable = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
