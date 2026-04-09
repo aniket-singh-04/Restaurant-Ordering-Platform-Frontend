@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LogOut,
-  ChefHat,
   Menu,
   X,
 } from 'lucide-react';
@@ -33,11 +32,11 @@ export default function AdminLayout() {
       {/* Mobile Header */}
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--surface)_85%,transparent)] px-4 py-3 text-[color:var(--text-primary)] shadow-[var(--shadow-sm)] backdrop-blur-xl md:hidden">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl warm-linear">
-            <ChefHat className="w-5 h-5 text-white" />
+            <div className="flex shrink-0  h-10 w-10 items-center justify-center rounded-full shadow-(--shadow-glow) sm:h-11 sm:w-11 warm-linear">
+              <img src="/public/favicon.png" alt="logo" className='w-10 h-10'/>
           </div>
           <div>
-            <p className="font-display text-base font-bold">Orderly</p>
+            <p className="font-display text-base font-bold">Mealtap</p>
             <p className="text-[10px] text-[color:var(--text-muted)]">Admin Panel</p>
           </div>
         </div>
@@ -76,11 +75,11 @@ export default function AdminLayout() {
         {/* Logo */}
         <div className="flex items-center justify-between gap-3 border-b border-[color:var(--border-subtle)] p-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl warm-linear">
-              <ChefHat className="w-6 h-6 text-white" />
+            <div className="flex shrink-0 h-10 w-10 items-center justify-center rounded-full shadow-(--shadow-glow) sm:h-11 sm:w-11 warm-linear">
+              <img src="/public/favicon.png" alt="logo" className='w-10 h-10'/>
             </div>
             <div>
-              <h1 className="font-display text-lg font-bold">Orderly</h1>
+              <h1 className="font-display text-lg font-bold">Mealtap</h1>
               <p className="text-xs text-[color:var(--text-muted)]">Admin Panel</p>
             </div>
           </div>
@@ -122,7 +121,7 @@ export default function AdminLayout() {
         <div className="border-t border-[color:var(--border-subtle)] p-4">
           <button
             type="button"
-            className="ui-button-secondary ui-button-pill flex w-full gap-3 rounded-lg px-4 py-3 text-sm font-semibold"
+            className="ui-button-secondary ui-button-pill flex w-full gap-3 rounded-lg px-4 py-3 text-sm hover:bg-[#fff9f2] font-semibold"
             onClick={() => navigate('/')}
           >
             <LogOut className="w-5 h-5" />

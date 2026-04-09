@@ -428,7 +428,7 @@ export default function TableManagement() {
             <h1 className="mt-2 text-3xl font-semibold">
               Branch Table Operations & QR Control
             </h1>
-            <p className="mt-2 max-w-2xl text-sm text-[#6d5c4d]">
+            <p className="mt-2 max-w-2xl text-sm text-[#6b665f]">
               Every generated QR routes guests to the correct branch menu and keeps the dine-in
               session tied to the right table.
             </p>
@@ -467,7 +467,7 @@ export default function TableManagement() {
           }}
           className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
         >
-          <label className="flex flex-col gap-2 text-sm text-[#6d5c4d]">
+          <label className="flex flex-col gap-2 text-sm">
             Branch
 
             <Listbox
@@ -540,7 +540,7 @@ export default function TableManagement() {
             </Listbox>
           </label>
 
-          <label className="flex flex-col gap-2 text-sm text-[#6d5c4d]">
+          <label className="flex flex-col gap-2 text-sm">
             Table Number
             <input
               type="text"
@@ -556,7 +556,7 @@ export default function TableManagement() {
             />
           </label>
 
-          <label className="flex flex-col gap-2 text-sm text-[#6d5c4d]">
+          <label className="flex flex-col gap-2 text-sm">
             Capacity
             <input
               type="number"
@@ -572,7 +572,7 @@ export default function TableManagement() {
             />
           </label>
 
-          <label className="flex flex-col gap-2 text-sm text-[#6d5c4d]">
+          <label className="flex flex-col gap-2 text-sm">
             Status
 
             <Listbox
@@ -597,8 +597,8 @@ export default function TableManagement() {
                     <ListboxOption
                       key={status}
                       value={status}
-                      className={({ active }) =>
-                        `cursor-pointer select-none px-4 py-2 flex items-center justify-between ${active ? "bg-orange-100 text-orange-700" : "text-gray-700"
+                      className={({ focus }) =>
+                        `cursor-pointer select-none px-4 py-2 flex items-center justify-between ${focus ? "bg-orange-100 text-orange-700" : "text-gray-700"
                         }`
                       }
                     >
@@ -631,7 +631,7 @@ export default function TableManagement() {
                 void loadTables();
               }}
               disabled={loading}
-              className="cursor-pointer inline-flex items-center gap-2 rounded-2xl border border-[#d8c0a7] px-5 py-3 font-medium text-[#5d4d3f] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="cursor-pointer inline-flex items-center gap-2 rounded-2xl border border-[#d8c0a7] px-5 py-3 font-medium transition text-[#3b2f2f] hover:bg-[#fff9f2] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <RefreshCcw className="h-4 w-4" />
               Refresh All Branches
@@ -707,7 +707,7 @@ export default function TableManagement() {
           ))}
         </div>
       ) : !branches.length ? (
-        <section className="ui-card bg-white px-6 py-8 text-center text-[#6d5c4d]">
+        <section className="ui-card bg-white px-6 py-8 text-center">
           No accessible branches were found for your account yet.
         </section>
       ) : null}
@@ -731,11 +731,11 @@ export default function TableManagement() {
             <div className="flex flex-col gap-3 border-b border-[#f0e3d5] pb-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <h2 className="text-2xl font-semibold">{branch.name}</h2>
-                <p className="mt-1 text-sm text-[#6d5c4d]">
+                <p className="mt-1 text-sm text-[#6b665f]">
                   {branch.city ? `${branch.city} - ` : ""}
                   {tables.length} / {branchTableLimit || tables.length} tables configured
                 </p>
-                <p className="mt-1 text-xs text-[#8d7967]">
+                <p className="mt-1 text-xs text-[#6b665f]">
                   {branchOccupiedCount} occupied, {branchCooldownCount} cooling down
                 </p>
               </div>
@@ -751,7 +751,7 @@ export default function TableManagement() {
             ) : null}
 
             {!branchError && !tables.length ? (
-              <div className="mt-6 rounded-2xl border border-dashed border-[#d9c1a8] bg-[#fffaf5] px-4 py-6 text-sm text-[#6d5c4d]">
+              <div className="mt-6 rounded-2xl border border-dashed border-[#d9c1a8] bg-[#fffaf5] px-4 py-6 text-sm">
                 No table QR codes have been generated for this branch yet.
               </div>
             ) : null}
@@ -799,14 +799,14 @@ export default function TableManagement() {
                           {formatOccupancyLabel(table.occupancyStatus)}
                         </span>
                         {table.cooldownEndsAt ? (
-                          <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-[#6d5c4d]">
+                          <span className="rounded-full bg-white px-3 py-1 text-xs font-medium">
                             {formatCooldownRemaining(table.cooldownEndsAt, now)}
                           </span>
                         ) : null}
                       </div>
 
                       <div className="grid gap-4 sm:grid-cols-2">
-                        <label className="flex flex-col gap-2 text-sm text-[#6d5c4d]">
+                        <label className="flex flex-col gap-2 text-sm">
                           Table Number
                           <input
                             type="text"
@@ -821,7 +821,7 @@ export default function TableManagement() {
                           />
                         </label>
 
-                        <label className="flex flex-col gap-2 text-sm text-[#6d5c4d]">
+                        <label className="flex flex-col gap-2 text-sm">
                           Capacity
                           <input
                             type="number"
@@ -837,7 +837,7 @@ export default function TableManagement() {
                           />
                         </label>
 
-                        <label className="flex flex-col gap-2 text-sm text-[#6d5c4d] sm:col-span-2">
+                        <label className="flex flex-col gap-2 text-sm sm:col-span-2">
                           Status
 
                           <Listbox
@@ -883,31 +883,31 @@ export default function TableManagement() {
                         </label>
                       </div>
 
-                      <div className="rounded-2xl bg-white px-4 py-3 text-sm text-[#6d5c4d] shadow-sm">
+                      <div className="rounded-2xl bg-white px-4 py-3 text-sm shadow-sm">
                         <p className="break-all font-medium">{table.qrUrl}</p>
-                        <p className="mt-1 text-xs">
+                        <p className="mt-1 text-xs text-[#6b665f]">
                           Public QR ID: <span className="font-medium">{table.publicQrId}</span>
                         </p>
-                        <p className="mt-1 text-xs">
+                        <p className="mt-1 text-xs text-[#6b665f]">
                           Occupancy version: <span className="font-medium">{table.occupancyVersion ?? 0}</span>
                         </p>
                         {table.activeOrderId ? (
-                          <p className="mt-1 text-xs">
+                          <p className="mt-1 text-xs text-[#6b665f]">
                             Active order: <span className="font-medium">#{table.activeOrderId.slice(-6).toUpperCase()}</span>
                           </p>
                         ) : null}
                         {table.occupiedAt ? (
-                          <p className="mt-1 text-xs">
+                          <p className="mt-1 text-xs text-[#6b665f]">
                             Occupied at: {new Date(table.occupiedAt).toLocaleString()}
                           </p>
                         ) : null}
                         {table.cooldownEndsAt ? (
-                          <p className="mt-1 text-xs">
+                          <p className="mt-1 text-xs text-[#6b665f]">
                             Cooldown ends: {new Date(table.cooldownEndsAt).toLocaleString()}
                           </p>
                         ) : null}
                         {table.updatedAt ? (
-                          <p className="mt-1 text-xs">Updated: {new Date(table.updatedAt).toLocaleString()}</p>
+                          <p className="mt-1 text-xs text-[#6b665f]">Updated: {new Date(table.updatedAt).toLocaleString()}</p>
                         ) : null}
                       </div>
 
@@ -929,7 +929,7 @@ export default function TableManagement() {
                           onClick={() => {
                             void handleCopyQrLink(table);
                           }}
-                          className="cursor-pointer inline-flex items-center gap-2 rounded-2xl border border-[#d8c0a7] px-4 py-2.5 text-sm font-medium text-[#5d4d3f] transition hover:bg-white"
+                          className="cursor-pointer inline-flex items-center gap-2 rounded-2xl border border-[#d8c0a7] px-4 py-2.5 text-sm font-medium transition text-[#3b2f2f] hover:bg-[#fff9f2]"
                         >
                           <Copy className="h-4 w-4" />
                           Copy Link
@@ -940,7 +940,7 @@ export default function TableManagement() {
                           onClick={() => {
                             handleOpenQrLink(table);
                           }}
-                          className="cursor-pointer inline-flex items-center gap-2 rounded-2xl border border-[#d8c0a7] px-4 py-2.5 text-sm font-medium text-[#5d4d3f] transition hover:bg-white"
+                          className="cursor-pointer inline-flex items-center gap-2 rounded-2xl border border-[#d8c0a7] px-4 py-2.5 text-sm font-medium transition text-[#3b2f2f] hover:bg-[#fff9f2]"
                         >
                           <ExternalLink className="h-4 w-4" />
                           Open Scan View

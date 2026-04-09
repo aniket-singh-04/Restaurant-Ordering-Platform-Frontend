@@ -1,4 +1,4 @@
-import { ClipboardList, MapPin, QrCode, ShoppingCart } from "lucide-react";
+import { ClipboardList, QrCode, ShoppingCart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CgProfile } from "react-icons/cg";
@@ -80,8 +80,9 @@ export default function Header() {
           className="flex min-w-0 w-fit max-w-full self-start items-center gap-2 rounded-[1.35rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface)] px-2 py-1.5 pr-2.5 text-left shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 sm:w-auto sm:gap-3 sm:rounded-full sm:px-2.5 sm:py-2"
           onClick={() => navigate(buildQrHomePath(qrId))}
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full warm-linear shadow-[var(--shadow-glow)] sm:h-11 sm:w-11">
-            <MapPin className="h-4.5 w-4.5 text-white sm:h-5 sm:w-5" />
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full warm-linear shadow-[var(--shadow-glow)] sm:h-11 sm:w-11">
+            <img src="/public/favicon.png" alt="logo" className='w-10 h-10' />
+
           </span>
 
           <span className="min-w-0">

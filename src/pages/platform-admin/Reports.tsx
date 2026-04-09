@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, Fragment } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Download, FileSpreadsheet } from "lucide-react";
+import { Download, FileSpreadsheet, Check, ChevronDown } from "lucide-react";
+import { Listbox, Transition } from "@headlessui/react";
 import { useToast } from "../../context/ToastContext";
 import {
   downloadPlatformAdminReport,
@@ -153,18 +154,41 @@ export default function PlatformAdminReports() {
             placeholder="Filter by restaurant ID..."
             className="w-full rounded-2xl border border-[#e0d2c3] px-4 py-3 text-sm placeholder-[#a89c8f] focus:outline-none focus:ring-2 focus:ring-[#8f5f2f]/20"
           />
-          <select
-            value={periodType}
-            onChange={(event) => setPeriodType(event.target.value as ReportPeriodType | "")}
-            className="w-full rounded-2xl border border-[#e0d2c3] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#8f5f2f]/20"
-          >
-            <option value="">All periods</option>
-            {PERIOD_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+          <div>
+            <Listbox value={periodType} onChange={(v) => setPeriodType(v as ReportPeriodType | "")}> 
+              <div className="relative">
+                <Listbox.Button className="w-full rounded-2xl border border-[#e0d2c3] px-4 py-3 text-sm text-left focus:outline-none focus:ring-2 focus:ring-[#8f5f2f]/20">
+                  <div className="flex items-center justify-between">
+                    <span className="truncate">{periodType || "All periods"}</span>
+                    <ChevronDown className="h-4 w-4 text-[#2a221c]" />
+                  </div>
+                </Listbox.Button>
+
+                <Transition as={Fragment} leave="transition ease-in duration-100" leaveFrom="opacity-100" leaveTo="opacity-0">
+                  <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <Listbox.Option value="">{({ selected }) => (
+                      <div className={`cursor-pointer select-none px-4 py-2 ${selected ? 'bg-[#f4efe7]' : ''}`}>
+                        <div className="flex items-center justify-between">
+                          <span>All periods</span>
+                          {selected ? <Check className="h-4 w-4 text-[#8b7661]" /> : null}
+                        </div>
+                      </div>
+                    )}</Listbox.Option>
+                    {PERIOD_OPTIONS.map((option) => (
+                      <Listbox.Option key={option} value={option}>{({ selected }) => (
+                        <div className={`cursor-pointer select-none px-4 py-2 ${selected ? 'bg-[#f4efe7]' : ''}`}>
+                          <div className="flex items-center justify-between">
+                            <span>{option}</span>
+                            {selected ? <Check className="h-4 w-4 text-[#8b7661]" /> : null}
+                          </div>
+                        </div>
+                      )}</Listbox.Option>
+                    ))}
+                  </Listbox.Options>
+                </Transition>
+              </div>
+            </Listbox>
+          </div>
           <input
             value={generateRestaurantId}
             onChange={(event) => setGenerateRestaurantId(event.target.value)}
@@ -172,17 +196,33 @@ export default function PlatformAdminReports() {
             className="w-full rounded-2xl border border-[#e0d2c3] px-4 py-3 text-sm placeholder-[#a89c8f] focus:outline-none focus:ring-2 focus:ring-[#8f5f2f]/20"
           />
           <div className="flex gap-3">
-            <select
-              value={generatePeriodType}
-              onChange={(event) => setGeneratePeriodType(event.target.value as ReportPeriodType)}
-              className="rounded-2xl border border-[#e0d2c3] px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#8f5f2f]/20"
-            >
-              {PERIOD_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
+            <div className="w-full">
+              <Listbox value={generatePeriodType} onChange={(v) => setGeneratePeriodType(v as ReportPeriodType)}>
+                <div className="relative">
+                  <Listbox.Button className="w-full rounded-2xl border border-[#e0d2c3] px-4 py-3 text-sm text-left focus:outline-none focus:ring-2 focus:ring-[#8f5f2f]/20">
+                    <div className="flex items-center justify-between">
+                      <span className="truncate">{generatePeriodType}</span>
+                      <ChevronDown className="h-4 w-4 text-[#2a221c]" />
+                    </div>
+                  </Listbox.Button>
+
+                  <Transition as={Fragment} leave="transition ease-in duration-100" leaveFrom="opacity-100" leaveTo="opacity-0">
+                    <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                      {PERIOD_OPTIONS.map((option) => (
+                        <Listbox.Option key={option} value={option}>{({ selected }) => (
+                          <div className={`cursor-pointer select-none px-4 py-2 ${selected ? 'bg-[#f4efe7]' : ''}`}>
+                            <div className="flex items-center justify-between">
+                              <span>{option}</span>
+                              {selected ? <Check className="h-4 w-4 text-[#8b7661]" /> : null}
+                            </div>
+                          </div>
+                        )}</Listbox.Option>
+                      ))}
+                    </Listbox.Options>
+                  </Transition>
+                </div>
+              </Listbox>
+            </div>
             <button
               type="button"
               onClick={() => void handleGenerate()}

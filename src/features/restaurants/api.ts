@@ -3,6 +3,7 @@ import { api } from "../../utils/api";
 export type RestaurantPaymentConnection = {
   provider: "RAZORPAY_ROUTE";
   status: "NOT_CONNECTED" | "PENDING" | "ACTIVE";
+  lifecycleStatus?: "ENABLED" | "INACTIVE";
   routeAccountId?: string | null;
   stakeholderId?: string | null;
   productConfigId?: string | null;
@@ -13,6 +14,8 @@ export type RestaurantPaymentConnection = {
   requirements?: string[];
   lastSubmittedAt?: string | null;
   lastSyncedAt?: string | null;
+  savedOnboardingPayload?: RestaurantPaymentConnectionOnboardingPayload | null;
+  lockedFields?: string[];
 };
 
 export type PaymentConnectionPreview = {
@@ -26,6 +29,11 @@ export type PaymentConnectionPreview = {
   confirmationHash: string;
   confirmationExpiresAt: string;
 };
+
+export type PaymentConnectionLifecycleAction =
+  | "INACTIVATE"
+  | "REACTIVATE"
+  | "DELETE";
 
 export type SupportedPaymentConnectionBusinessType =
   | "proprietorship"
@@ -107,6 +115,20 @@ export const previewRestaurantPaymentConnection = async (
 export const completeRestaurantPaymentConnection = async (restaurantId: string) => {
   const response = await api.post<{ data: RestaurantPaymentConnection }>(
     `/api/v1/restaurants/${restaurantId}/payment-connection/complete`,
+  );
+  return response.data;
+};
+
+export const manageRestaurantPaymentConnectionLifecycle = async (
+  restaurantId: string,
+  payload: {
+    action: PaymentConnectionLifecycleAction;
+    reason?: string;
+  },
+) => {
+  const response = await api.post<{ data: RestaurantPaymentConnection }>(
+    `/api/v1/restaurants/${restaurantId}/payment-connection/lifecycle`,
+    payload,
   );
   return response.data;
 };

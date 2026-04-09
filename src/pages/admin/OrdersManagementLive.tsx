@@ -348,7 +348,7 @@ export default function OrdersManagementLive() {
                           onClick={() => {
                             void toggleRefundDetails(order.id);
                           }}
-                          className="inline-flex items-center gap-2 rounded-md border border-[#d8c0a7] px-3 py-2 text-xs font-semibold text-[#5d4d3f] transition hover:bg-white"
+                          className="inline-flex items-center gap-2 rounded-md border border-[#d8c0a7] px-3 py-2 text-xs font-semibold text-[#3b2f2f] hover:bg-[#fff9f2] transition "
                         >
                           {refundDetails?.open ? (
                             <ChevronUp className="h-4 w-4" />

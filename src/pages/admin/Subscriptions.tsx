@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
@@ -9,6 +9,8 @@ import { useRazorpayCheckout } from "../../hooks/useRazorpayCheckout";
 import {
   completeRestaurantPaymentConnection,
   getRestaurantPaymentConnection,
+  manageRestaurantPaymentConnectionLifecycle,
+  type PaymentConnectionLifecycleAction,
   previewRestaurantPaymentConnection,
   type PaymentConnectionPreview,
   type RestaurantPaymentConnectionOnboardingPayload,
@@ -32,13 +34,61 @@ import { ApiError } from "../../utils/api";
 import { formatPrice } from "../../utils/formatPrice";
 import {
   buildPaymentConnectionPayload,
-  createPaymentConnectionForm,
+  hydratePaymentConnectionForm,
   PAYMENT_CONNECTION_BUSINESS_TYPE_OPTIONS,
   sanitizePaymentConnectionForm,
   validatePaymentConnectionForm,
 } from "../../features/restaurants/paymentConnectionForm";
 
 const formatMinorAmount = (value?: number) => formatPrice((value ?? 0) / 100);
+
+const getPaymentConnectionSyncToastConfig = (paymentConnection: {
+  status?: string | null;
+  lifecycleStatus?: string | null;
+  activationStatus?: string | null;
+  requirements?: string[];
+}) => {
+  const activationStatus = paymentConnection.activationStatus?.toLowerCase() ?? "";
+  const isActivated =
+    paymentConnection.status === "ACTIVE" || activationStatus === "activated";
+  const isLifecycleInactive = paymentConnection.lifecycleStatus === "INACTIVE";
+
+  if (isLifecycleInactive) {
+    return {
+      title: "Route connection is inactive",
+      description:
+        "Razorpay status synced, but this restaurant has locally paused the Route connection. Reactivate it before taking online payouts.",
+      variant: "warning" as const,
+    };
+  }
+
+  if (isActivated) {
+    return {
+      title: "Payouts enabled",
+      description:
+        "Online food-order payments can now route to the restaurant payout account.",
+      variant: "success" as const,
+    };
+  }
+
+  if (activationStatus === "needs_clarification") {
+    return {
+      title: "Razorpay needs clarification",
+      description:
+        (paymentConnection.requirements ?? []).length > 0
+          ? "Status synced. Review the documentation items above before payouts can be enabled."
+          : "Status synced. Razorpay still needs clarification before payouts can be enabled.",
+      variant: "warning" as const,
+    };
+  }
+
+  return {
+    title: "Route status synced",
+    description:
+      "Razorpay has not activated this account yet. Online food-order payouts remain unavailable until activation completes.",
+    variant: "warning" as const,
+  };
+};
 
 export default function Subscriptions() {
   const { user } = useAuth();
@@ -54,32 +104,67 @@ export default function Subscriptions() {
   const [paymentConnectLoading, setPaymentConnectLoading] = useState<
     null | "preview" | "start" | "complete"
   >(null);
+  const [paymentConnectionLifecycleLoading, setPaymentConnectionLifecycleLoading] =
+    useState<PaymentConnectionLifecycleAction | null>(null);
   const [paymentConnectionErrors, setPaymentConnectionErrors] = useState<Record<string, string>>({});
   const [paymentConnectionFormMessages, setPaymentConnectionFormMessages] = useState<string[]>([]);
   const [paymentConnectionRequestId, setPaymentConnectionRequestId] = useState<string | null>(null);
   const [paymentConnectionPreviewState, setPaymentConnectionPreviewState] =
     useState<PaymentConnectionPreview | null>(null);
   const [reinitiateReason, setReinitiateReason] = useState("");
+  const lastHydratedPaymentConnectionKeyRef = useRef<string | null>(null);
   const [paymentConnectionForm, setPaymentConnectionForm] =
     useState<RestaurantPaymentConnectionOnboardingPayload>(() =>
-      sanitizePaymentConnectionForm(createPaymentConnectionForm(user)),
+      hydratePaymentConnectionForm(user),
     );
   const canManageBilling = user?.role === "ADMIN" || user?.role === "RESTRO_OWNER";
 
   useEffect(() => {
-    setPaymentConnectionForm(sanitizePaymentConnectionForm(createPaymentConnectionForm(user)));
+    lastHydratedPaymentConnectionKeyRef.current = null;
+    setPaymentConnectionForm(hydratePaymentConnectionForm(user));
     setPaymentConnectionErrors({});
     setPaymentConnectionFormMessages([]);
     setPaymentConnectionRequestId(null);
     setPaymentConnectionPreviewState(null);
     setReinitiateReason("");
-  }, [user?.name, user?.email, user?.phone]);
+  }, [user?.restroId, user?.name, user?.email, user?.phone]);
 
   const paymentConnectionQuery = useQuery({
     queryKey: ["restaurants", "paymentConnection", user?.restroId],
     enabled: Boolean(user?.restroId),
     queryFn: async () => getRestaurantPaymentConnection(user?.restroId ?? ""),
   });
+
+  useEffect(() => {
+    const savedOnboardingPayload = paymentConnectionQuery.data?.savedOnboardingPayload;
+    if (!savedOnboardingPayload) {
+      return;
+    }
+
+    const hydrationKey = [
+      paymentConnectionQuery.data?.routeAccountId ?? "no-account",
+      paymentConnectionQuery.data?.lastSubmittedAt ?? "no-submission",
+    ].join(":");
+
+    if (lastHydratedPaymentConnectionKeyRef.current === hydrationKey) {
+      return;
+    }
+
+    lastHydratedPaymentConnectionKeyRef.current = hydrationKey;
+    setPaymentConnectionForm(
+      hydratePaymentConnectionForm(user, savedOnboardingPayload),
+    );
+    setPaymentConnectionErrors({});
+    setPaymentConnectionFormMessages([]);
+    setPaymentConnectionRequestId(null);
+    setPaymentConnectionPreviewState(null);
+    setReinitiateReason("");
+  }, [
+    paymentConnectionQuery.data?.routeAccountId,
+    paymentConnectionQuery.data?.lastSubmittedAt,
+    paymentConnectionQuery.data?.savedOnboardingPayload,
+    user,
+  ]);
 
   const plans = useMemo(
     () => (plansQuery.data ?? []).filter((plan) => plan.billingCycle === billingCycle),
@@ -109,6 +194,29 @@ export default function Subscriptions() {
       ? "border-red-300 focus:ring-red-200"
       : "border-[#e5d5c6] focus:ring-orange-400"
     }`;
+
+  const getPaymentConnectionReadonlyClass = (field?: string) =>
+    `mt-2 w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none ${
+      field && getPaymentConnectionFieldError(field)
+        ? "border-red-300 bg-red-50 text-red-900"
+        : "border-[#f0e3d5] bg-[#fffaf5] text-[#5f5146]"
+    }`;
+
+  const paymentConnectionLockedFields = useMemo(
+    () => new Set(paymentConnectionQuery.data?.lockedFields ?? []),
+    [paymentConnectionQuery.data?.lockedFields],
+  );
+
+  const isPaymentConnectionFieldLocked = (field: string) =>
+    paymentConnectionLockedFields.has(field);
+
+  const isPaymentConnectionBusy =
+    paymentConnectLoading !== null || paymentConnectionLifecycleLoading !== null;
+  const paymentConnectionLifecycleStatus =
+    paymentConnectionQuery.data?.lifecycleStatus ?? "ENABLED";
+  const hasLinkedRouteAccount = Boolean(paymentConnectionQuery.data?.routeAccountId);
+  const isPaymentConnectionInactive =
+    paymentConnectionLifecycleStatus === "INACTIVE";
 
   const renderPaymentConnectionFieldError = (field: string) => {
     const message = getPaymentConnectionFieldError(field);
@@ -328,13 +436,13 @@ export default function Subscriptions() {
           variant: "success",
         });
       } else {
-        await completeRestaurantPaymentConnection(user.restroId);
+        const response = await completeRestaurantPaymentConnection(user.restroId);
         await refreshAll();
+        const toastConfig = getPaymentConnectionSyncToastConfig(response);
         pushToast({
-          title: "Payouts enabled",
-          description:
-            "Online food-order payments can now route to the restaurant payout account.",
-          variant: "success",
+          title: toastConfig.title,
+          description: toastConfig.description,
+          variant: toastConfig.variant,
         });
       }
     } catch (error) {
@@ -350,6 +458,101 @@ export default function Subscriptions() {
       });
     } finally {
       setPaymentConnectLoading(null);
+    }
+  };
+
+  const handlePaymentConnectionLifecycleAction = async (
+    action: PaymentConnectionLifecycleAction,
+  ) => {
+    if (!canManageBilling) {
+      pushToast({
+        title: "Access restricted",
+        description: "Only restaurant owners and admins can manage payment onboarding.",
+        variant: "warning",
+      });
+      return;
+    }
+
+    if (!user?.restroId) {
+      pushToast({
+        title: "Restaurant context missing",
+        description: "Create or open a restaurant account first.",
+        variant: "warning",
+      });
+      return;
+    }
+
+    const confirmationMessageMap: Record<PaymentConnectionLifecycleAction, string> = {
+      INACTIVATE:
+        "This will locally pause Route payouts for this restaurant until you reactivate it. Continue?",
+      REACTIVATE:
+        "This will reactivate the current Route connection for this restaurant. Continue?",
+      DELETE:
+        "This will permanently remove the current Route link from this restaurant in the platform. You can onboard again later, but Razorpay may still reuse the same linked account. Continue?",
+    };
+
+    if (!window.confirm(confirmationMessageMap[action])) {
+      return;
+    }
+
+    setPaymentConnectionErrors({});
+    setPaymentConnectionFormMessages([]);
+    setPaymentConnectionRequestId(null);
+    setPaymentConnectionPreviewState(null);
+    setPaymentConnectionLifecycleLoading(action);
+
+    try {
+      const response = await manageRestaurantPaymentConnectionLifecycle(user.restroId, {
+        action,
+      });
+
+      await refreshAll();
+
+      const toastConfigMap: Record<
+        PaymentConnectionLifecycleAction,
+        { title: string; description: string; variant: "success" | "warning" }
+      > = {
+        INACTIVATE: {
+          title: "Route connection paused",
+          description:
+            "This restaurant will not send online food-order payouts through Route until you reactivate it.",
+          variant: "warning",
+        },
+        REACTIVATE: {
+          title: "Route connection reactivated",
+          description:
+            response.status === "ACTIVE"
+              ? "Online food-order payouts can use this Route connection again."
+              : "The Route connection is active locally again. Sync or finish activation if Razorpay still shows it as pending.",
+          variant: "success",
+        },
+        DELETE: {
+          title: "Route link removed",
+          description:
+            "The local Route connection has been deleted. You can review the form and onboard again when needed.",
+          variant: "warning",
+        },
+      };
+
+      const toastConfig = toastConfigMap[action];
+      pushToast({
+        title: toastConfig.title,
+        description: toastConfig.description,
+        variant: toastConfig.variant,
+      });
+    } catch (error) {
+      const { fieldErrors, formErrors } = applyPaymentConnectionErrorState(error);
+
+      pushToast({
+        title: "Payment connection action failed",
+        description:
+          formErrors[0] ??
+          Object.values(fieldErrors)[0] ??
+          getApiErrorMessage(error, "Please try again."),
+        variant: "error",
+      });
+    } finally {
+      setPaymentConnectionLifecycleLoading(null);
     }
   };
 
@@ -538,7 +741,7 @@ export default function Subscriptions() {
 
                 <ul className="space-y-2.5 mb-6">
                   {plan.features.map((feature) => (
-                    <li key={feature} className="rounded-lg bg-white px-4 py-2.5 text-sm text-[#5f5146] border border-[#f0e3d5]">
+                    <li key={feature} className="rounded-lg bg-white px-4 py-2.5 text-sm text-[#6b665f] border border-[#f0e3d5]">
                       ✓ {feature}
                     </li>
                   ))}
@@ -638,7 +841,7 @@ export default function Subscriptions() {
             <div className="rounded-2xl border border-[#eedbc8] bg-white p-4 shadow-sm">
               <h2 className="text-2xl font-bold text-[#3b2f2f]">Payment Connection</h2>
               <div className="mt-6 rounded-xl border border-[#f0e3d5] bg-[#fffaf5] p-4 space-y-6">
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-3">
                   <div className="rounded-lg bg-white p-4 border border-[#f0e3d5]">
                     <p className="text-xs uppercase font-semibold tracking-widest text-[#8d7967]">Status</p>
                     <p className="mt-2 font-semibold text-[#3b2f2f]">
@@ -651,6 +854,12 @@ export default function Subscriptions() {
                       {paymentConnectionQuery.data?.activationStatus ?? "Not submitted"}
                     </p>
                   </div>
+                  <div className="rounded-lg bg-white p-4 border border-[#f0e3d5]">
+                    <p className="text-xs uppercase font-semibold tracking-widest text-[#8d7967]">Local Mode</p>
+                    <p className="mt-2 font-semibold text-[#3b2f2f]">
+                      {paymentConnectionLifecycleStatus}
+                    </p>
+                  </div>
                 </div>
 
                 <div className="rounded-lg bg-white p-4 border border-[#f0e3d5]">
@@ -659,6 +868,13 @@ export default function Subscriptions() {
                     {paymentConnectionQuery.data?.routeAccountId ?? "Not created"}
                   </p>
                 </div>
+
+                {isPaymentConnectionInactive ? (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900">
+                    This Route connection is currently inactive in the platform. Razorpay may still
+                    show it as active, but online order payouts stay paused until you reactivate it.
+                  </div>
+                ) : null}
 
                 {(paymentConnectionQuery.data?.requirements ?? []).length > 0 && (
                   <div className="min-w-0 w-full overflow-hidden rounded-lg border border-amber-200 bg-amber-50 px-4 py-4 sm:px-5">
@@ -680,10 +896,10 @@ export default function Subscriptions() {
                 )}
 
                 <div className="pt-4 border-t border-[#f0e3d5]">
-                  <div className="flex flex-col gap-3 sm:flex-row">
+                  <div className="grid gap-4 lg:grid-cols-2">
                     <button
                       type="button"
-                      disabled={paymentConnectLoading !== null || !user?.restroId}
+                      disabled={isPaymentConnectionBusy || !user?.restroId}
                       onClick={() => void handlePaymentConnection("preview")}
                       className="flex-1 cursor-pointer rounded-xl border-2 border-[#ef6820] px-4 py-2.5 text-sm font-semibold text-[#ef6820] transition hover:bg-orange-50 disabled:opacity-60"
                     >
@@ -695,7 +911,7 @@ export default function Subscriptions() {
                     </button>
                     <button
                       type="button"
-                      disabled={paymentConnectLoading !== null || !user?.restroId}
+                      disabled={isPaymentConnectionBusy || !user?.restroId}
                       onClick={() => void handlePaymentConnection("complete")}
                       className="flex-1 cursor-pointer rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
                     >
@@ -703,6 +919,42 @@ export default function Subscriptions() {
                         ? "Syncing..."
                         : "Sync Status"}
                     </button>
+                    {hasLinkedRouteAccount ? (
+                      <button
+                        type="button"
+                        disabled={isPaymentConnectionBusy || !user?.restroId}
+                        onClick={() =>
+                          void handlePaymentConnectionLifecycleAction(
+                            isPaymentConnectionInactive ? "REACTIVATE" : "INACTIVATE",
+                          )
+                        }
+                        className={`flex-1 cursor-pointer rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:opacity-60 ${
+                          isPaymentConnectionInactive
+                            ? "bg-emerald-700 text-white hover:bg-emerald-800"
+                            : "border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100"
+                        }`}
+                      >
+                        {paymentConnectionLifecycleLoading === "REACTIVATE"
+                          ? "Reactivating..."
+                          : paymentConnectionLifecycleLoading === "INACTIVATE"
+                            ? "Pausing..."
+                            : isPaymentConnectionInactive
+                              ? "Reactivate Route"
+                              : "Make Inactive"}
+                      </button>
+                    ) : null}
+                    {hasLinkedRouteAccount ? (
+                      <button
+                        type="button"
+                        disabled={isPaymentConnectionBusy || !user?.restroId}
+                        onClick={() => void handlePaymentConnectionLifecycleAction("DELETE")}
+                        className="flex-1 cursor-pointer rounded-xl border border-red-300 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-800 transition hover:bg-red-100 disabled:opacity-60"
+                      >
+                        {paymentConnectionLifecycleLoading === "DELETE"
+                          ? "Deleting..."
+                          : "Delete Route Link"}
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -807,7 +1059,7 @@ export default function Subscriptions() {
                       {paymentConnectionPreviewState.changedFields.map((field) => (
                         <span
                           key={field}
-                          className="rounded-full border border-2 px-3 py-1 text-xs font-medium text-emerald-800"
+                          className="rounded-full border-2 px-3 py-1 text-xs font-medium text-emerald-800"
                         >
                           {field}
                         </span>
@@ -859,6 +1111,15 @@ export default function Subscriptions() {
               </div>
             ) : null}
 
+            {paymentConnectionQuery.data?.savedOnboardingPayload ? (
+              <div className="rounded-lg border border-[#e5d5c6] bg-white px-5 py-4 text-sm text-[#6b665f]">
+                Saved Route onboarding details have been loaded into this form.
+                {isPaymentConnectionFieldLocked("businessType")
+                  ? " Business type is locked after the first linked-account setup. Editable fields below can still be updated and resubmitted."
+                  : " You can review and update the editable fields below before submitting again."}
+              </div>
+            ) : null}
+
             {/* Business Information */}
             <div>
               <h3 className="text-lg font-bold text-[#3b2f2f] mb-4">Business Information</h3>
@@ -867,6 +1128,7 @@ export default function Subscriptions() {
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Business Type</label>
                   <Listbox
                     value={paymentConnectionForm.businessType}
+                    disabled={isPaymentConnectionFieldLocked("businessType")}
                     onChange={(value: RestaurantPaymentConnectionOnboardingPayload["businessType"]) =>
                       updateForm((current) => {
                         const currentStakeholder = current.stakeholder || {};
@@ -888,7 +1150,10 @@ export default function Subscriptions() {
                     <div className="relative">
                       {/* Button */}
                       <ListboxButton
-                        className={`${getPaymentConnectionInputClass("businessType")} flex items-center justify-between`}
+                        className={`flex items-center justify-between ${isPaymentConnectionFieldLocked("businessType")
+                          ? getPaymentConnectionReadonlyClass("businessType")
+                          : getPaymentConnectionInputClass("businessType")
+                          }`}
                       >
                         <span>
                           {
@@ -925,11 +1190,11 @@ export default function Subscriptions() {
                     </div>
                   </Listbox>
                   <p className="mt-2 text-xs text-[#6b665f]">
-                    {
-                      PAYMENT_CONNECTION_BUSINESS_TYPE_OPTIONS.find(
+                    {isPaymentConnectionFieldLocked("businessType")
+                      ? "Locked after the first Route linked-account setup. Changing it requires a fresh onboarding path."
+                      : PAYMENT_CONNECTION_BUSINESS_TYPE_OPTIONS.find(
                         (option) => option.value === paymentConnectionForm.businessType,
-                      )?.description
-                    }
+                      )?.description}
                   </p>
                   {renderPaymentConnectionFieldError("businessType")}
                 </div>
@@ -957,7 +1222,7 @@ export default function Subscriptions() {
                   <input
                     value={paymentConnectionForm.businessCategory}
                     readOnly
-                    className="mt-2 w-full rounded-lg border border-[#f0e3d5] bg-[#fffaf5] px-4 py-2.5 text-sm text-[#5f5146] focus:outline-none"
+                    className="mt-2 w-full rounded-lg border border-[#f0e3d5] bg-[#fffaf5] px-4 py-2.5 text-sm text-[#6b665f] focus:outline-none cursor-not-allowed"
                   />
                   <p className="mt-2 text-xs text-[#6b665f]">
                     Locked to the restaurant platform&apos;s supported category.
@@ -968,7 +1233,7 @@ export default function Subscriptions() {
                   <input
                     value={paymentConnectionForm.businessSubcategory}
                     readOnly
-                    className="mt-2 w-full rounded-lg border border-[#f0e3d5] bg-[#fffaf5] px-4 py-2.5 text-sm text-[#5f5146] focus:outline-none"
+                    className="mt-2 w-full rounded-lg border border-[#f0e3d5] bg-[#fffaf5] px-4 py-2.5 text-sm text-[#6b665f] focus:outline-none cursor-not-allowed"
                   />
                   <p className="mt-2 text-xs text-[#6b665f]">
                     Locked to the restaurant platform&apos;s supported subcategory.
@@ -1435,7 +1700,7 @@ export default function Subscriptions() {
             <div className="border-t border-[#f0e3d5] pt-8 flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
-                disabled={paymentConnectLoading !== null || !user?.restroId || !canManageBilling}
+                disabled={isPaymentConnectionBusy || !user?.restroId || !canManageBilling}
                 onClick={() => void handlePaymentConnection("preview")}
                 className="flex-1 cursor-pointer rounded-lg border-2 border-[#ef6820] px-6 py-3 text-sm font-semibold text-[#ef6820] transition hover:bg-orange-50 disabled:opacity-60"
               >
@@ -1448,7 +1713,7 @@ export default function Subscriptions() {
               {paymentConnectionPreviewState ? (
                 <button
                   type="button"
-                  disabled={paymentConnectLoading !== null || !user?.restroId || !canManageBilling}
+                  disabled={isPaymentConnectionBusy || !user?.restroId || !canManageBilling}
                   onClick={() => void confirmPaymentConnectionPreview()}
                   className="flex-1 cursor-pointer rounded-lg bg-emerald-700 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-60"
                 >
@@ -1463,7 +1728,7 @@ export default function Subscriptions() {
               ) : null}
               <button
                 type="button"
-                disabled={paymentConnectLoading !== null || !user?.restroId || !canManageBilling}
+                disabled={isPaymentConnectionBusy || !user?.restroId || !canManageBilling}
                 onClick={() => void handlePaymentConnection("complete")}
                 className="flex-1 cursor-pointer rounded-lg bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
               >

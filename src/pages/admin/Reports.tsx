@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, Fragment } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Download, FileSpreadsheet, RefreshCw } from "lucide-react";
+import { Download, FileSpreadsheet, RefreshCw, ChevronDownIcon, CheckIcon } from "lucide-react";
+import { Listbox, Transition, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
 import { useToast } from "../../context/ToastContext";
 import {
   downloadOwnerReport,
@@ -10,7 +11,37 @@ import {
   type ReportPeriodType,
 } from "../../features/reports/api";
 
-const PERIOD_OPTIONS: ReportPeriodType[] = ["DAILY", "WEEKLY", "MONTHLY", "YEARLY"];
+type PeriodSelectOption = {
+  value: ReportPeriodType | "";
+  label: string;
+};
+
+const PERIOD_OPTIONS: PeriodSelectOption[] = [
+  {
+    value: "DAILY",
+    label: "Daily",
+  },
+  {
+    value: "WEEKLY",
+    label: "Weekly",
+  },
+  {
+    value: "MONTHLY",
+    label: "Monthly",
+  },
+  {
+    value: "YEARLY",
+    label: "Yearly",
+  },
+];
+
+const FILTER_OPTIONS: PeriodSelectOption[] = [
+  {
+    value: "",
+    label: "All periods",
+  },
+  ...PERIOD_OPTIONS,
+];
 
 const formatMinorAmount = (value?: number) => `₹${((value ?? 0) / 100).toFixed(2)}`;
 
@@ -24,6 +55,70 @@ const statusToneClass: Record<string, string> = {
   FAILED: "bg-red-100 text-red-700",
   EXPIRED: "bg-slate-200 text-slate-700",
   PENDING: "bg-sky-100 text-sky-700",
+};
+
+const PeriodListboxField = ({
+  label,
+  helper,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  helper: string;
+  value: ReportPeriodType | "";
+  options: PeriodSelectOption[];
+  onChange: (value: ReportPeriodType | "") => void;
+}) => {
+  const selectedOption =
+    options.find((option) => option.value === value) ?? options[0];
+
+  return (
+    <div className="rounded-xl border border-[#ead8c5] bg-[#fffaf4] p-4">
+      <div className="mb-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8b7661]">
+          {label}
+        </p>
+        <p className="mt-1 text-sm text-[#6b665f]">{helper}</p>
+      </div>
+
+      <Listbox value={value} onChange={onChange}>
+        <div className="relative">
+          <ListboxButton className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#dcc6b1] bg-white px-4 py-3 text-left text-sm font-medium text-[#3b2f2f] transition hover:border-[#caad8d] focus:outline-none focus:ring-2 focus:ring-[#f3a264]/40">
+            <span className="truncate">{selectedOption.label}</span>
+            <ChevronDownIcon className="h-4 w-4 shrink-0 text-[#6f5947]" />
+          </ListboxButton>
+
+          <Transition
+            as={Fragment}
+            leave="transition ease-in duration-100"
+            leaveFrom="opacity-100 translate-y-0"
+            leaveTo="opacity-0 -translate-y-1"
+          >
+            <ListboxOptions className="absolute z-10 mt-2 max-h-60 w-full overflow-auto rounded-xl border border-[#e5d5c6] bg-white shadow-lg focus:outline-none">
+              {options.map((option) => (
+                <ListboxOption
+                  key={option.value || "all"}
+                  value={option.value}
+                  className={({ active }) =>
+                    `cursor-pointer select-none px-4 py-2 flex items-center justify-between ${active ? "bg-orange-100 text-orange-700" : "text-gray-700"
+                    }`
+                  }
+                >
+                  {({ selected }) => (
+                    <>
+                      <span>{option.label}</span>
+                      {selected && <CheckIcon className="h-4 w-4 text-orange-500" />}
+                    </>
+                  )}
+                </ListboxOption>
+              ))}
+            </ListboxOptions>
+          </Transition>
+        </div>
+      </Listbox>
+    </div>
+  );
 };
 
 const ReportRow = ({
@@ -58,9 +153,8 @@ const ReportRow = ({
 
       <div className="flex flex-col items-start gap-3 sm:items-end">
         <span
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-            statusToneClass[report.status] ?? "bg-slate-100 text-slate-700"
-          }`}
+          className={`rounded-full px-3 py-1 text-xs font-semibold ${statusToneClass[report.status] ?? "bg-slate-100 text-slate-700"
+            }`}
         >
           {report.status}
         </span>
@@ -122,6 +216,9 @@ export default function Reports() {
 
   const reportsQuery = useOwnerReports(periodType || undefined);
   const reports = useMemo(() => reportsQuery.data ?? [], [reportsQuery.data]);
+  const selectedGenerateOption =
+    PERIOD_OPTIONS.find((option) => option.value === generatePeriodType) ??
+    PERIOD_OPTIONS[0];
 
   const generateMutation = useMutation({
     mutationFn: generateOwnerReport,
@@ -184,7 +281,7 @@ export default function Reports() {
             <button
               type="button"
               onClick={() => void reportsQuery.refetch()}
-              className="inline-flex items-center gap-2 rounded-xl border border-[#d8c0a7] px-4 py-3 text-sm font-semibold text-[#5d4d3f] transition hover:bg-[#fffaf5]"
+              className="w-fit cursor-pointer inline-flex items-center gap-2 rounded-lg border border-[#ef6820] px-4 py-2.5 text-sm font-medium text-[#ef6820] transition hover:bg-white"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh
@@ -194,49 +291,43 @@ export default function Reports() {
       </section>
 
       <section className="rounded-2xl border border-[#eedbc8] bg-white p-6 shadow-sm">
-        <div className="grid gap-4 lg:grid-cols-[1fr_auto]">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
           <div className="grid gap-4 md:grid-cols-2">
-            <label className="text-sm text-[#6d5c4d]">
-              Filter period
-              <select
-                value={periodType}
-                onChange={(event) => setPeriodType(event.target.value as ReportPeriodType | "")}
-                className="mt-2 w-full rounded-xl border border-[#e5d5c6] bg-[#fff9f2] px-4 py-3"
-              >
-                <option value="">All periods</option>
-                {PERIOD_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <PeriodListboxField
+              label="Filter period"
+              helper="Choose which reports to show."
+              value={periodType}
+              options={FILTER_OPTIONS}
+              onChange={(value) => setPeriodType(value as ReportPeriodType | "")}
+            />
 
-            <label className="text-sm text-[#6d5c4d]">
-              Generate new report
-              <select
-                value={generatePeriodType}
-                onChange={(event) => setGeneratePeriodType(event.target.value as ReportPeriodType)}
-                className="mt-2 w-full rounded-xl border border-[#e5d5c6] bg-[#fff9f2] px-4 py-3"
-              >
-                {PERIOD_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <PeriodListboxField
+              label="Generate report"
+              helper="Choose which report to generate."
+              value={generatePeriodType}
+              options={PERIOD_OPTIONS}
+              onChange={(value) => setGeneratePeriodType(value as ReportPeriodType)}
+            />
           </div>
 
-          <button
-            type="button"
-            onClick={() => void handleGenerate()}
-            disabled={generateMutation.isPending}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2f241d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#46362b] disabled:opacity-60"
-          >
-            <FileSpreadsheet className="h-4 w-4" />
-            {generateMutation.isPending ? "Queueing..." : "Generate Report"}
-          </button>
+          <div className="rounded-xl border border-[#ead8c5]  p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#8b7661]">
+              Generate
+            </p>
+            <p className="mt-2 text-sm text-[#6b665f]">
+              Queue a new <span className="font-semibold text-[#3b2f2f]">{selectedGenerateOption.label}</span> report.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => void handleGenerate()}
+              disabled={generateMutation.isPending}
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#2f241d] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#46362b] disabled:opacity-60"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              {generateMutation.isPending ? "Queueing..." : "Generate Report"}
+            </button>
+          </div>
         </div>
       </section>
 

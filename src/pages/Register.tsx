@@ -272,7 +272,7 @@ export default function Register() {
             <div>
               <div className="inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium">
                 <MdFoodBank className="text-xl" />
-                Orderly
+                Mealtap
               </div>
               <h1 className="mt-8 font-display text-4xl font-semibold leading-tight">
                 Start with a verified account that fits your role.
@@ -295,7 +295,7 @@ export default function Register() {
               <div className="mb-8">
                 <div className="inline-flex items-center gap-2 rounded-full bg-[color:var(--surface-muted)] px-4 py-2 text-sm font-medium text-[color:var(--accent)] lg:hidden">
                   <MdFoodBank className="text-lg" />
-                  Orderly
+                  Mealtap
                 </div>
                 <h2 className="mt-4 font-display text-3xl font-semibold text-[color:var(--text-primary)]">
                   {isOtpStep ? "Verify Your Account" : "Create Your Account"}

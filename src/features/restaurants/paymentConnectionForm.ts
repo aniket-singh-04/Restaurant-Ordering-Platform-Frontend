@@ -95,6 +95,47 @@ export const createPaymentConnectionForm = (
   acceptTerms: false,
 });
 
+export const hydratePaymentConnectionForm = (
+  user: { name?: string; email?: string; phone?: string } | null | undefined,
+  savedPayload?: RestaurantPaymentConnectionOnboardingPayload | null,
+): RestaurantPaymentConnectionOnboardingPayload => {
+  const baseForm = createPaymentConnectionForm(user);
+
+  if (!savedPayload) {
+    return sanitizePaymentConnectionForm(baseForm);
+  }
+
+  return sanitizePaymentConnectionForm({
+    ...baseForm,
+    businessType: savedPayload.businessType ?? baseForm.businessType,
+    businessCategory: savedPayload.businessCategory ?? baseForm.businessCategory,
+    businessSubcategory: savedPayload.businessSubcategory ?? baseForm.businessSubcategory,
+    customerFacingBusinessName:
+      savedPayload.customerFacingBusinessName ?? baseForm.customerFacingBusinessName,
+    businessAddress: {
+      ...baseForm.businessAddress,
+      ...(savedPayload.businessAddress ?? {}),
+    },
+    legalInfo: {
+      ...baseForm.legalInfo,
+      ...(savedPayload.legalInfo ?? {}),
+    },
+    bankAccount: {
+      ...baseForm.bankAccount,
+      ...(savedPayload.bankAccount ?? {}),
+    },
+    stakeholder: {
+      ...baseForm.stakeholder,
+      ...(savedPayload.stakeholder ?? {}),
+      address: {
+        ...baseForm.stakeholder.address,
+        ...(savedPayload.stakeholder?.address ?? {}),
+      },
+    },
+    acceptTerms: savedPayload.acceptTerms ?? baseForm.acceptTerms,
+  });
+};
+
 export const sanitizePaymentConnectionForm = (
   form: RestaurantPaymentConnectionOnboardingPayload,
 ): RestaurantPaymentConnectionOnboardingPayload => {

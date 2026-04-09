@@ -108,7 +108,7 @@ export default function Footer() {
             <div className="min-w-0">
               <div className="inline-flex items-center gap-2 rounded-full border border-[color:color-mix(in_srgb,var(--accent)_24%,transparent)] bg-[color:var(--accent-soft)] px-3 py-1.5 text-sm font-semibold text-[color:var(--accent)]">
                 <Sparkles className="h-4 w-4" />
-                Orderly Platform
+                Mealtap Platform
               </div>
 
               <h3 className="mt-4 max-w-2xl font-display text-3xl font-semibold leading-tight text-[color:var(--text-primary)] sm:text-4xl">
@@ -190,7 +190,7 @@ export default function Footer() {
                 <UtensilsCrossed className="h-5 w-5" />
               </div>
               <div>
-                <p className="ui-eyebrow">Orderly</p>
+                <p className="ui-eyebrow">Mealtap</p>
                 <p className="text-sm font-semibold text-[color:var(--text-primary)]">
                   Restaurant Ordering Platform
                 </p>
@@ -269,7 +269,7 @@ export default function Footer() {
         <div className="my-6 h-px bg-[color:var(--border-subtle)] sm:my-8" />
 
         <div className="flex flex-col gap-2.5 text-center text-xs text-[color:var(--text-secondary)] sm:flex-row sm:items-center sm:justify-between sm:text-left sm:text-sm">
-          <span>© {new Date().getFullYear()} Orderly. Frontend and backend flows are aligned.</span>
+          <span>© {new Date().getFullYear()} Mealtap. Frontend and backend flows are aligned.</span>
 
           <div className="flex flex-wrap justify-center gap-3 sm:justify-end sm:gap-5">
             {footerKeywords.map((item) => (

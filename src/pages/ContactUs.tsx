@@ -133,19 +133,22 @@ export default function ContactUs() {
   return (
     <MenuPageLayout>
       <section className="ui-hero mt-1.5 p-3 sm:mt-2 sm:p-5">
-        <div className="relative z-10 max-w-3xl text-left">
-          <button
-            type="button"
-            onClick={() => goBackOrNavigate(navigate, fallbackRoute, location.key)}
-            className="ui-button-secondary ui-button-pill mb-4 rounded-full px-4 py-2.5 text-sm font-semibold text-white/92 backdrop-blur"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </button>
-          <p className="ui-eyebrow !text-white/72">Platform Contact</p>
-          <h1 className="mt-3 font-display text-3xl font-bold text-white sm:text-5xl">
-            Contact Us
-          </h1>
+        <div className="relative flex gap-4 z-10 max-w-3xl text-left">
+          <div className="flex items-center">
+            <button
+              type="button"
+              onClick={() => goBackOrNavigate(navigate, fallbackRoute, location.key)}
+              className="ui-button-secondary ui-button-pill rounded-full px-4 py-2.5 text-sm font-semibold text-white/92 backdrop-blur"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+          </div>
+          <div>
+            <p className="ui-eyebrow !text-white/72">Platform Contact</p>
+            <h1 className=" font-display text-3xl font-bold text-white sm:text-5xl">
+              Contact Us
+            </h1>
+          </div>
         </div>
 
         <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-white/20 blur-3xl" />
