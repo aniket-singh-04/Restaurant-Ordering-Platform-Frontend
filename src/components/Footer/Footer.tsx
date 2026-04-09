@@ -101,21 +101,21 @@ export default function Footer() {
       : ["Login", "Register", "Menu", "Cart", "QR Session", "Checkout"];
 
   return (
-    <footer className="border-t border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--surface)_76%,transparent)] backdrop-blur-xl">
+    <footer className="border-t border(--border-subtle) bg-[color-mix(in_srgb,var(--surface)_76%,transparent)] backdrop-blur-xl">
       <div className="app-container px-3 py-8 sm:px-6 sm:py-12">
-        <section className="overflow-hidden rounded-[2rem] border border-[color:var(--border-subtle)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--surface)_94%,transparent),color-mix(in_srgb,var(--surface-muted)_88%,transparent))] p-4 shadow-[var(--shadow-md)] sm:p-7">
+        <section className="overflow-hidden rounded-4xl border border-(--border-subtle)] bg-[linear-gradient(135deg,color-mix(in_srgb,var(--surface)_94%,transparent),color-mix(in_srgb,var(--surface-muted)_88%,transparent))] p-4 shadow-(--shadow-md) sm:p-7">
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.85fr)]">
             <div className="min-w-0">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[color:color-mix(in_srgb,var(--accent)_24%,transparent)] bg-[color:var(--accent-soft)] px-3 py-1.5 text-sm font-semibold text-[color:var(--accent)]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--accent)_24%,transparent)] bg-(--accent-soft) px-3 py-1.5 text-sm font-semibold text-(--accent)">
                 <Sparkles className="h-4 w-4" />
                 Mealtap Platform
               </div>
 
-              <h3 className="mt-4 max-w-2xl font-display text-3xl font-semibold leading-tight text-[color:var(--text-primary)] sm:text-4xl">
+              <h3 className="mt-4 max-w-2xl font-display text-3xl font-semibold leading-tight text-(--text-primary) sm:text-4xl">
                 {experienceTitle}
               </h3>
 
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-[color:var(--text-secondary)] sm:text-base">
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-(--text-secondary) sm:text-base">
                 {experienceDescription}
               </p>
 
@@ -123,7 +123,7 @@ export default function Footer() {
                 {platformSignals.map((signal) => (
                   <span
                     key={signal}
-                    className="inline-flex items-center rounded-full border border-[color:var(--border-subtle)] bg-[color:var(--surface)] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--text-secondary)]"
+                    className="inline-flex items-center rounded-full border border-(--border-subtle) bg-(--surface) px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-(--text-secondary)"
                   >
                     {signal}
                   </span>
@@ -132,19 +132,19 @@ export default function Footer() {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-              <div className="rounded-[1.5rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface)] p-4 shadow-[var(--shadow-sm)]">
+              <div className="rounded-3xl border border-(--border-subtle) bg-(--surface) p-4 shadow-(--shadow-sm)">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl warm-linear text-white shadow-[var(--shadow-glow)]">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl warm-linear text-white shadow-(--shadow-glow)">
                     <QrCode className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--text-muted)]">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-(--text-muted)">
                       Session Mode
                     </p>
-                    <p className="mt-1 text-base font-semibold text-[color:var(--text-primary)]">
+                    <p className="mt-1 text-base font-semibold text-(--text-primary)">
                       {qrId ? "Table-linked ordering active" : "Standard app navigation"}
                     </p>
-                    <p className="mt-2 text-sm leading-6 text-[color:var(--text-secondary)]">
+                    <p className="mt-2 text-sm leading-6 text-(--text-secondary)">
                       {qrId
                         ? "Menu, cart, and ordering stay scoped to the scanned table session."
                         : "Users can move across menu, cart, profile, and order history normally."}
@@ -153,9 +153,9 @@ export default function Footer() {
                 </div>
               </div>
 
-              <div className="rounded-[1.5rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface)] p-4 shadow-[var(--shadow-sm)]">
+              <div className="rounded-3xl border border-(--border-subtle) bg-(--surface) p-4 shadow-(--shadow-sm)">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent)]">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-(--accent-soft) text-(--accent)">
                     {canManageOperations ? (
                       <CreditCard className="h-5 w-5" />
                     ) : (
@@ -163,13 +163,13 @@ export default function Footer() {
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--text-muted)]">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-(--text-muted)">
                       {supportLabel}
                     </p>
-                    <p className="mt-1 text-base font-semibold text-[color:var(--text-primary)]">
+                    <p className="mt-1 text-base font-semibold text-(--text-primary)">
                       {supportTitle}
                     </p>
-                    <p className="mt-2 text-sm leading-6 text-[color:var(--text-secondary)]">
+                    <p className="mt-2 text-sm leading-6 text-(--text-secondary)">
                       {supportDescription}
                     </p>
                   </div>
@@ -186,24 +186,24 @@ export default function Footer() {
         >
           <div className="min-w-0">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl warm-linear text-white shadow-[var(--shadow-glow)]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl warm-linear text-white shadow-(--shadow-glow)">
                 <UtensilsCrossed className="h-5 w-5" />
               </div>
               <div>
                 <p className="ui-eyebrow">Mealtap</p>
-                <p className="text-sm font-semibold text-[color:var(--text-primary)]">
+                <p className="text-sm font-semibold text-(--text-primary)">
                   Restaurant Ordering Platform
                 </p>
               </div>
             </div>
 
-            <p className="mt-4 max-w-sm text-sm leading-7 text-[color:var(--text-secondary)]">
+            <p className="mt-4 max-w-sm text-sm leading-7 text-(--text-secondary)">
               {brandDescription}
             </p>
 
             <Link
               to={buildQrMenuPath(qrId)}
-              className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--accent)] transition hover:text-[color:var(--accent-hover)]"
+              className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-(--accent) transition hover:text-(--accent-hover)"
             >
               Continue into the menu
               <ArrowRight className="h-4 w-4" />
@@ -211,7 +211,7 @@ export default function Footer() {
 
             <Link
               to="/contact-us"
-              className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--text-secondary)] transition hover:text-[color:var(--accent)]"
+              className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-(--text-secondary) transition hover:text-(--accent)"
             >
               Contact us
               <ArrowRight className="h-4 w-4" />
@@ -225,7 +225,7 @@ export default function Footer() {
                 <Link
                   key={item.label}
                   to={item.to}
-                  className="block font-medium text-[color:var(--text-secondary)] transition hover:text-[color:var(--accent)]"
+                  className="block font-medium text-(--text-secondary) transition hover:text-(--accent)"
                 >
                   {item.label}
                 </Link>
@@ -240,7 +240,7 @@ export default function Footer() {
                 <Link
                   key={item.label}
                   to={item.to}
-                  className="block font-medium text-[color:var(--text-secondary)] transition hover:text-[color:var(--accent)]"
+                  className="block font-medium text-(--text-secondary) transition hover:text-(--accent)"
                 >
                   {item.label}
                 </Link>
@@ -256,7 +256,7 @@ export default function Footer() {
                   <Link
                     key={item.label}
                     to={item.to}
-                    className="block font-medium text-[color:var(--text-secondary)] transition hover:text-[color:var(--accent)]"
+                    className="block font-medium text-(--text-secondary) transition hover:text-(--accent)"
                   >
                     {item.label}
                   </Link>
@@ -266,9 +266,9 @@ export default function Footer() {
           ) : null}
         </section>
 
-        <div className="my-6 h-px bg-[color:var(--border-subtle)] sm:my-8" />
+        <div className="my-6 h-px bg-(--border-subtle) sm:my-8" />
 
-        <div className="flex flex-col gap-2.5 text-center text-xs text-[color:var(--text-secondary)] sm:flex-row sm:items-center sm:justify-between sm:text-left sm:text-sm">
+        <div className="flex flex-col gap-2.5 text-center text-xs text-(--text-secondary) sm:flex-row sm:items-center sm:justify-between sm:text-left sm:text-sm">
           <span>© {new Date().getFullYear()} Mealtap. Frontend and backend flows are aligned.</span>
 
           <div className="flex flex-wrap justify-center gap-3 sm:justify-end sm:gap-5">

@@ -144,7 +144,7 @@ export default function ContactUs() {
             </button>
           </div>
           <div>
-            <p className="ui-eyebrow !text-white/72">Platform Contact</p>
+            <p className="ui-eyebrow text-white/72!">Platform Contact</p>
             <h1 className=" font-display text-3xl font-bold text-white sm:text-5xl">
               Contact Us
             </h1>
@@ -159,10 +159,10 @@ export default function ContactUs() {
         <form className="ui-card space-y-5" onSubmit={handleSubmit} noValidate>
           <div>
             <p className="ui-eyebrow">Send an Email</p>
-            <h2 className="mt-2 font-display text-2xl font-semibold text-[color:var(--text-primary)]">
+            <h2 className="mt-2 font-display text-2xl font-semibold text-(--text-primary)">
               Write to the platform owner
             </h2>
-            <p className="mt-2 text-sm leading-6 text-[color:var(--text-secondary)]">
+            <p className="mt-2 text-sm leading-6 text-(--text-secondary)">
               Use this form to send an onboarding request, setup question, partnership inquiry,
               or rollout discussion directly from the platform.
             </p>
@@ -184,7 +184,7 @@ export default function ContactUs() {
                 aria-invalid={Boolean(errors.email)}
               />
               {errors.email ? (
-                <p className="ui-helper-text !text-[color:var(--danger)]">{errors.email}</p>
+                <p className="ui-helper-text text-(--danger)!">{errors.email}</p>
               ) : null}
             </div>
 
@@ -207,7 +207,7 @@ export default function ContactUs() {
                 aria-invalid={Boolean(errors.phone)}
               />
               {errors.phone ? (
-                <p className="ui-helper-text !text-[color:var(--danger)]">{errors.phone}</p>
+                <p className="ui-helper-text text-(--danger)!">{errors.phone}</p>
               ) : null}
             </div>
 
@@ -226,7 +226,7 @@ export default function ContactUs() {
                 aria-invalid={Boolean(errors.message)}
               />
               {errors.message ? (
-                <p className="ui-helper-text !text-[color:var(--danger)]">{errors.message}</p>
+                <p className="ui-helper-text text-(--danger)!">{errors.message}</p>
               ) : (
                 <p className="ui-helper-text">
                   Include your restaurant details and what type of onboarding or platform help you
@@ -236,16 +236,16 @@ export default function ContactUs() {
             </div>
           </div>
 
-          <div className="rounded-[1.5rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface-muted)] p-4">
+          <div className="rounded-3xl border border-(--border-subtle) bg-(--surface-muted) p-4">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent)]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--accent-soft) text-(--accent)">
                 <Mail className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-[color:var(--text-primary)]">
+                <p className="text-sm font-semibold text-(--text-primary)">
                   How delivery works
                 </p>
-                <p className="mt-1 text-sm leading-6 text-[color:var(--text-secondary)]">
+                <p className="mt-1 text-sm leading-6 text-(--text-secondary)">
                   The backend sends your message from the platform mail account to the owner email
                   configured in the server environment.
                 </p>
@@ -264,16 +264,16 @@ export default function ContactUs() {
         </form>
 
         <aside className="ui-card ui-card-muted space-y-4">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--border-subtle)] bg-[color:var(--surface)] px-3 py-1.5 text-sm font-semibold text-[color:var(--text-primary)]">
-            <Store className="h-4 w-4 text-[color:var(--accent)]" />
+          <div className="inline-flex items-center gap-2 rounded-full border border-(--border-subtle) bg-(--surface) px-3 py-1.5 text-sm font-semibold text-(--text-primary)">
+            <Store className="h-4 w-4 text-(--accent)" />
             Built for Restaurant Owners
           </div>
 
-          <h3 className="font-display text-2xl font-semibold text-[color:var(--text-primary)]">
+          <h3 className="font-display text-2xl font-semibold text-(--text-primary)">
             What to include in your message
           </h3>
 
-          <p className="text-sm leading-7 text-[color:var(--text-secondary)]">
+          <p className="text-sm leading-7 text-(--text-secondary)">
             A clear message helps the platform owner respond faster and with the right next steps
             for your restaurant.
           </p>
@@ -285,17 +285,17 @@ export default function ContactUs() {
               return (
                 <div
                   key={item.title}
-                  className="rounded-[1.35rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface)] p-4"
+                  className="rounded-[1.35rem] border border-(--border-subtle) bg-(--surface) p-4"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[color:var(--accent-soft)] text-[color:var(--accent)]">
+                    <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-(--accent-soft) text-(--accent)">
                       <Icon className="h-4.5 w-4.5" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-[color:var(--text-primary)]">
+                      <p className="text-sm font-semibold text-(--text-primary)">
                         {item.title}
                       </p>
-                      <p className="mt-1 text-sm leading-6 text-[color:var(--text-secondary)]">
+                      <p className="mt-1 text-sm leading-6 text-(--text-secondary)">
                         {item.description}
                       </p>
                     </div>
@@ -305,16 +305,16 @@ export default function ContactUs() {
             })}
           </div>
 
-          <div className="rounded-[1.5rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface)] p-4">
+          <div className="rounded-3xl border border-(--border-subtle) bg-(--surface) p-4">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent)]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-(--accent-soft) text-(--accent)">
                 <BadgeCheck className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-[color:var(--text-primary)]">
+                <p className="text-sm font-semibold text-(--text-primary)">
                   Useful examples
                 </p>
-                <p className="mt-1 text-sm leading-6 text-[color:var(--text-secondary)]">
+                <p className="mt-1 text-sm leading-6 text-(--text-secondary)">
                   Mention your restaurant name, city, branch count, and whether you need a demo,
                   onboarding help, or QR ordering setup.
                 </p>

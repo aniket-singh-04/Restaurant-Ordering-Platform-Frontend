@@ -84,9 +84,9 @@ const OrderCard = ({
 
   return (
     <article
-      className={`rounded-[2rem] border p-5 shadow-sm transition ${
+      className={`rounded-4xl border p-5 shadow-sm transition ${
         highlighted
-          ? "border-orange-300 bg-[color:var(--accent-soft)]"
+          ? "border-orange-300 bg-(--accent-soft)"
           : "border-[#eedbc8] bg-white"
       }`}
     >
@@ -128,7 +128,7 @@ const OrderCard = ({
       </div>
 
       <div className="mt-5 grid gap-3 md:grid-cols-4">
-        <div className="rounded-2xl bg-[color:var(--surface-muted)] px-4 py-3">
+        <div className="rounded-2xl bg-(--surface-muted) px-4 py-3">
           <p className="text-xs uppercase tracking-wide text-[#8d7967]">
             {getPaidAmountLabel(order.paymentSummary?.mode)}
           </p>
@@ -136,19 +136,19 @@ const OrderCard = ({
             {formatMinorAmount(order.paymentSummary?.advanceReceived)}
           </p>
         </div>
-        <div className="rounded-2xl bg-[color:var(--surface-muted)] px-4 py-3">
+        <div className="rounded-2xl bg-(--surface-muted) px-4 py-3">
           <p className="text-xs uppercase tracking-wide text-[#8d7967]">Remaining</p>
           <p className="mt-1 font-semibold text-[#3b2f2f]">
             {formatMinorAmount(order.paymentSummary?.remainingDue)}
           </p>
         </div>
-        <div className="rounded-2xl bg-[color:var(--surface-muted)] px-4 py-3">
+        <div className="rounded-2xl bg-(--surface-muted) px-4 py-3">
           <p className="text-xs uppercase tracking-wide text-[#8d7967]">Mode</p>
           <p className="mt-1 font-semibold text-[#3b2f2f]">
             {formatPaymentModeLabel(order.paymentSummary?.mode)}
           </p>
         </div>
-        <div className="rounded-2xl bg-[color:var(--surface-muted)] px-4 py-3">
+        <div className="rounded-2xl bg-(--surface-muted) px-4 py-3">
           <p className="text-xs uppercase tracking-wide text-[#8d7967]">Settlement</p>
           <p className="mt-1 font-semibold text-[#3b2f2f]">
             {order.paymentSummary?.settlementStatus ?? "N/A"}
@@ -398,14 +398,14 @@ export default function OrdersPage() {
 
       <main className="app-shell min-h-screen px-4 py-6">
         <div className="app-container space-y-8">
-          <section className="ui-card rounded-[2rem]">
+          <section className="ui-card rounded-4xl">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => goBackOrNavigate(navigate, "/", location.key)}
-                    className="ui-icon-button warm-linear h-11 min-w-11 border-transparent text-white shadow-[var(--shadow-glow)]"
+                    className="ui-icon-button warm-linear h-11 min-w-11 border-transparent text-white shadow-(--shadow-glow)"
                     aria-label="Go back"
                   >
                     <ArrowRight className="h-4 w-4 rotate-180" />
@@ -465,7 +465,7 @@ export default function OrdersPage() {
                 ))}
               </div>
             ) : (
-              <div className="ui-empty-state rounded-[2rem] px-6 py-8 text-[#6d5c4d]">
+              <div className="ui-empty-state rounded-4xl px-6 py-8 text-[#6d5c4d]">
                 You do not have any active orders right now.
               </div>
             )}
@@ -492,7 +492,7 @@ export default function OrdersPage() {
                 ))}
               </div>
             ) : (
-              <div className="ui-empty-state rounded-[2rem] px-6 py-8 text-[#6d5c4d]">
+              <div className="ui-empty-state rounded-4xl px-6 py-8 text-[#6d5c4d]">
                 Completed and cancelled orders will appear here.
               </div>
             )}

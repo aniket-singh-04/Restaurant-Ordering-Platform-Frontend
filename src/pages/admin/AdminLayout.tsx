@@ -5,6 +5,7 @@ import {
   Menu,
   X,
 } from 'lucide-react';
+import logo from '../../assets/images/logo.png';
 import ThemeToggle from '../../components/ThemeToggle';
 import { useAuth } from '../../context/AuthContext';
 import { roleMatches } from '../../features/auth/access';
@@ -33,7 +34,7 @@ export default function AdminLayout() {
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-(--border-subtle) bg-[color-mix(in_srgb,var(--surface)_85%,transparent)] px-4 py-3 text-(--text-primary) shadow-(--shadow-sm) backdrop-blur-xl md:hidden">
         <div className="flex items-center gap-3">
           <div className="flex shrink-0  h-10 w-10 items-center justify-center rounded-full shadow-(--shadow-glow) sm:h-11 sm:w-11 warm-linear">
-            <img src="../../assets/images/logo.png" alt="logo" className='w-10 h-10' />
+            <img src={logo} alt="Mealtap logo" className='w-10 h-10' />
           </div>
           <div>
             <p className="font-display text-base font-bold">Mealtap</p>
@@ -74,9 +75,9 @@ export default function AdminLayout() {
       >
         {/* Logo */}
         <div className="flex items-center justify-between gap-3 border-b border-(--border-subtle) p-6">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
             <div className="flex shrink-0 h-10 w-10 items-center justify-center rounded-full shadow-(--shadow-glow) sm:h-11 sm:w-11 warm-linear">
-              <img src="../../assets/images/logo.png" alt="logo" className='w-10 h-10' />
+              <img src={logo} alt="Mealtap logo" className='w-10 h-10' />
             </div>
             <div>
               <h1 className="font-display text-lg font-bold">Mealtap</h1>

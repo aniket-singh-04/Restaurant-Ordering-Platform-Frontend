@@ -73,26 +73,26 @@ export default function Header() {
   };
 
   return (
-    <div className="sticky top-0 z-40 border-b border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--surface)_82%,transparent)] px-2.5 py-1.5 backdrop-blur-xl sm:px-4 sm:py-1">
+    <div className="sticky top-0 z-40 border-b border-(--border-subtle) bg-[color-mix(in_srgb,var(--surface)_82%,transparent) px-2.5 py-1.5 backdrop-blur-xl sm:px-4 sm:py-1">
       <div className="app-container flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <button
           type="button"
-          className="flex min-w-0 w-fit max-w-full self-start items-center gap-2 rounded-[1.35rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface)] px-2 py-1.5 pr-2.5 text-left shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 sm:w-auto sm:gap-3 sm:rounded-full sm:px-2.5 sm:py-2"
+          className="flex min-w-0 w-fit max-w-full self-start items-center gap-2 rounded-[1.35rem] border border-(--border-subtle) bg-(--surface) px-2 py-1.5 pr-2.5 text-left shadow-(--shadow-sm) transition hover:-translate-y-0.5 sm:w-auto sm:gap-3 sm:rounded-full sm:px-2.5 sm:py-2"
           onClick={() => navigate(buildQrHomePath(qrId))}
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full warm-linear shadow-[var(--shadow-glow)] sm:h-11 sm:w-11">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full warm-linear shadow-(--shadow-glow) sm:h-11 sm:w-11">
             <img src="/public/favicon.png" alt="logo" className='w-10 h-10' />
 
           </span>
 
           <span className="min-w-0">
-            <span className="block text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-[color:var(--text-muted)] sm:text-[0.7rem] sm:tracking-[0.22em]">
+            <span className="block text-[0.62rem] font-semibold uppercase tracking-[0.18em] text-(--text-muted) sm:text-[0.7rem] sm:tracking-[0.22em]">
               {locationEyebrow}
             </span>
-            <span className="block truncate text-[0.84rem] font-semibold text-[color:var(--text-primary)] sm:text-sm">
+            <span className="block truncate text-[0.84rem] font-semibold text-(--text-primary) sm:text-sm">
               {locationTitle}
             </span>
-            <span className="hidden truncate text-xs text-[color:var(--text-secondary)] sm:block">
+            <span className="hidden truncate text-xs text-(--text-secondary) sm:block">
               {locationSubtitle}
             </span>
           </span>
@@ -105,7 +105,7 @@ export default function Header() {
           />
           <button
             type="button"
-            className={`${iconButtonClass} warm-linear border-transparent text-white shadow-[var(--shadow-glow)]`}
+            className={`${iconButtonClass} warm-linear border-transparent text-white shadow-(--shadow-glow)`}
             onClick={() => {
               void handleQrAction();
             }}
@@ -115,13 +115,13 @@ export default function Header() {
           </button>
           <button
             type="button"
-            className={`${iconButtonClass} warm-linear relative border-transparent text-white shadow-[var(--shadow-glow)]`}
+            className={`${iconButtonClass} warm-linear relative border-transparent text-white shadow-(--shadow-glow)`}
             onClick={() => navigate(buildQrCartPath(qrId))}
             aria-label="Open cart"
           >
             <ShoppingCart size={17} />
             {totalItems > 0 && (
-              <span className="absolute -right-1 -top-1 inline-flex h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full bg-[color:var(--danger)] px-1 text-[9px] font-semibold text-white sm:h-5 sm:min-w-5 sm:text-[10px]">
+              <span className="absolute -right-1 -top-1 inline-flex h-[1.1rem] min-w-[1.1rem] items-center justify-center rounded-full bg-(--danger) px-1 text-[9px] font-semibold text-white sm:h-5 sm:min-w-5 sm:text-[10px]">
                 {totalItems}
               </span>
             )}
