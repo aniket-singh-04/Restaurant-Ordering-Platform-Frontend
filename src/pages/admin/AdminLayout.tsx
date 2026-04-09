@@ -30,14 +30,14 @@ export default function AdminLayout() {
   return (
     <div className="panel-shell min-h-screen md:flex md:items-start">
       {/* Mobile Header */}
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--surface)_85%,transparent)] px-4 py-3 text-[color:var(--text-primary)] shadow-[var(--shadow-sm)] backdrop-blur-xl md:hidden">
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-(--border-subtle) bg-[color-mix(in_srgb,var(--surface)_85%,transparent)] px-4 py-3 text-(--text-primary) shadow-(--shadow-sm) backdrop-blur-xl md:hidden">
         <div className="flex items-center gap-3">
-            <div className="flex shrink-0  h-10 w-10 items-center justify-center rounded-full shadow-(--shadow-glow) sm:h-11 sm:w-11 warm-linear">
-              <img src="/public/favicon.png" alt="logo" className='w-10 h-10'/>
+          <div className="flex shrink-0  h-10 w-10 items-center justify-center rounded-full shadow-(--shadow-glow) sm:h-11 sm:w-11 warm-linear">
+            <img src="../../assets/images/logo.png" alt="logo" className='w-10 h-10' />
           </div>
           <div>
             <p className="font-display text-base font-bold">Mealtap</p>
-            <p className="text-[10px] text-[color:var(--text-muted)]">Admin Panel</p>
+            <p className="text-[10px] text-(--text-muted)">Admin Panel</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -68,19 +68,19 @@ export default function AdminLayout() {
       {/* Sidebar */}
       <aside
         id="admin-sidebar"
-        className={`panel-sidebar fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r text-[color:var(--text-primary)] transform transition-transform duration-300 md:sticky md:top-0 md:h-screen md:w-64 md:self-start md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        className={`panel-sidebar fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r text-(--text-primary) transform transition-transform duration-300 md:sticky md:top-0 md:h-screen md:w-64 md:self-start md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
           }`}
         aria-label="Admin navigation"
       >
         {/* Logo */}
-        <div className="flex items-center justify-between gap-3 border-b border-[color:var(--border-subtle)] p-6">
+        <div className="flex items-center justify-between gap-3 border-b border-(--border-subtle) p-6">
           <div className="flex items-center gap-3">
             <div className="flex shrink-0 h-10 w-10 items-center justify-center rounded-full shadow-(--shadow-glow) sm:h-11 sm:w-11 warm-linear">
-              <img src="/public/favicon.png" alt="logo" className='w-10 h-10'/>
+              <img src="../../assets/images/logo.png" alt="logo" className='w-10 h-10' />
             </div>
             <div>
               <h1 className="font-display text-lg font-bold">Mealtap</h1>
-              <p className="text-xs text-[color:var(--text-muted)]">Admin Panel</p>
+              <p className="text-xs text-(--text-muted)">Admin Panel</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -118,7 +118,7 @@ export default function AdminLayout() {
         </nav>
 
         {/* Footer */}
-        <div className="border-t border-[color:var(--border-subtle)] p-4">
+        <div className="border-t border-(--border-subtle) p-4">
           <button
             type="button"
             className="ui-button-secondary ui-button-pill flex w-full gap-3 rounded-lg px-4 py-3 text-sm hover:bg-[#fff9f2] font-semibold"
