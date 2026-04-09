@@ -6,6 +6,7 @@ import ThemeToggle from "../ThemeToggle";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
+import logo from '../../assets/images/logo.png';
 import {
   buildQrCartPath,
   buildQrHomePath,
@@ -81,7 +82,7 @@ export default function Header() {
           onClick={() => navigate(buildQrHomePath(qrId))}
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full warm-linear shadow-(--shadow-glow) sm:h-11 sm:w-11">
-            <img src="/public/favicon.png" alt="logo" className='w-10 h-10' />
+            <img src={logo} alt="Mealtap logo" className='w-10 h-10' />
 
           </span>
 

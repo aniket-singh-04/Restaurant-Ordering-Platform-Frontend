@@ -190,8 +190,8 @@ export default function Analytics() {
               className="ui-card rounded-2xl"
             >
               <div className="flex items-start justify-between mb-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[color:var(--accent-soft)]">
-                  <stat.icon className="w-6 h-6 text-[color:var(--accent)]" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-(--accent-soft)">
+                  <stat.icon className="w-6 h-6 text-(--accent)" />
                 </div>
                 <div className={`flex items-center gap-1 text-sm font-medium ${stat.isPositive ? 'text-green-600' : 'text-red-600'}`}>
                   {stat.isPositive ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
@@ -217,7 +217,7 @@ export default function Analytics() {
           <h2 className="font-display text-xl font-semibold mb-6">Revenue Trend</h2>
           <div className="h-72">
             {branchTrends.isLoading ? (
-              <SkeletonBlock className="h-full w-full rounded-[1.5rem]" />
+              <SkeletonBlock className="h-full w-full rounded-3xl" />
             ) : revenueData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={revenueData}>
@@ -293,7 +293,7 @@ export default function Analytics() {
           <h2 className="font-display text-xl font-semibold mb-6">Daily Orders</h2>
           <div className="h-72">
             {branchTrends.isLoading ? (
-              <SkeletonBlock className="h-full w-full rounded-[1.5rem]" />
+              <SkeletonBlock className="h-full w-full rounded-3xl" />
             ) : revenueData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={revenueData}>
@@ -336,7 +336,7 @@ export default function Analytics() {
             ) : topItems.items.length > 0 ? (
               topItems.items.map((item, index) => (
                 <div key={item.name} className="flex items-center gap-4">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-sm font-bold text-[color:var(--accent)]">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-(--accent-soft) text-sm font-bold text-(--accent)">
                     {index + 1}
                   </span>
                   <div className="min-w-0 flex-1">
