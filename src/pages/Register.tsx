@@ -9,7 +9,7 @@ import { useState, type FormEvent } from "react";
 import { FaPhone } from "react-icons/fa";
 import { HiOutlineMailOpen } from "react-icons/hi";
 import { MdFoodBank, MdOutlinePassword, MdOutlineSms } from "react-icons/md";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
@@ -24,7 +24,7 @@ import { setAuthToken } from "../features/auth/storage";
 import { authStore } from "../features/auth/store";
 import { mapAuthUser } from "../features/auth/user";
 import { getApiErrorMessage } from "../utils/apiErrorHelpers";
-import { isStrongPassword, isValidEmail, isValidOtp, isValidPhone } from "../utils/validators";
+import { isStrongPassword, isValidEmail, isValidName, isValidOtp, isValidPhone } from "../utils/validators";
 
 type UserRole = "RESTRO_OWNER" | "CUSTOMER";
 
@@ -91,8 +91,8 @@ export default function Register() {
     const emailValue = form.email?.trim() ?? "";
     const phoneValue = form.phone?.trim() ?? "";
 
-    if (!nameValue) {
-      setError("Full name is required");
+    if (!isValidName(nameValue)) {
+      setError("Name must be at least 2 characters and contain no special control characters");
       return null;
     }
 
@@ -112,7 +112,7 @@ export default function Register() {
     }
 
     if (!isStrongPassword(form.password, 6)) {
-      setError("Password must be at least 6 characters");
+      setError("Password must be at least 6 characters and not blank");
       return null;
     }
 
@@ -489,7 +489,7 @@ export default function Register() {
                       }
                       className="mt-1 h-4 w-4 rounded border-[color:var(--border-strong)] text-[color:var(--accent)]"
                     />
-                    <span>I accept the Terms of Service and Privacy Policy.</span>
+                    <span>I accept the <Link to="/terms-and-conditions" className="text-[color:var(--accent)] hover:underline">Terms of Service</Link> and <Link to="/privacy-policy" className="text-[color:var(--accent)] hover:underline">Privacy Policy</Link>.</span>
                   </label>
 
                   {error ? (
@@ -527,6 +527,7 @@ export default function Register() {
                         type="text"
                         inputMode="numeric"
                         autoComplete="one-time-code"
+                      maxLength={6}
                         placeholder="Enter the OTP"
                         value={otp}
                         onChange={(e) => setOtp(e.target.value)}

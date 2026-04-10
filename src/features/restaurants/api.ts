@@ -1,5 +1,13 @@
 import { api } from "../../utils/api";
 
+export type RestaurantPaymentConnectionRequirement = {
+  field_reference?: string;
+  resolution_url?: string;
+  reason_code?: string;
+  status?: string;
+  [key: string]: unknown;
+};
+
 export type RestaurantPaymentConnection = {
   provider: "RAZORPAY_ROUTE";
   status: "NOT_CONNECTED" | "PENDING" | "ACTIVE";
@@ -11,7 +19,7 @@ export type RestaurantPaymentConnection = {
   onboardingLink?: string;
   chargesEnabled?: boolean;
   payoutsEnabled?: boolean;
-  requirements?: string[];
+  requirements?: RestaurantPaymentConnectionRequirement[];
   lastSubmittedAt?: string | null;
   lastSyncedAt?: string | null;
   savedOnboardingPayload?: RestaurantPaymentConnectionOnboardingPayload | null;
@@ -69,7 +77,6 @@ export type RestaurantPaymentConnectionOnboardingPayload = {
     percentageOwnership: number;
     address: {
       street1: string;
-      street2?: string;
       city: string;
       state: string;
       postalCode: string;

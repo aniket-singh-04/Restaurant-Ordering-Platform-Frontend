@@ -8,14 +8,14 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { useToast } from "../context/ToastContext";
-import { submitPlatformContact } from "../features/contact/api";
-import { goBackOrNavigate } from "../utils/navigation";
-import { getApiErrorMessage, getApiFieldErrors } from "../utils/apiErrorHelpers";
-import { sanitizeHtml } from "../security";
-import { isValidEmail, isValidPhone } from "../utils/validators";
-import MenuPageLayout from "./user/menu/components/MenuPageLayout";
+import { useAuth } from "../../context/AuthContext";
+import { useToast } from "../../context/ToastContext";
+import { submitPlatformContact } from "../../features/contact/api";
+import { goBackOrNavigate } from "../../utils/navigation";
+import { getApiErrorMessage, getApiFieldErrors } from "../../utils/apiErrorHelpers";
+import { sanitizeHtml } from "../../security";
+import { isValidEmail, isValidPhone } from "../../utils/validators";
+import MenuPageLayout from "../user/menu/components/MenuPageLayout";
 
 type ContactForm = {
   email: string;
@@ -134,7 +134,7 @@ export default function ContactUs() {
     <MenuPageLayout>
       <section className="ui-hero mt-1.5 p-3 sm:mt-2 sm:p-5">
         <div className="relative flex gap-4 z-10 max-w-3xl text-left">
-          <div className="flex items-center">
+          <div className="flex items-start">
             <button
               type="button"
               onClick={() => goBackOrNavigate(navigate, fallbackRoute, location.key)}
@@ -145,7 +145,7 @@ export default function ContactUs() {
           </div>
           <div>
             <p className="ui-eyebrow text-white/72!">Platform Contact</p>
-            <h1 className=" font-display text-3xl font-bold text-white sm:text-5xl">
+            <h1 className="font-display text-3xl font-bold text-white sm:text-5xl">
               Contact Us
             </h1>
           </div>

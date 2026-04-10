@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { FaPhone } from "react-icons/fa";
 import { HiOutlineMailOpen } from "react-icons/hi";
 import { MdFoodBank, MdOutlinePassword, MdOutlineSms } from "react-icons/md";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
@@ -65,7 +65,7 @@ export default function Login() {
     }
 
     if (!isStrongPassword(password, 6)) {
-      setError("Password must be at least 6 characters");
+      setError("Password must be at least 6 characters and not blank");
       return null;
     }
 
@@ -256,7 +256,7 @@ export default function Login() {
                         autoComplete="tel"
                         placeholder="Optional if you sign in with email"
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
+                        onChange={(e) => { setPhone(e.target.value); setError(""); }}
                         className={fieldInputClass}
                       />
                     </div>
@@ -274,7 +274,7 @@ export default function Login() {
                         autoComplete="email"
                         placeholder="Optional if you sign in with phone"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => { setEmail(e.target.value); setError(""); }}
                         className={fieldInputClass}
                       />
                     </div>
@@ -295,7 +295,7 @@ export default function Login() {
                         autoComplete="current-password"
                         placeholder="Enter your password"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => { setPassword(e.target.value); setError(""); }}
                         className={fieldInputClass}
                       />
                     </div>
@@ -335,6 +335,7 @@ export default function Login() {
                         type="text"
                         inputMode="numeric"
                         autoComplete="one-time-code"
+                      maxLength={6}
                         placeholder="Enter the OTP"
                         value={otp}
                         onChange={(e) => setOtp(e.target.value)}
@@ -382,7 +383,7 @@ export default function Login() {
               )}
 
               <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--border-subtle)] pt-5 text-sm text-[color:var(--text-secondary)]">
-                <span>By continuing, you agree to our Terms and Privacy Policy.</span>
+                <span>By continuing, you agree to our <Link to="/terms-and-conditions" className="hover:text-[color:var(--text-primary)] hover:underline transition-colors">Terms of Service</Link> and <Link to="/privacy-policy" className="hover:text-[color:var(--text-primary)] hover:underline transition-colors">Privacy Policy</Link>.</span>
                 <button
                   type="button"
                   className={secondaryButtonClass}

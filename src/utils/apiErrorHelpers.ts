@@ -22,6 +22,9 @@ const getErrorBody = (error: unknown): RawErrorBody | null => {
     return null;
   }
 
+  // The ApiError.details holds the full parsed response body from the backend.
+  // The backend response shape is: { success, message, details: { formErrors, fieldErrors }, requestId }
+  // So error.details === the full response body.
   return error.details as RawErrorBody;
 };
 
@@ -44,7 +47,14 @@ export const getApiFieldErrors = (error: unknown) => {
   const errorBody = getErrorBody(error);
   const nextErrors: Record<string, string> = {};
 
-  for (const fieldError of errorBody?.details?.fieldErrors ?? []) {
+  // Field errors can be at errorBody.details.fieldErrors (standard validation)
+  // or directly at errorBody.fieldErrors (some AppError details)
+  const fieldErrors =
+    errorBody?.details?.fieldErrors ??
+    (errorBody as any)?.fieldErrors ??
+    [];
+
+  for (const fieldError of fieldErrors) {
     const field = typeof fieldError.field === "string" ? normalizeFieldName(fieldError.field) : "";
     const message = typeof fieldError.message === "string" ? fieldError.message : "";
 
@@ -58,8 +68,16 @@ export const getApiFieldErrors = (error: unknown) => {
 
 export const getApiFormErrors = (error: unknown) => {
   const errorBody = getErrorBody(error);
-  return (errorBody?.details?.formErrors ?? []).filter(
-    (message): message is string => typeof message === "string" && message.trim().length > 0,
+
+  // Form errors can be at errorBody.details.formErrors (standard validation)
+  // or directly at errorBody.formErrors (some AppError details)
+  const formErrors =
+    errorBody?.details?.formErrors ??
+    (errorBody as any)?.formErrors ??
+    [];
+
+  return formErrors.filter(
+    (message: unknown): message is string => typeof message === "string" && String(message).trim().length > 0,
   );
 };
 
@@ -67,3 +85,4 @@ export const getApiRequestId = (error: unknown) => {
   const errorBody = getErrorBody(error);
   return typeof errorBody?.requestId === "string" ? errorBody.requestId : undefined;
 };
+

@@ -4,7 +4,6 @@ import {
   QrCode,
   ShieldCheck,
   Sparkles,
-  UtensilsCrossed,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -15,6 +14,7 @@ import {
   buildQrMenuPath,
   useResolvedQrId,
 } from "../../features/qr-context/navigation";
+import logo from "../../assets/images/logo.png";
 
 const platformSignals = [
   "OTP auth",
@@ -39,15 +39,15 @@ export default function Footer() {
 
   const accountLinks = user
     ? [
-        { label: "My Orders", to: "/orders" },
-        { label: "Profile", to: "/profile" },
-        { label: "Continue Ordering", to: buildQrMenuPath(qrId) },
-      ]
+      { label: "My Orders", to: "/orders" },
+      { label: "Profile", to: "/profile" },
+      { label: "Continue Ordering", to: buildQrMenuPath(qrId) },
+    ]
     : [
-        { label: "Login", to: "/login" },
-        { label: "Create Account", to: "/register" },
-        { label: "Forgot Password", to: "/forgot-password" },
-      ];
+      { label: "Login", to: "/login" },
+      { label: "Create Account", to: "/register" },
+      { label: "Forgot Password", to: "/forgot-password" },
+    ];
 
   const operationsLinks = [
     { label: "Dashboard", to: "/admin" },
@@ -56,6 +56,14 @@ export default function Footer() {
     { label: "Tables", to: "/admin/tables" },
     { label: "Subscriptions", to: "/admin/subscriptions" },
     { label: "Analytics", to: "/admin/analytics" },
+  ];
+
+  const legalLinks = [
+    { label: "About Us", to: "/about-us" },
+    { label: "Contact Us", to: "/contact-us" },
+    { label: "Privacy Policy", to: "/privacy-policy" },
+    { label: "Terms & Conditions", to: "/terms-and-conditions" },
+    { label: "Refund Policy", to: "/refund-policy" },
   ];
 
   const experienceTitle = canManageOperations
@@ -180,14 +188,13 @@ export default function Footer() {
         </section>
 
         <section
-          className={`mt-6 grid gap-6 text-left sm:mt-8 ${
-            canManageOperations ? "lg:grid-cols-4" : "md:grid-cols-3"
-          }`}
+          className={`mt-6 grid gap-6 text-left sm:mt-8 ${canManageOperations ? "lg:grid-cols-5 md:grid-cols-4" : "lg:grid-cols-4 md:grid-cols-3"
+            }`}
         >
           <div className="min-w-0">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl warm-linear text-white shadow-(--shadow-glow)">
-                <UtensilsCrossed className="h-5 w-5" />
+              <div className="flex h-11 w-11 items-center justify-center rounded-full warm-linear text-white shadow-(--shadow-glow)">
+                <img src={logo} alt="Mealtap logo" className='w-10 h-10' />
               </div>
               <div>
                 <p className="ui-eyebrow">Mealtap</p>
@@ -206,14 +213,6 @@ export default function Footer() {
               className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-(--accent) transition hover:text-(--accent-hover)"
             >
               Continue into the menu
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-
-            <Link
-              to="/contact-us"
-              className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-(--text-secondary) transition hover:text-(--accent)"
-            >
-              Contact us
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -264,6 +263,22 @@ export default function Footer() {
               </div>
             </div>
           ) : null}
+
+          <div>
+            <h4 className="ui-field-label">Legal & Info</h4>
+            <div className="mt-4 space-y-2.5 text-sm">
+              {legalLinks.map((item) => (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  className="flex items-center font-medium text-(--text-secondary) transition hover:text-(--accent)"
+                >
+                  <span>{item.label}</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              ))}
+            </div>
+          </div>
         </section>
 
         <div className="my-6 h-px bg-(--border-subtle) sm:my-8" />

@@ -13,6 +13,7 @@ import {
   type PaymentConnectionLifecycleAction,
   previewRestaurantPaymentConnection,
   type PaymentConnectionPreview,
+  type RestaurantPaymentConnectionRequirement,
   type RestaurantPaymentConnectionOnboardingPayload,
   startRestaurantPaymentConnection,
 } from "../../features/restaurants/api";
@@ -42,11 +43,131 @@ import {
 
 const formatMinorAmount = (value?: number) => formatPrice((value ?? 0) / 100);
 
+const PAYMENT_CONNECTION_REQUIREMENT_FIELD_MAP: Record<
+  string,
+  { formField: string; label: string }
+> = {
+  "profile.addresses.registered.street": {
+    formField: "businessAddress.street1",
+    label: "Business address",
+  },
+  "profile.addresses.registered.street1": {
+    formField: "businessAddress.street1",
+    label: "Business address",
+  },
+  "profile.addresses.registered.street2": {
+    formField: "businessAddress.street2",
+    label: "Business address line 2",
+  },
+  "profile.addresses.registered.city": {
+    formField: "businessAddress.city",
+    label: "Business city",
+  },
+  "profile.addresses.registered.state": {
+    formField: "businessAddress.state",
+    label: "Business state",
+  },
+  "profile.addresses.registered.postal_code": {
+    formField: "businessAddress.postalCode",
+    label: "Business postal code",
+  },
+  "profile.addresses.registered.country": {
+    formField: "businessAddress.country",
+    label: "Business country",
+  },
+  "legal_info.pan": {
+    formField: "legalInfo.pan",
+    label: "Business PAN",
+  },
+  "legal_info.gst": {
+    formField: "legalInfo.gst",
+    label: "GST number",
+  },
+  "kyc.pan": {
+    formField: "stakeholder.pan",
+    label: "Stakeholder PAN",
+  },
+  name: {
+    formField: "stakeholder.name",
+    label: "Stakeholder name",
+  },
+  "phone.primary": {
+    formField: "stakeholder.phone",
+    label: "Stakeholder phone",
+  },
+  "addresses.residential.street": {
+    formField: "stakeholder.address.street1",
+    label: "Stakeholder street address",
+  },
+  "addresses.residential.street1": {
+    formField: "stakeholder.address.street1",
+    label: "Stakeholder street address",
+  },
+  "addresses.residential.city": {
+    formField: "stakeholder.address.city",
+    label: "Stakeholder city",
+  },
+  "addresses.residential.state": {
+    formField: "stakeholder.address.state",
+    label: "Stakeholder state",
+  },
+  "addresses.residential.postal_code": {
+    formField: "stakeholder.address.postalCode",
+    label: "Stakeholder postal code",
+  },
+  "addresses.residential.country": {
+    formField: "stakeholder.address.country",
+    label: "Stakeholder country",
+  },
+  "settlements.account_number": {
+    formField: "bankAccount.accountNumber",
+    label: "Settlement account number",
+  },
+  "settlements.ifsc": {
+    formField: "bankAccount.ifscCode",
+    label: "Settlement IFSC code",
+  },
+  "settlements.ifsc_code": {
+    formField: "bankAccount.ifscCode",
+    label: "Settlement IFSC code",
+  },
+  "settlements.beneficiary_name": {
+    formField: "bankAccount.beneficiaryName",
+    label: "Settlement beneficiary name",
+  },
+};
+
+const getPaymentConnectionRequirementFieldConfig = (
+  fieldReference?: string,
+) => (fieldReference ? PAYMENT_CONNECTION_REQUIREMENT_FIELD_MAP[fieldReference] ?? null : null);
+
+const formatRequirementCode = (value?: string) =>
+  value
+    ? value
+        .split("_")
+        .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+        .join(" ")
+    : "Unspecified";
+
+const isRequirementResolvableInForm = (
+  requirement: RestaurantPaymentConnectionRequirement,
+) => {
+  const fieldConfig = getPaymentConnectionRequirementFieldConfig(
+    requirement.field_reference,
+  );
+
+  if (!fieldConfig) {
+    return false;
+  }
+
+  return (requirement.reason_code ?? "").toLowerCase() !== "document_missing";
+};
+
 const getPaymentConnectionSyncToastConfig = (paymentConnection: {
   status?: string | null;
   lifecycleStatus?: string | null;
   activationStatus?: string | null;
-  requirements?: string[];
+  requirements?: RestaurantPaymentConnectionRequirement[];
 }) => {
   const activationStatus = paymentConnection.activationStatus?.toLowerCase() ?? "";
   const isActivated =
@@ -187,13 +308,35 @@ export default function Subscriptions() {
     [paymentConnectionErrors, paymentConnectionFormMessages],
   );
 
+  const paymentConnectionRequirementFieldHints = useMemo(
+    () =>
+      new Set(
+        (paymentConnectionQuery.data?.requirements ?? [])
+          .filter((requirement) => isRequirementResolvableInForm(requirement))
+          .flatMap((requirement) => {
+            const fieldConfig = getPaymentConnectionRequirementFieldConfig(
+              requirement.field_reference,
+            );
+            return fieldConfig ? [fieldConfig.formField] : [];
+          }),
+      ),
+    [paymentConnectionQuery.data?.requirements],
+  );
+
   const getPaymentConnectionFieldError = (field: string) => paymentConnectionErrors[field];
 
-  const getPaymentConnectionInputClass = (field: string) =>
-    `mt-2 w-full rounded-lg border bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${getPaymentConnectionFieldError(field)
-      ? "border-red-300 focus:ring-red-200"
-      : "border-[#e5d5c6] focus:ring-orange-400"
+  const getPaymentConnectionInputClass = (field: string) => {
+    const hasError = Boolean(getPaymentConnectionFieldError(field));
+    const hasClarificationHint = paymentConnectionRequirementFieldHints.has(field);
+
+    return `mt-2 w-full rounded-lg border bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 ${
+      hasError
+        ? "border-red-300 focus:ring-red-200"
+        : hasClarificationHint
+          ? "border-amber-300 bg-amber-50 focus:ring-amber-200"
+          : "border-[#e5d5c6] focus:ring-orange-400"
     }`;
+  };
 
   const getPaymentConnectionReadonlyClass = (field?: string) =>
     `mt-2 w-full rounded-lg border px-4 py-2.5 text-sm focus:outline-none ${
@@ -878,19 +1021,109 @@ export default function Subscriptions() {
 
                 {(paymentConnectionQuery.data?.requirements ?? []).length > 0 && (
                   <div className="min-w-0 w-full overflow-hidden rounded-lg border border-amber-200 bg-amber-50 px-4 py-4 sm:px-5">
-                    <p className="text-sm font-semibold text-amber-900">
-                      Documentation needed:
-                    </p>
+                    <div className="flex flex-col gap-1">
+                      <p className="text-sm font-semibold text-amber-900">
+                        Razorpay clarification requirements
+                      </p>
+                      <p className="text-xs text-amber-800">
+                        Review each requirement below, update any mapped onboarding fields, then
+                        submit again and sync Razorpay status.
+                      </p>
+                    </div>
 
                     <ul className="mt-3 scrollbar-thin space-y-2 text-sm text-amber-800 wrap-break-word max-h-40 overflow-y-auto">
-                      {paymentConnectionQuery.data?.requirements?.map((requirement) => (
-                        <li key={requirement} className="flex items-start gap-2 min-w-0">
-                          <span className="text-amber-600 mt-1">•</span>
-                          <span className="break-all whitespace-normal pr-2">
-                            {requirement}
-                          </span>
-                        </li>
-                      ))}
+                      {paymentConnectionQuery.data?.requirements?.map((requirement, index) => {
+                        const fieldConfig = getPaymentConnectionRequirementFieldConfig(
+                          requirement.field_reference,
+                        );
+                        const reasonCode = (requirement.reason_code ?? "").toLowerCase();
+                        const isResolvableInForm = isRequirementResolvableInForm(requirement);
+                        const requirementKey =
+                          requirement.field_reference ??
+                          requirement.resolution_url ??
+                          requirement.reason_code ??
+                          `requirement-${index}`;
+
+                        return (
+                          <li key={requirementKey} className="flex min-w-0 items-start gap-2">
+                            <span className="mt-1 text-amber-600">*</span>
+                            <div className="min-w-0 flex-1 rounded-lg border border-amber-200 bg-white/80 p-3">
+                              <div className="flex flex-wrap items-center gap-2">
+                              <span className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-900">
+                                {formatRequirementCode(requirement.status)}
+                              </span>
+                              <span className="rounded-full border border-amber-300 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-900">
+                                {formatRequirementCode(requirement.reason_code)}
+                              </span>
+                            </div>
+
+                            <div className="mt-3 space-y-2">
+                              <div>
+                                <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                                  Provider field reference
+                                </p>
+                                <p className="mt-1 break-all font-mono text-xs text-amber-950">
+                                  {requirement.field_reference ?? "Not provided"}
+                                </p>
+                              </div>
+
+                              {fieldConfig ? (
+                                <div>
+                                  <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                                    Mapped onboarding field
+                                  </p>
+                                  <p className="mt-1 text-sm text-amber-900">
+                                    {fieldConfig.label}
+                                  </p>
+                                </div>
+                              ) : null}
+
+                              {isResolvableInForm ? (
+                                <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                                  Update{" "}
+                                  <span className="font-semibold">
+                                    {fieldConfig?.label ?? "the related onboarding field"}
+                                  </span>{" "}
+                                  in the form below, submit again, then click Sync Status.
+                                </p>
+                              ) : reasonCode === "document_missing" ? (
+                                <>
+                                  {/* TODO: documentation.md references resolution_url for missing fields/documents, but it does not define the document-upload contract for this UI. */}
+                                  <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                                    This requirement needs provider-side document follow-up. Review
+                                    the provider reference below, update any supporting documents
+                                    outside this form, then sync Razorpay status again.
+                                  </p>
+                                </>
+                              ) : fieldConfig ? (
+                                <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                                  Review the mapped field carefully before resubmitting. Razorpay
+                                  has not marked this requirement as directly resolvable inside the
+                                  current form.
+                                </p>
+                              ) : (
+                                <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                                  This requirement is not mapped to a field in the current
+                                  onboarding form. Review the provider reference and sync again
+                                  after the clarification is handled.
+                                </p>
+                              )}
+
+                              {requirement.resolution_url ? (
+                                <div>
+                                  <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                                    Provider reference
+                                  </p>
+                                  <p className="mt-1 break-all rounded-md border border-amber-200 bg-amber-50 px-3 py-2 font-mono text-xs text-amber-950">
+                                    {requirement.resolution_url}
+                                  </p>
+                                </div>
+                              ) : null}
+                            </div>
+                            </div>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 )}
@@ -1516,7 +1749,7 @@ export default function Subscriptions() {
                         ...current,
                         stakeholder: {
                           ...current.stakeholder,
-                          phone: event.target.value.replace(/\D/g, "").slice(0, 10),
+                          phone: event.target.value.replace(/\D/g, "").slice(0, 11),
                         },
                       }))
                     }
@@ -1549,8 +1782,9 @@ export default function Subscriptions() {
                   <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Ownership %</label>
                   <input
                     type="number"
-                    min={1}
+                    min={0}
                     max={100}
+                    step={0.01}
                     value={paymentConnectionForm.stakeholder.percentageOwnership}
                     disabled={isProprietorship}
                     onChange={(event) =>
@@ -1569,7 +1803,7 @@ export default function Subscriptions() {
                     <p className="mt-2 text-xs text-[#6b665f]">
                       {isProprietorship
                         ? "Fixed at 100% for proprietorship onboarding."
-                        : "Enter the stakeholder ownership share used for compliance review."}
+                        : "Optional unless Razorpay requests it. When provided, use 0 to 100 with up to 2 decimal places."}
                     </p>
                   )}
                 </div>

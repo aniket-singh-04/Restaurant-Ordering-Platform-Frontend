@@ -2,16 +2,23 @@ import type {
   RestaurantPaymentConnectionOnboardingPayload,
   SupportedPaymentConnectionBusinessType,
 } from "./api";
-import { isValidEmail, isValidGst, isValidPhone } from "../../utils/validators";
+import { isValidEmail, isValidGst } from "../../utils/validators";
 
 const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
+const BUSINESS_PAN_FOURTH_CHAR_REGEX = /^[A-Z]{3}[CHFATBJGL]/;
+const STAKEHOLDER_PAN_FOURTH_CHAR_REGEX = /^[A-Z]{3}P/;
 const IFSC_REGEX = /^[A-Z]{4}0[A-Z0-9]{6}$/;
-const ACCOUNT_NUMBER_REGEX = /^[0-9]{6,18}$/;
+const ACCOUNT_NUMBER_REGEX = /^[0-9]{5,20}$/;
 const POSTAL_CODE_REGEX = /^[1-9][0-9]{5}$/;
-const MAX_ADDRESS_LENGTH = 160;
-const MAX_CITY_LENGTH = 80;
-const MAX_STATE_LENGTH = 80;
-const MAX_NAME_LENGTH = 120;
+const LINKED_ACCOUNT_ADDRESS_MAX_LENGTH = 100;
+const LINKED_ACCOUNT_CITY_MAX_LENGTH = 100;
+const LINKED_ACCOUNT_STATE_MAX_LENGTH = 32;
+const STAKEHOLDER_NAME_MAX_LENGTH = 255;
+const STAKEHOLDER_EMAIL_MAX_LENGTH = 132;
+const STAKEHOLDER_ADDRESS_MAX_LENGTH = 255;
+const STAKEHOLDER_CITY_MAX_LENGTH = 32;
+const STAKEHOLDER_STATE_MAX_LENGTH = 32;
+const STAKEHOLDER_POSTAL_CODE_MAX_LENGTH = 10;
 const MAX_BUSINESS_NAME_LENGTH = 255;
 
 export const PAYMENT_CONNECTION_BUSINESS_TYPE_OPTIONS: Array<{
@@ -85,7 +92,6 @@ export const createPaymentConnectionForm = (
     percentageOwnership: 100,
     address: {
       street1: "",
-      street2: "",
       city: "",
       state: "",
       postalCode: "",
@@ -127,6 +133,9 @@ export const hydratePaymentConnectionForm = (
     stakeholder: {
       ...baseForm.stakeholder,
       ...(savedPayload.stakeholder ?? {}),
+      percentageOwnership: Number.isFinite(savedPayload.stakeholder?.percentageOwnership)
+        ? Number(savedPayload.stakeholder.percentageOwnership)
+        : baseForm.stakeholder.percentageOwnership,
       address: {
         ...baseForm.stakeholder.address,
         ...(savedPayload.stakeholder?.address ?? {}),
@@ -142,6 +151,7 @@ export const sanitizePaymentConnectionForm = (
   const businessType = form.businessType === "partnership" ? "partnership" : "proprietorship";
   const legalPan = normalizeOptionalText(form.legalInfo.pan);
   const gst = normalizeOptionalText(form.legalInfo.gst);
+  const stakeholderAddress = form.stakeholder.address ?? {};
 
   return {
     businessType,
@@ -149,11 +159,11 @@ export const sanitizePaymentConnectionForm = (
     businessSubcategory: "restaurant",
     customerFacingBusinessName: normalizeOptionalText(form.customerFacingBusinessName),
     businessAddress: {
-      street1: normalizeWhitespace(form.businessAddress.street1),
+      street1: normalizeWhitespace(form.businessAddress.street1 ?? ""),
       street2: normalizeOptionalText(form.businessAddress.street2),
-      city: normalizeWhitespace(form.businessAddress.city),
-      state: normalizeWhitespace(form.businessAddress.state),
-      postalCode: normalizeDigits(form.businessAddress.postalCode).slice(0, 6),
+      city: normalizeWhitespace(form.businessAddress.city ?? ""),
+      state: normalizeWhitespace(form.businessAddress.state ?? ""),
+      postalCode: normalizeDigits(form.businessAddress.postalCode ?? "").slice(0, 6),
       country: "IN",
     },
     legalInfo: {
@@ -161,27 +171,26 @@ export const sanitizePaymentConnectionForm = (
       gst: gst ? normalizeUppercaseCode(gst) : undefined,
     },
     bankAccount: {
-      accountNumber: normalizeDigits(form.bankAccount.accountNumber).slice(0, 18),
-      ifscCode: normalizeUppercaseCode(form.bankAccount.ifscCode),
-      beneficiaryName: normalizeWhitespace(form.bankAccount.beneficiaryName),
+      accountNumber: normalizeDigits(form.bankAccount.accountNumber ?? "").slice(0, 20),
+      ifscCode: normalizeUppercaseCode(form.bankAccount.ifscCode ?? ""),
+      beneficiaryName: normalizeWhitespace(form.bankAccount.beneficiaryName ?? ""),
     },
     stakeholder: {
-      name: normalizeWhitespace(form.stakeholder.name),
-      email: normalizeWhitespace(form.stakeholder.email).toLowerCase(),
-      phone: normalizeDigits(form.stakeholder.phone).slice(0, 10),
-      pan: normalizeUppercaseCode(form.stakeholder.pan),
+      name: normalizeWhitespace(form.stakeholder.name ?? ""),
+      email: normalizeWhitespace(form.stakeholder.email ?? "").toLowerCase(),
+      phone: normalizeDigits(form.stakeholder.phone ?? "").slice(0, 11),
+      pan: normalizeUppercaseCode(form.stakeholder.pan ?? ""),
       percentageOwnership:
         businessType === "proprietorship"
           ? 100
           : Number.isFinite(form.stakeholder.percentageOwnership)
-            ? Math.trunc(form.stakeholder.percentageOwnership)
+            ? Number(form.stakeholder.percentageOwnership)
             : 0,
       address: {
-        street1: normalizeWhitespace(form.stakeholder.address.street1),
-        street2: normalizeOptionalText(form.stakeholder.address.street2),
-        city: normalizeWhitespace(form.stakeholder.address.city),
-        state: normalizeWhitespace(form.stakeholder.address.state),
-        postalCode: normalizeDigits(form.stakeholder.address.postalCode).slice(0, 6),
+        street1: normalizeWhitespace(stakeholderAddress.street1 ?? ""),
+        city: normalizeWhitespace(stakeholderAddress.city ?? ""),
+        state: normalizeWhitespace(stakeholderAddress.state ?? ""),
+        postalCode: normalizeDigits(stakeholderAddress.postalCode ?? "").slice(0, 10),
         country: "IN",
       },
     },
@@ -222,45 +231,31 @@ export const validatePaymentConnectionForm = (
   }
 
   if (sanitizedForm.customerFacingBusinessName) {
-    if (sanitizedForm.customerFacingBusinessName.length < 2) {
-      setError(
-        "customerFacingBusinessName",
-        "Customer-facing business name must be at least 2 characters.",
-      );
-    }
-
     if (sanitizedForm.customerFacingBusinessName.length > MAX_BUSINESS_NAME_LENGTH) {
       setError(
         "customerFacingBusinessName",
         `Customer-facing business name must be ${MAX_BUSINESS_NAME_LENGTH} characters or fewer.`,
       );
     }
-
-    if (/(https?:\/\/|www\.|<|>|mailto:)/i.test(sanitizedForm.customerFacingBusinessName)) {
-      setError(
-        "customerFacingBusinessName",
-        "Customer-facing business name cannot include links or markup.",
-      );
-    }
   }
 
   if (
-    sanitizedForm.businessAddress.street1.length < 3 ||
-    sanitizedForm.businessAddress.street1.length > MAX_ADDRESS_LENGTH
+    sanitizedForm.businessAddress.street1.length < 1 ||
+    sanitizedForm.businessAddress.street1.length > LINKED_ACCOUNT_ADDRESS_MAX_LENGTH
   ) {
     setError("businessAddress.street1", "Business address is required.");
   }
 
   if (
-    sanitizedForm.businessAddress.city.length < 2 ||
-    sanitizedForm.businessAddress.city.length > MAX_CITY_LENGTH
+    sanitizedForm.businessAddress.city.length < 1 ||
+    sanitizedForm.businessAddress.city.length > LINKED_ACCOUNT_CITY_MAX_LENGTH
   ) {
     setError("businessAddress.city", "Business city is required.");
   }
 
   if (
     sanitizedForm.businessAddress.state.length < 2 ||
-    sanitizedForm.businessAddress.state.length > MAX_STATE_LENGTH
+    sanitizedForm.businessAddress.state.length > LINKED_ACCOUNT_STATE_MAX_LENGTH
   ) {
     setError("businessAddress.state", "Business state is required.");
   }
@@ -271,114 +266,103 @@ export const validatePaymentConnectionForm = (
 
   if (!PAN_REGEX.test(sanitizedForm.stakeholder.pan)) {
     setError("stakeholder.pan", "Enter a valid stakeholder PAN.");
+  } else if (!STAKEHOLDER_PAN_FOURTH_CHAR_REGEX.test(sanitizedForm.stakeholder.pan)) {
+    setError("stakeholder.pan", "Stakeholder PAN must have P as the fourth character.");
   }
 
   if (sanitizedForm.businessType === "partnership") {
     if (!sanitizedForm.legalInfo.pan || !PAN_REGEX.test(sanitizedForm.legalInfo.pan)) {
       setError("legalInfo.pan", "Enter a valid business PAN for partnership onboarding.");
+    } else if (!BUSINESS_PAN_FOURTH_CHAR_REGEX.test(sanitizedForm.legalInfo.pan)) {
+      setError("legalInfo.pan", "Business PAN must use a supported fourth character.");
     }
-  } else if (
-    sanitizedForm.legalInfo.pan &&
-    sanitizedForm.legalInfo.pan !== sanitizedForm.stakeholder.pan
-  ) {
-    setError(
-      "legalInfo.pan",
-      "For proprietorship, the proprietor PAN must match the stakeholder PAN.",
-    );
   }
 
   if (sanitizedForm.legalInfo.gst && !isValidGst(sanitizedForm.legalInfo.gst)) {
     setError("legalInfo.gst", "Enter a valid GST number.");
   }
 
-  const effectiveBusinessPan = getEffectiveBusinessPan(sanitizedForm);
-  if (
-    sanitizedForm.legalInfo.gst &&
-    effectiveBusinessPan &&
-    sanitizedForm.legalInfo.gst.slice(2, 12) !== effectiveBusinessPan
-  ) {
-    setError(
-      "legalInfo.gst",
-      "GST number must belong to the same PAN used for the business.",
-    );
-  }
-
   if (!ACCOUNT_NUMBER_REGEX.test(sanitizedForm.bankAccount.accountNumber)) {
-    setError("bankAccount.accountNumber", "Account number must be 6-18 digits.");
+    setError("bankAccount.accountNumber", "Account number must be between 5 and 20 digits.");
   }
 
   if (!IFSC_REGEX.test(sanitizedForm.bankAccount.ifscCode)) {
     setError("bankAccount.ifscCode", "Enter a valid IFSC code.");
   }
 
-  if (
-    sanitizedForm.bankAccount.beneficiaryName.length < 2 ||
-    sanitizedForm.bankAccount.beneficiaryName.length > MAX_NAME_LENGTH
-  ) {
+  if (sanitizedForm.bankAccount.beneficiaryName.length < 1) {
     setError("bankAccount.beneficiaryName", "Beneficiary name is required.");
   }
 
   if (
-    sanitizedForm.stakeholder.name.length < 2 ||
-    sanitizedForm.stakeholder.name.length > MAX_NAME_LENGTH
+    sanitizedForm.stakeholder.name &&
+    sanitizedForm.stakeholder.name.length > STAKEHOLDER_NAME_MAX_LENGTH
   ) {
-    setError("stakeholder.name", "Stakeholder name is required.");
+    setError(
+      "stakeholder.name",
+      `Stakeholder name must be ${STAKEHOLDER_NAME_MAX_LENGTH} characters or fewer.`,
+    );
   }
 
-  if (!isValidEmail(sanitizedForm.stakeholder.email)) {
+  if (
+    sanitizedForm.stakeholder.email.length > STAKEHOLDER_EMAIL_MAX_LENGTH ||
+    !isValidEmail(sanitizedForm.stakeholder.email)
+  ) {
     setError("stakeholder.email", "Enter a valid stakeholder email.");
   }
 
-  if (!isValidPhone(sanitizedForm.stakeholder.phone)) {
-    setError("stakeholder.phone", "Stakeholder phone must be exactly 10 digits.");
+  if (
+    sanitizedForm.stakeholder.phone &&
+    !/^[0-9]{8,11}$/.test(sanitizedForm.stakeholder.phone)
+  ) {
+    setError("stakeholder.phone", "Stakeholder phone must be 8 to 11 digits.");
   }
 
   if (
-    !Number.isFinite(sanitizedForm.stakeholder.percentageOwnership) ||
-    sanitizedForm.stakeholder.percentageOwnership < 1 ||
-    sanitizedForm.stakeholder.percentageOwnership > 100
+    sanitizedForm.stakeholder.percentageOwnership > 0 &&
+    (!Number.isFinite(sanitizedForm.stakeholder.percentageOwnership) ||
+      sanitizedForm.stakeholder.percentageOwnership > 100 ||
+      Math.round(sanitizedForm.stakeholder.percentageOwnership * 100) !==
+        sanitizedForm.stakeholder.percentageOwnership * 100)
   ) {
     setError(
       "stakeholder.percentageOwnership",
-      "Ownership percentage must be between 1 and 100.",
+      "Ownership percentage must be 100 or less and can have at most 2 decimal places.",
     );
   }
 
   if (
-    sanitizedForm.businessType === "proprietorship" &&
-    sanitizedForm.stakeholder.percentageOwnership !== 100
+    sanitizedForm.stakeholder.address.street1 &&
+    (sanitizedForm.stakeholder.address.street1.length < 10 ||
+      sanitizedForm.stakeholder.address.street1.length > STAKEHOLDER_ADDRESS_MAX_LENGTH)
   ) {
-    setError(
-      "stakeholder.percentageOwnership",
-      "Ownership must be 100% for proprietorship onboarding.",
-    );
+    setError("stakeholder.address.street1", "Stakeholder street address must be 10 to 255 characters.");
   }
 
   if (
-    sanitizedForm.stakeholder.address.street1.length < 3 ||
-    sanitizedForm.stakeholder.address.street1.length > MAX_ADDRESS_LENGTH
+    sanitizedForm.stakeholder.address.city &&
+    (sanitizedForm.stakeholder.address.city.length < 2 ||
+      sanitizedForm.stakeholder.address.city.length > STAKEHOLDER_CITY_MAX_LENGTH)
   ) {
-    setError("stakeholder.address.street1", "Stakeholder address is required.");
+    setError("stakeholder.address.city", "Stakeholder city must be 2 to 32 characters.");
   }
 
   if (
-    sanitizedForm.stakeholder.address.city.length < 2 ||
-    sanitizedForm.stakeholder.address.city.length > MAX_CITY_LENGTH
+    sanitizedForm.stakeholder.address.state &&
+    (sanitizedForm.stakeholder.address.state.length < 2 ||
+      sanitizedForm.stakeholder.address.state.length > STAKEHOLDER_STATE_MAX_LENGTH)
   ) {
-    setError("stakeholder.address.city", "Stakeholder city is required.");
+    setError("stakeholder.address.state", "Stakeholder state must be 2 to 32 characters.");
   }
 
   if (
-    sanitizedForm.stakeholder.address.state.length < 2 ||
-    sanitizedForm.stakeholder.address.state.length > MAX_STATE_LENGTH
+    sanitizedForm.stakeholder.address.postalCode &&
+    (sanitizedForm.stakeholder.address.postalCode.length < 2 ||
+      sanitizedForm.stakeholder.address.postalCode.length > STAKEHOLDER_POSTAL_CODE_MAX_LENGTH)
   ) {
-    setError("stakeholder.address.state", "Stakeholder state is required.");
-  }
-
-  if (!POSTAL_CODE_REGEX.test(sanitizedForm.stakeholder.address.postalCode)) {
     setError(
       "stakeholder.address.postalCode",
-      "Stakeholder postal code must be a valid 6-digit PIN code.",
+      "Stakeholder postal code must be 2 to 10 characters.",
     );
   }
 

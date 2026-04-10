@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Clock3, CreditCard, Receipt, ScrollText } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Header from "../../../components/Header/Header";
 import { LoadingOrderCards } from "../../../components/LoadingState";
 import { useAuth } from "../../../context/AuthContext";
@@ -113,7 +113,7 @@ const OrderCard = ({
             Payment <span className="font-semibold">{order.paymentStatus}</span>
           </p>
           <p>
-            Refund{" "}
+            <Link to="/refund-policy" className="hover:text-orange-600 hover:underline transition-colors">Refund</Link>{" "}
             <span className="font-semibold">
               {order.refundStatus ?? order.refundSummary?.status ?? "NOT_REQUIRED"}
             </span>

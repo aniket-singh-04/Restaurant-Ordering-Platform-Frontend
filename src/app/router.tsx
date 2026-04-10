@@ -25,7 +25,11 @@ const Login = lazy(() => import("../pages/Login"));
 const ForgotPassword = lazy(() => import("../pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("../pages/ResetPassword"));
 const VerifyEmail = lazy(() => import("../pages/VerifyEmail"));
-const ContactUs = lazy(() => import("../pages/ContactUs"));
+const ContactUs = lazy(() => import("../pages/public/ContactUs"));
+const AboutUs = lazy(() => import("../pages/public/AboutUs"));
+const PrivacyPolicy = lazy(() => import("../pages/public/PrivacyPolicy"));
+const TermsAndConditions = lazy(() => import("../pages/public/TermsAndConditions"));
+const RefundPolicy = lazy(() => import("../pages/public/RefundPolicy"));
 const PlatformAdminDashboard = lazy(() => import("../pages/platform-admin/Dashboard"));
 const PlatformAdminLayout = lazy(() => import("../pages/platform-admin/Layout"));
 const PlatformAdminLogin = lazy(() => import("../pages/platform-admin/Login"));
@@ -125,6 +129,22 @@ export const router = createBrowserRouter([
   {
     path: "/contact-us",
     element: <ContactUs />,
+  },
+  {
+    path: "/about-us",
+    element: <AboutUs />,
+  },
+  {
+    path: "/privacy-policy",
+    element: <PrivacyPolicy />,
+  },
+  {
+    path: "/terms-and-conditions",
+    element: <TermsAndConditions />,
+  },
+  {
+    path: "/refund-policy",
+    element: <RefundPolicy />,
   },
   {
     path: "/menu",

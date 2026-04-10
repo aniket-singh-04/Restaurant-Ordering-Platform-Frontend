@@ -12,6 +12,20 @@ export const isValidGst = (value: string) =>
     value.trim().toUpperCase(),
   );
 
-export const isStrongPassword = (value: string, minLength = 8) =>
-  value.trim().length >= minLength;
+export const isValidPan = (value: string) =>
+  /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(value.trim().toUpperCase());
 
+export const isValidName = (value: string) => {
+  const trimmed = value.trim();
+  if (trimmed.length < 2) return false;
+  // Reject control characters
+  if (/[\u0000-\u001F\u007F]/.test(trimmed)) return false;
+  return true;
+};
+
+export const isStrongPassword = (value: string, minLength = 8) => {
+  if (value.length < minLength) return false;
+  // Reject all-whitespace passwords
+  if (!value.trim()) return false;
+  return true;
+};
