@@ -76,7 +76,7 @@ export type RestaurantPaymentConnectionOnboardingPayload = {
     pan: string;
     percentageOwnership: number;
     address: {
-      street1: string;
+      street: string;
       city: string;
       state: string;
       postalCode: string;

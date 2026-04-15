@@ -50,6 +50,39 @@ const normalizeOptionalText = (value?: string | null) => {
   return normalized || undefined;
 };
 
+const buildSingleStakeholderStreet = (...values: Array<unknown>) => {
+  const normalizedValues = values
+    .flatMap((value) =>
+      typeof value === "string" ? [normalizeOptionalText(value)] : [],
+    )
+    .filter((value): value is string => Boolean(value));
+  return normalizedValues.length > 0 ? normalizedValues.join(", ") : undefined;
+};
+
+const normalizeLegacyStakeholderAddress = (
+  value: unknown,
+): Partial<RestaurantPaymentConnectionOnboardingPayload["stakeholder"]["address"]> => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  const record = value as Record<string, unknown>;
+  const street1 = record.street1;
+  const street2 = record.street2;
+
+  const street =
+    typeof record.street === "string" ? normalizeOptionalText(record.street) : undefined;
+  const normalizedStreet = street ?? buildSingleStakeholderStreet(street1, street2);
+
+  return {
+    ...(normalizedStreet ? { street: normalizedStreet } : {}),
+    ...(typeof record.city === "string" ? { city: record.city } : {}),
+    ...(typeof record.state === "string" ? { state: record.state } : {}),
+    ...(typeof record.postalCode === "string" ? { postalCode: record.postalCode } : {}),
+    ...(typeof record.country === "string" ? { country: record.country } : {}),
+  };
+};
+
 const normalizeDigits = (value: string) => value.replace(/\D/g, "");
 const normalizeUppercaseCode = (value: string) => normalizeWhitespace(value).toUpperCase();
 
@@ -91,7 +124,7 @@ export const createPaymentConnectionForm = (
     pan: "",
     percentageOwnership: 100,
     address: {
-      street1: "",
+      street: "",
       city: "",
       state: "",
       postalCode: "",
@@ -106,6 +139,9 @@ export const hydratePaymentConnectionForm = (
   savedPayload?: RestaurantPaymentConnectionOnboardingPayload | null,
 ): RestaurantPaymentConnectionOnboardingPayload => {
   const baseForm = createPaymentConnectionForm(user);
+  const savedStakeholderAddress = normalizeLegacyStakeholderAddress(
+    savedPayload?.stakeholder?.address,
+  );
 
   if (!savedPayload) {
     return sanitizePaymentConnectionForm(baseForm);
@@ -138,7 +174,7 @@ export const hydratePaymentConnectionForm = (
         : baseForm.stakeholder.percentageOwnership,
       address: {
         ...baseForm.stakeholder.address,
-        ...(savedPayload.stakeholder?.address ?? {}),
+        ...savedStakeholderAddress,
       },
     },
     acceptTerms: savedPayload.acceptTerms ?? baseForm.acceptTerms,
@@ -151,7 +187,7 @@ export const sanitizePaymentConnectionForm = (
   const businessType = form.businessType === "partnership" ? "partnership" : "proprietorship";
   const legalPan = normalizeOptionalText(form.legalInfo.pan);
   const gst = normalizeOptionalText(form.legalInfo.gst);
-  const stakeholderAddress = form.stakeholder.address ?? {};
+  const stakeholderAddress = normalizeLegacyStakeholderAddress(form.stakeholder.address);
 
   return {
     businessType,
@@ -187,7 +223,7 @@ export const sanitizePaymentConnectionForm = (
             ? Number(form.stakeholder.percentageOwnership)
             : 0,
       address: {
-        street1: normalizeWhitespace(stakeholderAddress.street1 ?? ""),
+        street: normalizeWhitespace(stakeholderAddress.street ?? ""),
         city: normalizeWhitespace(stakeholderAddress.city ?? ""),
         state: normalizeWhitespace(stakeholderAddress.state ?? ""),
         postalCode: normalizeDigits(stakeholderAddress.postalCode ?? "").slice(0, 10),
@@ -332,11 +368,11 @@ export const validatePaymentConnectionForm = (
   }
 
   if (
-    sanitizedForm.stakeholder.address.street1 &&
-    (sanitizedForm.stakeholder.address.street1.length < 10 ||
-      sanitizedForm.stakeholder.address.street1.length > STAKEHOLDER_ADDRESS_MAX_LENGTH)
+    sanitizedForm.stakeholder.address.street &&
+    (sanitizedForm.stakeholder.address.street.length < 10 ||
+      sanitizedForm.stakeholder.address.street.length > STAKEHOLDER_ADDRESS_MAX_LENGTH)
   ) {
-    setError("stakeholder.address.street1", "Stakeholder street address must be 10 to 255 characters.");
+    setError("stakeholder.address.street", "Stakeholder street address must be 10 to 255 characters.");
   }
 
   if (

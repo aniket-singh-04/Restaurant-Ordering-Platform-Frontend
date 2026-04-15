@@ -96,11 +96,7 @@ const PAYMENT_CONNECTION_REQUIREMENT_FIELD_MAP: Record<
     label: "Stakeholder phone",
   },
   "addresses.residential.street": {
-    formField: "stakeholder.address.street1",
-    label: "Stakeholder street address",
-  },
-  "addresses.residential.street1": {
-    formField: "stakeholder.address.street1",
+    formField: "stakeholder.address.street",
     label: "Stakeholder street address",
   },
   "addresses.residential.city": {
@@ -1816,7 +1812,7 @@ export default function Subscriptions() {
               <div>
                 <label className="text-xs font-semibold uppercase tracking-widest text-[#8d7967]">Street Address</label>
                 <input
-                  value={paymentConnectionForm.stakeholder.address.street1}
+                  value={paymentConnectionForm.stakeholder.address.street}
                   onBlur={commitSanitizedPaymentConnectionForm}
                   onChange={(event) =>
                     updateForm((current) => ({
@@ -1825,15 +1821,15 @@ export default function Subscriptions() {
                         ...current.stakeholder,
                         address: {
                           ...current.stakeholder.address,
-                          street1: event.target.value,
+                          street: event.target.value,
                         },
                       },
                     }))
                   }
                   placeholder="Residential address"
-                  className={getPaymentConnectionInputClass("stakeholder.address.street1")}
+                  className={getPaymentConnectionInputClass("stakeholder.address.street")}
                 />
-                {renderPaymentConnectionFieldError("stakeholder.address.street1")}
+                {renderPaymentConnectionFieldError("stakeholder.address.street")}
               </div>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-3">
