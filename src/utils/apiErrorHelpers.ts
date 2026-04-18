@@ -12,6 +12,8 @@ type RawErrorBody = {
     formErrors?: string[];
     fieldErrors?: RawFieldError[];
   };
+  formErrors?: unknown;
+  fieldErrors?: unknown;
 };
 
 const normalizeFieldName = (field: string) =>
@@ -49,10 +51,11 @@ export const getApiFieldErrors = (error: unknown) => {
 
   // Field errors can be at errorBody.details.fieldErrors (standard validation)
   // or directly at errorBody.fieldErrors (some AppError details)
-  const fieldErrors =
+  const rawFieldErrors =
     errorBody?.details?.fieldErrors ??
-    (errorBody as any)?.fieldErrors ??
+    errorBody?.fieldErrors ??
     [];
+  const fieldErrors = Array.isArray(rawFieldErrors) ? rawFieldErrors : [];
 
   for (const fieldError of fieldErrors) {
     const field = typeof fieldError.field === "string" ? normalizeFieldName(fieldError.field) : "";
@@ -71,10 +74,11 @@ export const getApiFormErrors = (error: unknown) => {
 
   // Form errors can be at errorBody.details.formErrors (standard validation)
   // or directly at errorBody.formErrors (some AppError details)
-  const formErrors =
+  const rawFormErrors =
     errorBody?.details?.formErrors ??
-    (errorBody as any)?.formErrors ??
+    errorBody?.formErrors ??
     [];
+  const formErrors = Array.isArray(rawFormErrors) ? rawFormErrors : [];
 
   return formErrors.filter(
     (message: unknown): message is string => typeof message === "string" && String(message).trim().length > 0,
@@ -85,4 +89,3 @@ export const getApiRequestId = (error: unknown) => {
   const errorBody = getErrorBody(error);
   return typeof errorBody?.requestId === "string" ? errorBody.requestId : undefined;
 };
-

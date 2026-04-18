@@ -504,12 +504,14 @@ export default function Register() {
                     </p>
                   ) : null}
 
-                  <Turnstile
-                    siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY ?? ""}
-                    onVerify={(token) => setTurnstileToken(token)}
-                    onExpire={() => setTurnstileToken("")}
-                    onError={() => setTurnstileToken("")}
-                  />
+                  {import.meta.env.VITE_TURNSTILE_SITE_KEY ? (
+                    <Turnstile
+                      siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                      onVerify={(token) => setTurnstileToken(token)}
+                      onExpire={() => setTurnstileToken("")}
+                      onError={() => setTurnstileToken("")}
+                    />
+                  ) : null}
 
                   <button type="submit" disabled={loading} className={primaryButtonClass}>
                     {loading ? "Sending OTP..." : "Continue"}

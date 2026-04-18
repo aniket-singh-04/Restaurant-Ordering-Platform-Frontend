@@ -1,4 +1,5 @@
 import { platformAdminAuthStore } from "../features/platform-admin/auth/store";
+import type { PlatformAdminUser } from "../features/platform-admin/auth/types";
 import { buildApiUrl } from "../config/api";
 
 export type AdminApiErrorShape = {
@@ -50,6 +51,21 @@ const getAdminAuthHeader = () => {
   return token ? `Bearer ${token}` : undefined;
 };
 
+const isPlatformAdminUser = (value: unknown): value is PlatformAdminUser => {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const admin = value as Partial<PlatformAdminUser>;
+  return (
+    typeof admin.id === "string" &&
+    typeof admin.email === "string" &&
+    admin.role === "SUPER_ADMIN" &&
+    typeof admin.isActive === "boolean" &&
+    (typeof admin.lastLoginAt === "string" || admin.lastLoginAt === null)
+  );
+};
+
 let refreshPromise: Promise<string | null> | null = null;
 
 const refreshAdminAccessToken = async () => {
@@ -72,14 +88,14 @@ const refreshAdminAccessToken = async () => {
         return null;
       }
 
-      const data = await safeParseJson<any>(response);
+      const data = await safeParseJson<{ data?: { accessToken?: string; admin?: unknown } }>(response);
       const accessToken = data?.data?.accessToken ?? null;
       const admin = data?.data?.admin ?? null;
 
       if (accessToken) {
         platformAdminAuthStore.setAccessToken(accessToken);
       }
-      if (admin) {
+      if (isPlatformAdminUser(admin)) {
         platformAdminAuthStore.setAdmin(admin);
       }
       platformAdminAuthStore.setInitialized(true);

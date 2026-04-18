@@ -72,7 +72,7 @@ type OrderPayload = {
   }>;
 };
 
-const listQuery = (path?: string) =>
+const useListQuery = (path?: string) =>
   useQuery({
     queryKey: ["orders", path],
     enabled: Boolean(path),
@@ -109,10 +109,10 @@ export const confirmCashOrder = async (orderId: string) => {
   return response.data;
 };
 
-export const useMyOrders = () => listQuery("/api/v1/orders/my");
+export const useMyOrders = () => useListQuery("/api/v1/orders/my");
 
 export const useBranchOrders = (branchId?: string) =>
-  listQuery(branchId ? `/api/v1/orders/branch/${branchId}` : undefined);
+  useListQuery(branchId ? `/api/v1/orders/branch/${branchId}` : undefined);
 
 export const useRestaurantOrders = (restaurantId?: string) =>
-  listQuery(restaurantId ? `/api/v1/orders/restaurant/${restaurantId}` : undefined);
+  useListQuery(restaurantId ? `/api/v1/orders/restaurant/${restaurantId}` : undefined);

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import FullPageLoader from "../components/FullPageLoader";
 import { useAuth } from "../context/AuthContext";
@@ -8,11 +8,9 @@ export default function QrRouteGuard({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [cancelled, setCancelled] = useState(false);
-
-  useEffect(() => {
-    setCancelled(false);
-  }, [location.pathname, location.search]);
+  const [cancelledPath, setCancelledPath] = useState<string | null>(null);
+  const currentPath = `${location.pathname}${location.search}`;
+  const cancelled = cancelledPath === currentPath;
 
   if (loading) {
     return <FullPageLoader label="Checking QR access..." />;
@@ -54,7 +52,7 @@ export default function QrRouteGuard({ children }: { children: ReactNode }) {
           <button
             type="button"
             className="flex-1 rounded-2xl border border-[#d8c0a7] px-5 py-3 font-medium text-[#5d4d3f] transition hover:bg-[#fff8ef]"
-            onClick={() => setCancelled(true)}
+            onClick={() => setCancelledPath(currentPath)}
           >
             Cancel
           </button>

@@ -19,6 +19,7 @@ export const isValidName = (value: string) => {
   const trimmed = value.trim();
   if (trimmed.length < 2) return false;
   // Reject control characters
+  // eslint-disable-next-line no-control-regex
   if (/[\u0000-\u001F\u007F]/.test(trimmed)) return false;
   return true;
 };
