@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../utils/api";
-import type { MenuItem, multiImage, MenuVideo } from "../../components/MenuCard/types";
+import type { MenuItem, multiImage } from "../../components/MenuCard/types";
 
 export type MenuRatingRecord = {
   id: string;
