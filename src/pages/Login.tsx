@@ -4,6 +4,7 @@ import { HiOutlineMailOpen } from "react-icons/hi";
 import { MdFoodBank, MdOutlinePassword, MdOutlineSms } from "react-icons/md";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
+import Turnstile from "../components/Turnstile";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { isAdminPanelRole } from "../features/auth/access";
@@ -44,6 +45,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string>("");
 
   const validateCredentials = () => {
     const normalizedEmail = email.trim();
@@ -100,7 +102,7 @@ export default function Login() {
       setLoading(true);
       setError("");
 
-      const data = await initiateLogin(payload);
+      const data = await initiateLogin({ ...payload, turnstileToken });
       setChallenge(data);
       setOtp("");
 
@@ -310,6 +312,13 @@ export default function Login() {
                       {error}
                     </p>
                   ) : null}
+
+                  <Turnstile
+                    siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY ?? ""}
+                    onVerify={(token) => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken("")}
+                    onError={() => setTurnstileToken("")}
+                  />
 
                   <button type="submit" disabled={loading} className={primaryButtonClass}>
                     {loading ? "Sending OTP..." : "Continue"}

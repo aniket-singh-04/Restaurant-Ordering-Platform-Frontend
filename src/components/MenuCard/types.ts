@@ -13,6 +13,13 @@ export interface multiImage{
   url: string;
 }
 
+export interface MenuVideo {
+  url: string;
+  s3Key?: string;
+  mimeType?: string;
+  sizeBytes?: number;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -30,6 +37,7 @@ export interface MenuItem {
   prepTime: string;
   addOns: AddOn[];
   has3DModel: boolean;
+  video?: MenuVideo | null;
 }
 
 export interface MenuCardProps {

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../utils/api";
-import type { MenuItem, multiImage } from "../../components/MenuCard/types";
+import type { MenuItem, multiImage, MenuVideo } from "../../components/MenuCard/types";
 
 export type MenuRatingRecord = {
   id: string;
@@ -38,6 +38,7 @@ type MenuApiItem = {
   preparationTimeMinutes?: number;
   addOns?: Array<{ code?: string; name: string; price?: number; priceDeltaMinor?: number }>;
   has3DModel?: boolean;
+  video?: { url?: string; s3Key?: string; mimeType?: string; sizeBytes?: number } | null;
 };
 
 const toMajorPrice = (item: MenuApiItem) => {
@@ -83,6 +84,14 @@ const mapMenuItem = (item: MenuApiItem): MenuItem => ({
             : 0,
     })) ?? [],
   has3DModel: item.has3DModel ?? false,
+  video: item.video?.url
+    ? {
+        url: item.video.url,
+        s3Key: item.video.s3Key,
+        mimeType: item.video.mimeType,
+        sizeBytes: item.video.sizeBytes,
+      }
+    : null,
 });
 
 export const useBranchMenu = (branchId?: string, restaurantId?: string) =>

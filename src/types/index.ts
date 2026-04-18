@@ -73,6 +73,8 @@ export interface Menu {
   image: string;
   images: multiImage[];
 
+  video?: MenuVideo | null;
+
   isVeg: boolean;
   isSpicy: boolean;
   has3DModel: boolean;
@@ -88,4 +90,11 @@ export interface Menu {
 
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface MenuVideo {
+  url?: string;
+  s3Key?: string;
+  mimeType?: string;
+  sizeBytes?: number;
 }

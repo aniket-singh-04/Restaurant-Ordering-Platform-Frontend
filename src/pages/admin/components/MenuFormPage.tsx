@@ -31,6 +31,12 @@ type MenuImageRecord = {
   isPrimary?: boolean
   displayOrder?: number
 }
+type MenuVideoRecord = {
+  url?: string
+  s3Key?: string
+  mimeType?: string
+  sizeBytes?: number
+}
 type MenuImageSlots = Record<ImageType, MenuImageRecord | null>
 type BranchReference =
   | string
@@ -54,6 +60,7 @@ type MenuResponse = Partial<Omit<MenuFormState, "images">> & {
   branchId?: BranchSource
   branchIds?: BranchSource
   images?: MenuImageRecord[]
+  video?: MenuVideoRecord | null
   rating?: {
     average?: number
     count?: number
@@ -226,6 +233,10 @@ export default function MenuFormPage() {
   const [submitError, setSubmitError] = useState("")
   const [previews, setPreviews] = useState<Record<ImageType, string>>(defaultPreviews)
   const [persistedImages, setPersistedImages] = useState<MenuImageSlots>(defaultPersistedImages)
+  const [videoFile, setVideoFile] = useState<File | null>(null)
+  const [videoPreview, setVideoPreview] = useState<string>("")
+  const [persistedVideo, setPersistedVideo] = useState<MenuVideoRecord | null>(null)
+  const [videoError, setVideoError] = useState<string>("")
 
   const categories = menuCategoryNames
 
@@ -309,6 +320,14 @@ export default function MenuFormPage() {
         })
         setPreviews(nextPreviews)
         setPersistedImages(nextPersistedImages)
+
+        if (payload?.video?.url) {
+          setVideoPreview(payload.video.url)
+          setPersistedVideo(payload.video)
+        } else {
+          setVideoPreview("")
+          setPersistedVideo(null)
+        }
       } catch (error) {
         pushToast({
           title: "Unable to load menu item",
@@ -325,6 +344,10 @@ export default function MenuFormPage() {
   useEffect(() => () => {
     Object.values(previews).forEach(revokePreviewUrl)
   }, [previews])
+
+  useEffect(() => () => {
+    revokePreviewUrl(videoPreview)
+  }, [videoPreview])
 
   /* --------------------------- VALIDATION --------------------------- */
 
@@ -474,6 +497,123 @@ export default function MenuFormPage() {
     if (file) uploadImage(file, type)
   }
 
+  /* --------------------------- VIDEO HANDLING --------------------------- */
+
+  const MAX_VIDEO_SIZE_BYTES = 10 * 1024 * 1024 // 10 MB
+  const ALLOWED_VIDEO_TYPES = new Set(["video/mp4", "video/webm"])
+
+  const validateVideoFile = (file: File): Promise<string | null> =>
+    new Promise((resolve) => {
+      if (!ALLOWED_VIDEO_TYPES.has(file.type)) {
+        resolve("Only MP4 and WebM videos are allowed.")
+        return
+      }
+      if (file.size > MAX_VIDEO_SIZE_BYTES) {
+        resolve(`Video must be smaller than 10 MB (yours is ${(file.size / (1024 * 1024)).toFixed(1)} MB).`)
+        return
+      }
+      const video = document.createElement("video")
+      video.preload = "metadata"
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(video.src)
+        if (video.duration > 15) {
+          resolve(`Video duration (${Math.ceil(video.duration)}s) exceeds the 15-second limit.`)
+        } else {
+          resolve(null)
+        }
+      }
+      video.onerror = () => {
+        URL.revokeObjectURL(video.src)
+        resolve("Unable to read video file. Please try a different file.")
+      }
+      video.src = URL.createObjectURL(file)
+    })
+
+  const uploadMenuVideo = async (file: File): Promise<MenuVideoRecord> => {
+    const branchId = form.branchIds[0]
+    if (!form.restaurantId.trim() || !branchId) {
+      throw new Error("Restaurant and branch are required before uploading video")
+    }
+    const contentType = file.type || "video/mp4"
+    const response = await api.post<{ data?: UploadTarget } & UploadTarget>(
+      `${MENU_ENDPOINT}/uploads/presign`,
+      {
+        restaurantId: form.restaurantId,
+        branchId,
+        fileName: file.name,
+        contentType,
+      },
+    )
+    const uploadTarget = response?.data ?? response
+    const uploadUrl = uploadTarget?.uploadUrl ?? ""
+    const key = uploadTarget?.key ?? ""
+
+    if (!uploadUrl || !key) {
+      throw new Error("Unable to prepare video upload")
+    }
+
+    if (!isAbsoluteHttpUrl(uploadUrl)) {
+      return {
+        url: URL.createObjectURL(file),
+        mimeType: contentType,
+        sizeBytes: file.size,
+      }
+    }
+
+    const uploadResponse = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": contentType },
+      body: file,
+    })
+
+    if (!uploadResponse.ok) {
+      throw new Error(`Unable to upload ${file.name}`)
+    }
+
+    return {
+      s3Key: key,
+      mimeType: contentType,
+      sizeBytes: file.size,
+    }
+  }
+
+  const handleVideoSelect = async (file: File) => {
+    setVideoError("")
+    const error = await validateVideoFile(file)
+    if (error) {
+      setVideoError(error)
+      return
+    }
+    revokePreviewUrl(videoPreview)
+    const preview = URL.createObjectURL(file)
+    setVideoFile(file)
+    setVideoPreview(preview)
+    setPersistedVideo(null)
+  }
+
+  const removeVideo = () => {
+    revokePreviewUrl(videoPreview)
+    setVideoFile(null)
+    setVideoPreview("")
+    setPersistedVideo(null)
+    setVideoError("")
+  }
+
+  const buildVideoPayload = async (): Promise<MenuVideoRecord | null> => {
+    if (videoFile) {
+      return uploadMenuVideo(videoFile)
+    }
+    if (persistedVideo?.s3Key?.trim() || persistedVideo?.url?.trim()) {
+      return {
+        ...(persistedVideo.s3Key?.trim() ? { s3Key: persistedVideo.s3Key.trim() } : {}),
+        ...(persistedVideo.url?.trim() ? { url: persistedVideo.url.trim() } : {}),
+        mimeType: persistedVideo.mimeType?.trim(),
+        sizeBytes: persistedVideo.sizeBytes,
+      }
+    }
+    return null
+  }
+
   /* --------------------------- ADDONS --------------------------- */
 
   const addAddon = () => {
@@ -499,6 +639,7 @@ export default function MenuFormPage() {
     setSubmitError("")
     try {
       const images = await buildImagesPayload()
+      const video = await buildVideoPayload()
       const payload = {
         restaurantId: form.restaurantId,
         branchIds: form.branchIds,
@@ -515,6 +656,7 @@ export default function MenuFormPage() {
             isAvailable: addon.isAvailable ?? true,
           })),
         images,
+        video,
         isVeg: form.isVeg ?? true,
         isSpicy: form.isSpicy ?? false,
         has3DModel: form.has3DModel ?? false,
@@ -780,6 +922,76 @@ export default function MenuFormPage() {
             )
           })}
         </div>
+      </AdminSection>
+
+      {/* VIDEO UPLOAD */}
+      <AdminSection className="shadow p-6 rounded-2xl space-y-4">
+        <h2 className="font-semibold">
+          Menu Video{" "}
+          <span className="text-xs font-normal text-gray-400">
+            (optional · max 15s · MP4 or WebM · max 10 MB)
+          </span>
+        </h2>
+
+        {videoPreview ? (
+          <div className="relative rounded-xl overflow-hidden bg-black max-w-lg">
+            <video
+              src={videoPreview}
+              controls
+              controlsList="nodownload"
+              playsInline
+              className="w-full aspect-video object-contain"
+            />
+            <button
+              type="button"
+              onClick={removeVideo}
+              className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded hover:bg-red-600 transition cursor-pointer"
+            >
+              Remove
+            </button>
+          </div>
+        ) : (
+          <label
+            onDrop={(e) => {
+              e.preventDefault()
+              const file = e.dataTransfer.files?.[0]
+              if (file) handleVideoSelect(file)
+            }}
+            onDragOver={(e) => e.preventDefault()}
+            className="cursor-pointer flex flex-col items-center justify-center h-40 border-2 border-dashed border-gray-300 rounded-xl hover:border-orange-400 transition"
+          >
+            <svg
+              className="w-8 h-8 text-gray-400 mb-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
+            </svg>
+            <span className="text-sm text-gray-500">Click or drag to upload video</span>
+            <span className="text-xs text-gray-400 mt-1">
+              MP4 or WebM · up to 15 seconds · max 10 MB
+            </span>
+            <input
+              type="file"
+              accept="video/mp4,video/webm"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) handleVideoSelect(file)
+              }}
+            />
+          </label>
+        )}
+
+        {videoError && (
+          <p className="text-sm text-red-600">{videoError}</p>
+        )}
       </AdminSection>
 
       {/* FLAGS */}

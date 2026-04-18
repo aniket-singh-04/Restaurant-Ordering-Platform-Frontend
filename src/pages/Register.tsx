@@ -11,6 +11,7 @@ import { HiOutlineMailOpen } from "react-icons/hi";
 import { MdFoodBank, MdOutlinePassword, MdOutlineSms } from "react-icons/md";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
+import Turnstile from "../components/Turnstile";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { isAdminPanelRole } from "../features/auth/access";
@@ -85,6 +86,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string>("");
 
   const validateRegistration = () => {
     const nameValue = form.name.trim();
@@ -162,7 +164,7 @@ export default function Register() {
     setError("");
     try {
       setLoading(true);
-      const data = await initiateRegistration(payload);
+      const data = await initiateRegistration({ ...payload, turnstileToken });
       setChallenge(data);
       setOtp("");
 
@@ -501,6 +503,13 @@ export default function Register() {
                       {error}
                     </p>
                   ) : null}
+
+                  <Turnstile
+                    siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY ?? ""}
+                    onVerify={(token) => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken("")}
+                    onError={() => setTurnstileToken("")}
+                  />
 
                   <button type="submit" disabled={loading} className={primaryButtonClass}>
                     {loading ? "Sending OTP..." : "Continue"}
