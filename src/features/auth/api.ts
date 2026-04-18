@@ -17,7 +17,7 @@ export const initiateLogin = async (payload: {
   email?: string;
   phone?: string;
   password: string;
-  turnstileToken?: string;
+
 }) => {
   const response = await api.post<{ data: AuthOtpChallenge }>(
     "/api/v1/auth/login",
@@ -45,7 +45,7 @@ export const initiateRegistration = async (payload: {
   phone?: string;
   password: string;
   role: "RESTRO_OWNER" | "CUSTOMER";
-  turnstileToken?: string;
+
 }) => {
   const response = await api.post<{ data: AuthOtpChallenge }>(
     "/api/v1/auth/register",

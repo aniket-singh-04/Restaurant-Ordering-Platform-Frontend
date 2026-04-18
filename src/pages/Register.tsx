@@ -11,7 +11,7 @@ import { HiOutlineMailOpen } from "react-icons/hi";
 import { MdFoodBank, MdOutlinePassword, MdOutlineSms } from "react-icons/md";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
-import Turnstile from "../components/Turnstile";
+
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { isAdminPanelRole } from "../features/auth/access";
@@ -64,7 +64,7 @@ const fieldLabelClass = "ui-field-label";
 const primaryButtonClass =
   "ui-button ui-button-pill w-full justify-center text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60";
 const secondaryButtonClass =
-  "text-sm font-semibold text-[color:var(--accent)] transition hover:text-[color:var(--accent-hover)] disabled:cursor-not-allowed disabled:opacity-60";
+  "text-sm font-semibold text-(--accent) transition hover:text-(--accent-hover) disabled:cursor-not-allowed disabled:opacity-60";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -86,7 +86,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState<string>("");
+
 
   const validateRegistration = () => {
     const nameValue = form.name.trim();
@@ -164,7 +164,7 @@ export default function Register() {
     setError("");
     try {
       setLoading(true);
-      const data = await initiateRegistration({ ...payload, turnstileToken });
+      const data = await initiateRegistration(payload);
       setChallenge(data);
       setOtp("");
 
@@ -295,14 +295,14 @@ export default function Register() {
           <section className="auth-body">
             <div className="mx-auto w-full max-w-md">
               <div className="mb-8">
-                <div className="inline-flex items-center gap-2 rounded-full bg-[color:var(--surface-muted)] px-4 py-2 text-sm font-medium text-[color:var(--accent)] lg:hidden">
+                <div className="inline-flex items-center gap-2 rounded-full bg-(--surface-muted) px-4 py-2 text-sm font-medium text-(--accent) lg:hidden">
                   <MdFoodBank className="text-lg" />
                   Mealtap
                 </div>
-                <h2 className="mt-4 font-display text-3xl font-semibold text-[color:var(--text-primary)]">
+                <h2 className="mt-4 font-display text-3xl font-semibold text-(--text-primary)">
                   {isOtpStep ? "Verify Your Account" : "Create Your Account"}
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-[color:var(--text-secondary)]">
+                <p className="mt-2 text-sm leading-6 text-(--text-secondary)">
                   {isOtpStep
                     ? "Enter the verification code from your inbox to finish setup."
                     : "Set up your account with the essentials below. We will verify your email before activation."}
@@ -316,7 +316,7 @@ export default function Register() {
                       Full Name
                     </label>
                     <div className={fieldShellClass}>
-                      <MdFoodBank className="text-xl text-[color:var(--accent)]" aria-hidden="true" />
+                      <MdFoodBank className="text-xl text-(--accent)" aria-hidden="true" />
                       <input
                         id="register-name"
                         type="text"
@@ -334,7 +334,7 @@ export default function Register() {
                       Email Address
                     </label>
                     <div className={fieldShellClass}>
-                      <HiOutlineMailOpen className="text-xl text-[color:var(--accent)]" aria-hidden="true" />
+                      <HiOutlineMailOpen className="text-xl text-(--accent)" aria-hidden="true" />
                       <input
                         id="register-email"
                         type="email"
@@ -355,7 +355,7 @@ export default function Register() {
                       Phone Number
                     </label>
                     <div className={fieldShellClass}>
-                      <FaPhone className="text-[color:var(--accent)]" aria-hidden="true" />
+                      <FaPhone className="text-(--accent)" aria-hidden="true" />
                       <input
                         id="register-phone"
                         type="tel"
@@ -382,28 +382,28 @@ export default function Register() {
                           id="register-role"
                           className="ui-select relative text-left"
                         >
-                          <span className="block pr-10 text-[15px] font-medium text-[color:var(--text-primary)]">
+                          <span className="block pr-10 text-[15px] font-medium text-(--text-primary)">
                             {selectedRole.label}
                           </span>
-                          <span className="mt-1 block pr-10 text-xs leading-5 text-[color:var(--text-muted)]">
+                          <span className="mt-1 block pr-10 text-xs leading-5 text-(--text-muted)">
                             {selectedRole.description}
                           </span>
                           <ChevronDown
-                            className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--text-muted)]"
+                            className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-(--text-muted)"
                             aria-hidden="true"
                           />
                         </ListboxButton>
 
-                        <ListboxOptions className="absolute left-0 z-20 mt-2 max-h-64 w-full overflow-auto rounded-[1.25rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface-strong)] p-1 shadow-[var(--shadow-md)] focus:outline-none">
+                        <ListboxOptions className="absolute left-0 z-20 mt-2 max-h-64 w-full overflow-auto rounded-[1.25rem] border border-(--border-subtle) bg-(--surface-strong) p-1 shadow-[var(--shadow-md) focus:outline-none">
                           {roleOptions.map((option) => (
                             <ListboxOption
                               key={option.value}
                               value={option.value}
                               className={({ focus }) =>
-                                `cursor-pointer rounded-[1rem] px-4 py-3 transition ${
+                                `cursor-pointer rounded-2xl px-4 py-3 transition ${
                                   focus
-                                    ? "bg-[color:var(--accent-soft)]"
-                                    : "text-[color:var(--text-secondary)]"
+                                    ? "bg-(--accent-soft)"
+                                    : "text-(--text-secondary)"
                                 }`
                               }
                             >
@@ -413,20 +413,20 @@ export default function Register() {
                                     <p
                                       className={`text-sm font-semibold ${
                                         selected
-                                          ? "text-[color:var(--accent)]"
-                                          : "text-[color:var(--text-primary)]"
+                                          ? "text-(--accent)"
+                                          : "text-(--text-primary)"
                                       }`}
                                     >
                                       {option.label}
                                     </p>
-                                    <p className="mt-1 text-xs leading-5 text-[color:var(--text-muted)]">
+                                    <p className="mt-1 text-xs leading-5 text-(--text-muted)">
                                       {option.description}
                                     </p>
                                   </div>
                                   <Check
                                     className={`mt-0.5 h-4 w-4 shrink-0 ${
                                       selected
-                                        ? "opacity-100 text-[color:var(--accent)]"
+                                        ? "opacity-100 text-(--accent)"
                                         : "opacity-0"
                                     }`}
                                     aria-hidden="true"
@@ -449,7 +449,7 @@ export default function Register() {
                       Password
                     </label>
                     <div className={fieldShellClass}>
-                      <MdOutlinePassword className="text-xl text-[color:var(--accent)]" aria-hidden="true" />
+                      <MdOutlinePassword className="text-xl text-(--accent)" aria-hidden="true" />
                       <input
                         id="register-password"
                         type="password"
@@ -467,7 +467,7 @@ export default function Register() {
                       Confirm Password
                     </label>
                     <div className={fieldShellClass}>
-                      <MdOutlinePassword className="text-xl text-[color:var(--accent)]" aria-hidden="true" />
+                      <MdOutlinePassword className="text-xl text-(--accent)" aria-hidden="true" />
                       <input
                         id="register-confirm-password"
                         type="password"
@@ -482,21 +482,21 @@ export default function Register() {
                     </div>
                   </div>
 
-                  <label className="flex items-start gap-3 rounded-2xl border border-[color:var(--border-subtle)] bg-[color:var(--surface)] px-4 py-3 text-sm text-[color:var(--text-secondary)]">
+                  <label className="flex items-start gap-3 rounded-2xl border border-(--border-subtle) bg-(--surface) px-4 py-3 text-sm text-(--text-secondary)">
                     <input
                       type="checkbox"
                       checked={form.acceptTerms}
                       onChange={(e) =>
                         setForm({ ...form, acceptTerms: e.target.checked })
                       }
-                      className="mt-1 h-4 w-4 rounded border-[color:var(--border-strong)] text-[color:var(--accent)]"
+                      className="mt-1 h-4 w-4 rounded border-(--border-strong) text-(--accent)"
                     />
-                    <span>I accept the <Link to="/terms-and-conditions" className="text-[color:var(--accent)] hover:underline">Terms of Service</Link> and <Link to="/privacy-policy" className="text-[color:var(--accent)] hover:underline">Privacy Policy</Link>.</span>
+                    <span>I accept the <Link to="/terms-and-conditions" className="text-(--accent) hover:underline">Terms of Service</Link> and <Link to="/privacy-policy" className="text-(--accent) hover:underline">Privacy Policy</Link>.</span>
                   </label>
 
                   {error ? (
                     <p
-                      className="rounded-2xl border border-[color:color-mix(in_srgb,var(--danger)_24%,transparent)] bg-[color:var(--danger-soft)] px-4 py-3 text-sm text-[color:var(--danger)]"
+                      className="rounded-2xl border border-[color:color-mix(in_srgb,var(--danger)_24%,transparent) bg-(--danger-soft) px-4 py-3 text-sm text-(--danger)"
                       role="alert"
                       aria-live="polite"
                     >
@@ -504,14 +504,7 @@ export default function Register() {
                     </p>
                   ) : null}
 
-                  {import.meta.env.VITE_TURNSTILE_SITE_KEY ? (
-                    <Turnstile
-                      siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-                      onVerify={(token) => setTurnstileToken(token)}
-                      onExpire={() => setTurnstileToken("")}
-                      onError={() => setTurnstileToken("")}
-                    />
-                  ) : null}
+
 
                   <button type="submit" disabled={loading} className={primaryButtonClass}>
                     {loading ? "Sending OTP..." : "Continue"}
@@ -519,8 +512,8 @@ export default function Register() {
                 </form>
               ) : (
                 <form onSubmit={handleVerify} className="space-y-5" noValidate>
-                  <div className="rounded-3xl border border-[color:color-mix(in_srgb,var(--accent)_24%,transparent)] bg-[color:var(--accent-soft)] px-4 py-4 text-sm text-[color:var(--accent)]">
-                    <p className="font-medium text-[color:var(--text-primary)]">Verification code sent</p>
+                  <div className="rounded-3xl border border-[color:color-mix(in_srgb,var(--accent)_24%,transparent) bg-(--accent-soft) px-4 py-4 text-sm text-(--accent)">
+                    <p className="font-medium text-(--text-primary)">Verification code sent</p>
                     <p className="mt-1 leading-6">
                       {challenge?.message ||
                         `Enter the code sent to ${challenge?.maskedEmail ?? "your email"}.`}
@@ -532,7 +525,7 @@ export default function Register() {
                       One-Time Password
                     </label>
                     <div className={fieldShellClass}>
-                      <MdOutlineSms className="text-xl text-[color:var(--accent)]" aria-hidden="true" />
+                      <MdOutlineSms className="text-xl text-(--accent)" aria-hidden="true" />
                       <input
                         id="register-otp"
                         type="text"
@@ -549,7 +542,7 @@ export default function Register() {
 
                   {error ? (
                     <p
-                      className="rounded-2xl border border-[color:color-mix(in_srgb,var(--danger)_24%,transparent)] bg-[color:var(--danger-soft)] px-4 py-3 text-sm text-[color:var(--danger)]"
+                      className="rounded-2xl border border-[color:color-mix(in_srgb,var(--danger)_24%,transparent) bg-(--danger-soft) px-4 py-3 text-sm text-(--danger)"
                       role="alert"
                       aria-live="polite"
                     >
@@ -585,11 +578,11 @@ export default function Register() {
                 </form>
               )}
 
-              <p className="mt-6 border-t border-[color:var(--border-subtle)] pt-5 text-sm text-[color:var(--text-secondary)]">
+              <p className="mt-6 border-t border-(--border-subtle) pt-5 text-sm text-(--text-secondary)">
                 Already have an account?
                 <button
                   type="button"
-                  className="ml-1 font-semibold text-[color:var(--accent)] transition hover:text-[color:var(--accent-hover)]"
+                  className="ml-1 font-semibold text-(--accent) transition hover:text-(--accent-hover)"
                   onClick={() => navigate("/login")}
                 >
                   Sign in

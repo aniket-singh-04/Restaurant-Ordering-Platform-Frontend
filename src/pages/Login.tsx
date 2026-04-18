@@ -4,7 +4,7 @@ import { HiOutlineMailOpen } from "react-icons/hi";
 import { MdFoodBank, MdOutlinePassword, MdOutlineSms } from "react-icons/md";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import ThemeToggle from "../components/ThemeToggle";
-import Turnstile from "../components/Turnstile";
+
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { isAdminPanelRole } from "../features/auth/access";
@@ -45,7 +45,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState<string>("");
+
 
   const validateCredentials = () => {
     const normalizedEmail = email.trim();
@@ -102,7 +102,7 @@ export default function Login() {
       setLoading(true);
       setError("");
 
-      const data = await initiateLogin({ ...payload, turnstileToken });
+      const data = await initiateLogin(payload);
       setChallenge(data);
       setOtp("");
 
@@ -229,14 +229,14 @@ export default function Login() {
           <section className="auth-body">
             <div className="mx-auto w-full max-w-md">
               <div className="mb-8">
-                <div className="inline-flex items-center gap-2 rounded-full bg-[color:var(--surface-muted)] px-4 py-2 text-sm font-medium text-[color:var(--accent)] lg:hidden">
+                <div className="inline-flex items-center gap-2 rounded-full bg-(--surface-muted) px-4 py-2 text-sm font-medium text-(--accent) lg:hidden">
                   <MdFoodBank className="text-lg" />
                   Mealtap
                 </div>
-                <h2 className="mt-4 font-display text-3xl font-semibold text-[color:var(--text-primary)]">
+                <h2 className="mt-4 font-display text-3xl font-semibold text-(--text-primary)">
                   {isOtpStep ? "Verify Your Sign In" : "Welcome Back"}
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-[color:var(--text-secondary)]">
+                <p className="mt-2 text-sm leading-6 text-(--text-secondary)">
                   {isOtpStep
                     ? "Enter the code we sent to your registered email address."
                     : "Sign in to continue to the menu, orders, and dashboard experience."}
@@ -250,7 +250,7 @@ export default function Login() {
                       Phone Number
                     </label>
                     <div className={fieldShellClass}>
-                      <FaPhone className="text-[color:var(--accent)]" aria-hidden="true" />
+                      <FaPhone className="text-(--accent)" aria-hidden="true" />
                       <input
                         id="login-phone"
                         type="tel"
@@ -269,7 +269,7 @@ export default function Login() {
                       Email Address
                     </label>
                     <div className={fieldShellClass}>
-                      <HiOutlineMailOpen className="text-xl text-[color:var(--accent)]" aria-hidden="true" />
+                      <HiOutlineMailOpen className="text-xl text-(--accent)" aria-hidden="true" />
                       <input
                         id="login-email"
                         type="email"
@@ -290,7 +290,7 @@ export default function Login() {
                       Password
                     </label>
                     <div className={fieldShellClass}>
-                      <MdOutlinePassword className="text-xl text-[color:var(--accent)]" aria-hidden="true" />
+                      <MdOutlinePassword className="text-xl text-(--accent)" aria-hidden="true" />
                       <input
                         id="login-password"
                         type="password"
@@ -305,7 +305,7 @@ export default function Login() {
 
                   {error ? (
                     <p
-                      className="rounded-2xl border border-[color:color-mix(in_srgb,var(--danger)_24%,transparent)] bg-[color:var(--danger-soft)] px-4 py-3 text-sm text-[color:var(--danger)]"
+                      className="rounded-2xl border border-[color-mix(in_srgb,var(--danger)_24%,transparent)] bg-(--danger-soft) px-4 py-3 text-sm text-(--danger)"
                       role="alert"
                       aria-live="polite"
                     >
@@ -313,14 +313,7 @@ export default function Login() {
                     </p>
                   ) : null}
 
-                  {import.meta.env.VITE_TURNSTILE_SITE_KEY ? (
-                    <Turnstile
-                      siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-                      onVerify={(token) => setTurnstileToken(token)}
-                      onExpire={() => setTurnstileToken("")}
-                      onError={() => setTurnstileToken("")}
-                    />
-                  ) : null}
+
 
                   <button type="submit" disabled={loading} className={primaryButtonClass}>
                     {loading ? "Sending OTP..." : "Continue"}
@@ -328,8 +321,8 @@ export default function Login() {
                 </form>
               ) : (
                 <form onSubmit={handleVerifyOtp} className="space-y-5" noValidate>
-                  <div className="rounded-3xl border border-[color:color-mix(in_srgb,var(--accent)_24%,transparent)] bg-[color:var(--accent-soft)] px-4 py-4 text-sm text-[color:var(--accent)]">
-                    <p className="font-medium text-[color:var(--text-primary)]">Verification code sent</p>
+                  <div className="rounded-3xl border border-[color-mix(in_srgb,var(--accent)_24%,transparent)] bg-(--accent-soft) px-4 py-4 text-sm text-(--accent)">
+                    <p className="font-medium text-(--text-primary)">Verification code sent</p>
                     <p className="mt-1 leading-6">
                       {challenge?.message || `Check ${challenge?.maskedEmail ?? "your email"}.`}
                     </p>
@@ -340,7 +333,7 @@ export default function Login() {
                       One-Time Password
                     </label>
                     <div className={fieldShellClass}>
-                      <MdOutlineSms className="text-xl text-[color:var(--accent)]" aria-hidden="true" />
+                      <MdOutlineSms className="text-xl text-(--accent)" aria-hidden="true" />
                       <input
                         id="login-otp"
                         type="text"
@@ -357,7 +350,7 @@ export default function Login() {
 
                   {error ? (
                     <p
-                      className="rounded-2xl border border-[color:color-mix(in_srgb,var(--danger)_24%,transparent)] bg-[color:var(--danger-soft)] px-4 py-3 text-sm text-[color:var(--danger)]"
+                      className="rounded-2xl border border-[color-mix(in_srgb,var(--danger)_24%,transparent)] bg-(--danger-soft) px-4 py-3 text-sm text-(--danger)"
                       role="alert"
                       aria-live="polite"
                     >
@@ -393,8 +386,8 @@ export default function Login() {
                 </form>
               )}
 
-              <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--border-subtle)] pt-5 text-sm text-[color:var(--text-secondary)]">
-                <span>By continuing, you agree to our <Link to="/terms-and-conditions" className="hover:text-[color:var(--text-primary)] hover:underline transition-colors">Terms of Service</Link> and <Link to="/privacy-policy" className="hover:text-[color:var(--text-primary)] hover:underline transition-colors">Privacy Policy</Link>.</span>
+              <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-(--border-subtle) pt-5 text-sm text-(--text-secondary)">
+                <span>By continuing, you agree to our <Link to="/terms-and-conditions" className="hover:text-(--text-primary) hover:underline transition-colors">Terms of Service</Link> and <Link to="/privacy-policy" className="hover:text-(--text-primary) hover:underline transition-colors">Privacy Policy</Link>.</span>
                 <button
                   type="button"
                   className={secondaryButtonClass}
@@ -404,11 +397,11 @@ export default function Login() {
                 </button>
               </div>
 
-              <p className="mt-4 text-sm text-[color:var(--text-secondary)]">
+              <p className="mt-4 text-sm text-(--text-secondary)">
                 Need an account?
                 <button
                   type="button"
-                  className="ml-1 font-semibold text-[color:var(--accent)] transition hover:text-[color:var(--accent-hover)]"
+                  className="ml-1 font-semibold text-(--accent) transition hover:text-(--accent-hover)"
                   onClick={() => navigate("/register")}
                 >
                   Create one
