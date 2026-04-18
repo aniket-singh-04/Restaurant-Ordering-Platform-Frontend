@@ -201,7 +201,8 @@ export default function MenuItemDetail() {
                 items={{
                   name: item.name,
                   image: item.image,
-                  images: item.images
+                  images: item.images,
+                  video: item.video,
                 }}
               />
                 {item.has3DModel && (

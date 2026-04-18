@@ -265,7 +265,8 @@ export default function MenuManagement() {
                       items={{
                         name: item.name,
                         image: item.image,
-                        images: item.images
+                        images: item.images,
+                        video: item.video,
                       }}
                     />
                   </div>
