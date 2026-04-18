@@ -12,6 +12,10 @@ import {
   failOrderPayment,
   initiateOrderPayment,
 } from "../../../features/payments/api";
+import {
+  clearPaymentIdempotencyKey,
+  getPaymentIdempotencyKey,
+} from "../../../features/payments/idempotency";
 import { isAdminPanelRole } from "../../../features/auth/access";
 import { useAuth } from "../../../context/AuthContext";
 import { useActiveQrContext } from "../../../features/qr-context/useActiveQrContext";
@@ -120,6 +124,10 @@ export default function CartPage() {
       : checkoutContextTitle;
 
   const handleCreateOrder = async () => {
+    if (placingOrder || checkoutLoading) {
+      return;
+    }
+
     if (!hasCheckoutContext || !qrContext) {
       pushToast({
         title: "QR context missing",
@@ -163,9 +171,10 @@ export default function CartPage() {
         (paymentMode === "ONLINE_ADVANCE" || paymentMode === "ONLINE_FULL") &&
         orderId
       ) {
+        const paymentPurpose = "ADVANCE";
         const payment = await initiateOrderPayment(orderId, {
-          purpose: "ADVANCE",
-          idempotencyKey: `order-payment-${orderId}-${Date.now()}`,
+          purpose: paymentPurpose,
+          idempotencyKey: getPaymentIdempotencyKey(orderId, paymentPurpose),
         });
         const paymentAttemptId = payment.paymentAttempt.id ?? payment.paymentAttempt._id ?? "";
 
@@ -195,6 +204,7 @@ export default function CartPage() {
               razorpay_signature: result.razorpay_signature,
               amount: payment.paymentAttempt.amount,
             });
+            clearPaymentIdempotencyKey(orderId, paymentPurpose);
           }
 
           pushToast({

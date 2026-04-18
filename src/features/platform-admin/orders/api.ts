@@ -16,7 +16,14 @@ const toQueryString = (query: Record<string, string | number | undefined>) => {
 };
 
 export const usePlatformAdminOrders = (
-  query: AdminListQuery & { status?: string; paymentStatus?: string; restaurantId?: string },
+  query: AdminListQuery & {
+    status?: string;
+    paymentStatus?: string;
+    restaurantId?: string;
+    orderType?: string;
+    orderSource?: string;
+    paymentMode?: string;
+  },
 ) =>
   useQuery({
     queryKey: ["platform-admin", "orders", query],
@@ -29,6 +36,9 @@ export const usePlatformAdminOrders = (
           status: query.status,
           paymentStatus: query.paymentStatus,
           restaurantId: query.restaurantId,
+          orderType: query.orderType,
+          orderSource: query.orderSource,
+          paymentMode: query.paymentMode,
         })}`,
       );
       return response.data;

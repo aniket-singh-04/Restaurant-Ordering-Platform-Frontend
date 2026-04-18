@@ -37,8 +37,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (error instanceof ApiError && error.status === 401) {
         setUser(null);
         removeAuthToken();
-      } else {
-        setUser(null);
       }
     } finally {
       setLoading(false);
@@ -87,12 +85,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [storeUser]);
 
   const logout = async (): Promise<void> => {
-    const response = await api.post<any>("/api/v1/auth/logout");
-    if (response?.success === false) {
-      throw new Error(response?.message || "Logout failed");
+    try {
+      const response = await api.post<any>("/api/v1/auth/logout");
+      if (response?.success === false) {
+        throw new Error(response?.message || "Logout failed");
+      }
+    } finally {
+      setUser(null);
+      authStore.clear();
     }
-    setUser(null);
-    authStore.clear();
   };
 
   const hasRole = (roles?: UserRole | UserRole[]) => userHasRole(user, roles);

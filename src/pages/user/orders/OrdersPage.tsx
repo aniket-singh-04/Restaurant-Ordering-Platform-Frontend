@@ -16,6 +16,10 @@ import {
   failOrderPayment,
   initiateOrderPayment,
 } from "../../../features/payments/api";
+import {
+  clearPaymentIdempotencyKey,
+  getPaymentIdempotencyKey,
+} from "../../../features/payments/idempotency";
 import { useRazorpayCheckout } from "../../../hooks/useRazorpayCheckout";
 import { formatPrice } from "../../../utils/formatPrice";
 import { goBackOrNavigate } from "../../../utils/navigation";
@@ -289,6 +293,10 @@ export default function OrdersPage() {
     order: OrderRecord,
     purpose: "ADVANCE" | "FINAL_SETTLEMENT",
   ) => {
+    if (actionKind || checkoutLoading) {
+      return;
+    }
+
     if (!user) {
       navigate("/login", {
         state: { from: `${location.pathname}${location.search}` },
@@ -305,7 +313,7 @@ export default function OrdersPage() {
     try {
       const payment = await initiateOrderPayment(order.id, {
         purpose,
-        idempotencyKey: `${purpose.toLowerCase()}-${order.id}-${Date.now()}`,
+        idempotencyKey: getPaymentIdempotencyKey(order.id, purpose),
       });
 
       paymentAttemptId =
@@ -335,6 +343,7 @@ export default function OrdersPage() {
           razorpay_signature: result.razorpay_signature,
           amount: attemptAmount,
         });
+        clearPaymentIdempotencyKey(order.id, purpose);
       }
 
       await refreshOrders();
