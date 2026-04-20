@@ -28,7 +28,7 @@ const fieldLabelClass = "ui-field-label";
 const primaryButtonClass =
   "ui-button ui-button-pill w-full justify-center text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60";
 const secondaryButtonClass =
-  "text-sm font-semibold text-[color:var(--accent)] transition hover:text-[color:var(--accent-hover)] disabled:cursor-not-allowed disabled:opacity-60";
+  "text-sm font-semibold text-(--accent) transition hover:text-(--accent-hover) disabled:cursor-not-allowed disabled:opacity-60";
 
 export default function Login() {
   const navigate = useNavigate();

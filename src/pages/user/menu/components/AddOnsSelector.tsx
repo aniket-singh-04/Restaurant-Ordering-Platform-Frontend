@@ -26,10 +26,10 @@ export default function AddOnsSelector({
       className={`space-y-6 ${className}`}
     >
       <div className="flex items-center justify-between">
-        <h3 className="font-display text-2xl font-semibold tracking-tight text-[color:var(--text-primary)]">
+        <h3 className="font-display text-2xl font-semibold tracking-tight text-(--text-primary)">
           Customize your order
         </h3>
-        <span className="text-xs text-[color:var(--text-muted)]">Optional</span>
+        <span className="text-xs text-(--text-muted)">Optional</span>
       </div>
 
       <div className="space-y-3">
@@ -44,8 +44,8 @@ export default function AddOnsSelector({
               onClick={() => toggleAddOn(addOn)}
               className={`relative flex cursor-pointer items-center justify-between rounded-2xl border px-5 py-4 transition-all duration-300 ${
                 selected
-                  ? "border-[color:color-mix(in_srgb,var(--accent)_30%,transparent)] bg-[color:var(--accent-soft)] shadow-[var(--shadow-sm)]"
-                  : "border-[color:var(--border-subtle)] bg-[color:var(--surface)] hover:border-[color:color-mix(in_srgb,var(--accent)_30%,transparent)] hover:shadow-[var(--shadow-sm)]"
+                  ? "border-[color:color-mix(in_srgb,var(--accent)_30%,transparent)] bg-(--accent-soft) shadow-(--shadow-sm)"
+                  : "border-(--border-subtle) bg-(--surface) hover:border-[color:color-mix(in_srgb,var(--accent)_30%,transparent)] hover:shadow-(--shadow-sm)"
               }`}
             >
               {selected && (
@@ -56,8 +56,8 @@ export default function AddOnsSelector({
                 <div
                   className={`flex h-6 w-6 items-center justify-center rounded-full border transition-all ${
                     selected
-                      ? "border-[color:var(--accent)] warm-linear text-white"
-                      : "border-[color:var(--border-subtle)] bg-[color:var(--surface-strong)]"
+                      ? "border-(--accent) warm-linear text-white"
+                      : "border-(--border-subtle) bg-(--surface-strong)"
                   }`}
                 >
                   {selected && (
@@ -70,12 +70,12 @@ export default function AddOnsSelector({
                 <div className="flex flex-col">
                   <span
                     className={`font-medium ${
-                      selected ? "text-[color:var(--accent)]" : "text-[color:var(--text-primary)]"
+                      selected ? "text-(--accent)" : "text-(--text-primary)"
                     }`}
                   >
                     {addOn.name}
                   </span>
-                  <span className="text-xs text-[color:var(--text-muted)]">
+                  <span className="text-xs text-(--text-muted)">
                     Add extra goodness
                   </span>
                 </div>
@@ -85,7 +85,7 @@ export default function AddOnsSelector({
                 className={`rounded-full px-3 py-1 text-sm font-semibold ${
                   selected
                     ? "warm-linear text-white"
-                    : "bg-[color:var(--surface-muted)] text-[color:var(--accent)]"
+                    : "bg-(--surface-muted) text-(--accent)"
                 }`}
               >
                 +{formatPrice(addOn.price)}

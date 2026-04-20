@@ -16,7 +16,7 @@ import {
   providerOptions,
 } from "../../utils/filterOptions";
 
-const cardClass = "rounded-[28px] bg-white shadow-sm";
+const cardClass = "ui-card";
 
 export default function PlatformAdminPayments() {
   const queryClient = useQueryClient();
@@ -85,9 +85,9 @@ export default function PlatformAdminPayments() {
 
   return (
     <div className="grid gap-3 xl:grid-cols-[1.5fr_0.5fr] overflow-x-hidden">
-      <section className="space-y-6 min-w-0">
+      <section className="space-y-6 min-w-0 pt-4">
         {/* Filters Card */}
-        <div className={cardClass}>
+        <div className={`${cardClass} relative z-20`}>
           <p className="text-xs uppercase tracking-[0.35em] text-[#8b7661]">Payments</p>
           <h1 className="mt-3 font-serif text-3xl font-bold">Payment monitoring and refunds</h1>
           <div className="mt-6 space-y-4">

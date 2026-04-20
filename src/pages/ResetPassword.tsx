@@ -80,10 +80,10 @@ export default function ResetPassword() {
         <div className="state-card px-6 py-8 sm:px-8">
           <div className="mx-auto max-w-md">
             <p className="ui-eyebrow text-center">Password Reset</p>
-            <h2 className="mt-3 text-center font-display text-3xl font-semibold text-[color:var(--text-primary)]">
+            <h2 className="mt-3 text-center font-display text-3xl font-semibold text-(--text-primary)">
               Set New Password
             </h2>
-            <p className="mt-3 text-center text-sm text-[color:var(--text-secondary)]">{helperCopy}</p>
+            <p className="mt-3 text-center text-sm text-(--text-secondary)">{helperCopy}</p>
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-4">
               <div>
@@ -116,7 +116,7 @@ export default function ResetPassword() {
               </div>
 
               {error ? (
-                <p className="rounded-2xl border border-[color:color-mix(in_srgb,var(--danger)_24%,transparent)] bg-[color:var(--danger-soft)] px-4 py-3 text-sm text-[color:var(--danger)]">
+                <p className="rounded-2xl border border-[color-mix(in_srgb,var(--danger)_24%,transparent)] bg-(--danger-soft) px-4 py-3 text-sm text-(--danger)">
                   {error}
                 </p>
               ) : null}
@@ -133,7 +133,7 @@ export default function ResetPassword() {
             <button
               type="button"
               onClick={() => navigate("/login")}
-              className="mt-5 text-sm font-semibold text-[color:var(--accent)] transition hover:text-[color:var(--accent-hover)]"
+              className="mt-5 text-sm font-semibold text-(--accent) transition hover:text-(--accent-hover)"
             >
               Back to login
             </button>

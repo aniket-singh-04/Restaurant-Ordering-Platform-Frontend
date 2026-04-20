@@ -12,8 +12,8 @@ export default function NotFound() {
         </div>
         <div className="state-card px-6 py-10 text-center sm:px-8">
           <p className="ui-eyebrow">Not Found</p>
-          <h1 className="mt-3 font-display text-6xl font-extrabold text-[color:var(--text-primary)]">404</h1>
-          <p className="mt-4 text-base text-[color:var(--text-secondary)]">
+          <h1 className="mt-3 font-display text-6xl font-extrabold text-(--text-primary)">404</h1>
+          <p className="mt-4 text-base text-(--text-secondary)">
             Page not found
           </p>
 

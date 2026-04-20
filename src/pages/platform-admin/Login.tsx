@@ -47,7 +47,7 @@ export default function PlatformAdminLogin() {
   };
 
   return (
-    <div className="auth-shell px-4 py-12 text-[color:var(--text-primary)]">
+    <div className="auth-shell px-4 py-12 text-(--text-primary)">
       <div className="auth-frame">
         <div className="auth-theme-bar">
           <ThemeToggle />
@@ -71,14 +71,14 @@ export default function PlatformAdminLogin() {
                   <ShieldCheck className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--text-muted)]">/platform</p>
-                  <h2 className="font-display text-3xl font-bold text-[color:var(--text-primary)]">Super Admin Login</h2>
+                  <p className="text-xs uppercase tracking-[0.3em] text-(--text-muted)">/platform</p>
+                  <h2 className="font-display text-3xl font-bold text-(--text-primary)">Super Admin Login</h2>
                 </div>
               </div>
 
               <form className="space-y-5" onSubmit={handleSubmit}>
                 <label className="block">
-                  <span className="ui-field-label !mb-2 !text-[color:var(--text-secondary)] !tracking-[0.16em]">
+                  <span className="ui-field-label !mb-2 !text-(--text-secondary) !tracking-[0.16em]">
                     Admin email
                   </span>
                   <input
@@ -92,7 +92,7 @@ export default function PlatformAdminLogin() {
                 </label>
 
                 <label className="block">
-                  <span className="ui-field-label !mb-2 !text-[color:var(--text-secondary)] !tracking-[0.16em]">
+                  <span className="ui-field-label !mb-2 !text-(--text-secondary) !tracking-[0.16em]">
                     Password
                   </span>
                   <input
@@ -106,7 +106,7 @@ export default function PlatformAdminLogin() {
                 </label>
 
                 {error ? (
-                  <div className="rounded-2xl border border-[color:color-mix(in_srgb,var(--danger)_24%,transparent)] bg-[color:var(--danger-soft)] px-4 py-3 text-sm text-[color:var(--danger)]">
+                  <div className="rounded-2xl border border-[color-mix(in_srgb,var(--danger)_24%,transparent)] bg-(--danger-soft) px-4 py-3 text-sm text-(--danger)">
                     {error}
                   </div>
                 ) : null}

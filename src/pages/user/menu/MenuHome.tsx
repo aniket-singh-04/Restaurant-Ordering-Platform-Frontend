@@ -78,7 +78,7 @@ export default function MenuHome() {
         className="ui-hero mt-2 p-6 sm:p-7"
       >
         <div className="relative z-10 text-left">
-          <p className="ui-eyebrow !text-white/72">Featured Experience</p>
+          <p className="ui-eyebrow text-white/72!">Featured Experience</p>
           <h1 className="mb-1 mt-3 font-display text-3xl font-bold text-white sm:text-4xl md:text-5xl">
             Discover Flavors <br /> in 3D
           </h1>
@@ -137,8 +137,8 @@ export default function MenuHome() {
         >
           <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-[color:var(--accent)]" />
-              <h2 className="font-display text-2xl font-semibold text-[color:var(--text-primary)]">Top Picks</h2>
+              <TrendingUp className="h-5 w-5 text-(--accent)" />
+              <h2 className="font-display text-2xl font-semibold text-(--text-primary)">Top Picks</h2>
             </div>
             <button
               type="button"
@@ -164,7 +164,7 @@ export default function MenuHome() {
         transition={{ delay: 0.4 }}
         className="ui-card"
       >
-        <h2 className="mb-4 text-left font-display text-2xl font-semibold text-[color:var(--text-primary)]">
+        <h2 className="mb-4 text-left font-display text-2xl font-semibold text-(--text-primary)">
           {getActiveCategoryTitle(categories, activeCategory)}
         </h2>
 

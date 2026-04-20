@@ -1,7 +1,13 @@
 import { useMemo, useState, Fragment } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Download, FileSpreadsheet, Check, ChevronDown } from "lucide-react";
-import { Listbox, Transition } from "@headlessui/react";
+import { Download, FileSpreadsheet, Check, ChevronDown, X } from "lucide-react";
+import {
+  Listbox,
+  ListboxButton,
+  ListboxOption,
+  ListboxOptions,
+  Transition,
+} from "@headlessui/react";
 import { useToast } from "../../context/ToastContext";
 import {
   downloadPlatformAdminReport,
@@ -46,9 +52,8 @@ const ReportTableRow = ({
     </td>
     <td className="px-4 py-4">
       <span
-        className={`rounded-full px-3 py-1 text-xs font-semibold ${
-          statusToneClass[report.status] ?? "bg-slate-100 text-slate-700"
-        }`}
+        className={`rounded-full px-3 py-1 text-xs font-semibold ${statusToneClass[report.status] ?? "bg-slate-100 text-slate-700"
+          }`}
       >
         {report.status}
       </span>
@@ -143,8 +148,8 @@ export default function PlatformAdminReports() {
   };
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-[28px] bg-white shadow-sm">
+    <div className="space-y-6 pt-4">
+      <section className="ui-card relative z-20">
         <p className="text-xs uppercase tracking-[0.35em] text-[#8b7661]">Reports</p>
         <h1 className="mt-3 font-serif text-3xl font-bold">Platform report artifacts</h1>
         <div className="mt-6 grid gap-4 lg:grid-cols-[1.4fr_1fr_1fr_auto]">
@@ -155,37 +160,89 @@ export default function PlatformAdminReports() {
             className="w-full rounded-2xl border border-[#e0d2c3] px-4 py-3 text-sm placeholder-[#a89c8f] focus:outline-none focus:ring-2 focus:ring-[#8f5f2f]/20"
           />
           <div>
-            <Listbox value={periodType} onChange={(v) => setPeriodType(v as ReportPeriodType | "")}> 
+            <Listbox
+              value={periodType}
+              onChange={(v) => setPeriodType(v as ReportPeriodType | "")}
+            >
               <div className="relative">
-                <Listbox.Button className="w-full rounded-2xl border border-[#e0d2c3] px-4 py-3 text-sm text-left focus:outline-none focus:ring-2 focus:ring-[#8f5f2f]/20">
-                  <div className="flex items-center justify-between">
-                    <span className="truncate">{periodType || "All periods"}</span>
-                    <ChevronDown className="h-4 w-4 text-[#2a221c]" />
-                  </div>
-                </Listbox.Button>
+                <ListboxButton
+                  className={`ui-select pr-11 text-left text-sm font-medium ${periodType ? "text-(--text-primary)" : "text-(--text-muted)"
+                    }`}
+                >
+                  <span className="block truncate pr-10">
+                    {periodType || "All periods"}
+                  </span>
 
-                <Transition as={Fragment} leave="transition ease-in duration-100" leaveFrom="opacity-100" leaveTo="opacity-0">
-                  <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                    <Listbox.Option value="">{({ selected }) => (
-                      <div className={`cursor-pointer select-none px-4 py-2 ${selected ? 'bg-[#f4efe7]' : ''}`}>
-                        <div className="flex items-center justify-between">
-                          <span>All periods</span>
-                          {selected ? <Check className="h-4 w-4 text-[#8b7661]" /> : null}
-                        </div>
-                      </div>
-                    )}</Listbox.Option>
-                    {PERIOD_OPTIONS.map((option) => (
-                      <Listbox.Option key={option} value={option}>{({ selected }) => (
-                        <div className={`cursor-pointer select-none px-4 py-2 ${selected ? 'bg-[#f4efe7]' : ''}`}>
-                          <div className="flex items-center justify-between">
-                            <span>{option}</span>
-                            {selected ? <Check className="h-4 w-4 text-[#8b7661]" /> : null}
-                          </div>
-                        </div>
-                      )}</Listbox.Option>
-                    ))}
-                  </Listbox.Options>
-                </Transition>
+                  <span className="absolute inset-y-0 right-3 flex items-center gap-2">
+                    {periodType && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPeriodType("");
+                        }}
+                        className="rounded-full p-1 text-(--text-muted) transition hover:bg-(--accent-soft) hover:text-(--accent)"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+
+                    <ChevronDown className="h-5 w-5 text-(--text-muted)" />
+                  </span>
+                </ListboxButton>
+
+                <ListboxOptions className="absolute left-0 z-50 mt-2 max-h-60 w-full overflow-auto scrollbar-thin rounded-[1.25rem] border border-(--border-subtle) bg-(--surface-strong) p-1 shadow-(--shadow-md)">
+
+                  {/* Default option */}
+                  <ListboxOption value="" as={Fragment}>
+                    {({ focus, selected }) => (
+                      <li
+                        className={`flex cursor-pointer items-center justify-between rounded-2xl px-4 py-2.5 text-sm transition-all ${focus
+                            ? "bg-(--accent-soft) text-(--text-primary)"
+                            : "text-(--text-secondary)"
+                          } ${selected
+                            ? "bg-(--accent-soft-strong) font-semibold text-(--accent)"
+                            : ""
+                          }`}
+                      >
+                        <span className="truncate">All periods</span>
+
+                        <Check
+                          className={`h-4 w-4 transition-opacity ${selected
+                              ? "opacity-100 text-(--accent)"
+                              : "opacity-0"
+                            }`}
+                        />
+                      </li>
+                    )}
+                  </ListboxOption>
+
+                  {/* Dynamic options */}
+                  {PERIOD_OPTIONS.map((option) => (
+                    <ListboxOption key={option} value={option} as={Fragment}>
+                      {({ focus, selected }) => (
+                        <li
+                          className={`flex cursor-pointer items-center justify-between rounded-2xl px-4 py-2.5 text-sm transition-all ${focus
+                              ? "bg-(--accent-soft) text-(--text-primary)"
+                              : "text-(--text-secondary)"
+                            } ${selected
+                              ? "bg-(--accent-soft-strong) font-semibold text-(--accent)"
+                              : ""
+                            }`}
+                        >
+                          <span className="truncate">{option}</span>
+
+                          <Check
+                            className={`h-4 w-4 transition-opacity ${selected
+                                ? "opacity-100 text-(--accent)"
+                                : "opacity-0"
+                              }`}
+                          />
+                        </li>
+                      )}
+                    </ListboxOption>
+                  ))}
+                </ListboxOptions>
               </div>
             </Listbox>
           </div>
@@ -199,26 +256,26 @@ export default function PlatformAdminReports() {
             <div className="w-full">
               <Listbox value={generatePeriodType} onChange={(v) => setGeneratePeriodType(v as ReportPeriodType)}>
                 <div className="relative">
-                  <Listbox.Button className="w-full rounded-2xl border border-[#e0d2c3] px-4 py-3 text-sm text-left focus:outline-none focus:ring-2 focus:ring-[#8f5f2f]/20">
+                  <ListboxButton className="w-full rounded-2xl border border-[#e0d2c3] px-4 py-3 text-sm text-left focus:outline-none focus:ring-2 focus:ring-[#8f5f2f]/20">
                     <div className="flex items-center justify-between">
                       <span className="truncate">{generatePeriodType}</span>
                       <ChevronDown className="h-4 w-4 text-[#2a221c]" />
                     </div>
-                  </Listbox.Button>
+                  </ListboxButton>
 
                   <Transition as={Fragment} leave="transition ease-in duration-100" leaveFrom="opacity-100" leaveTo="opacity-0">
-                    <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                    <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                       {PERIOD_OPTIONS.map((option) => (
-                        <Listbox.Option key={option} value={option}>{({ selected }) => (
+                        <ListboxOption key={option} value={option}>{({ selected }) => (
                           <div className={`cursor-pointer select-none px-4 py-2 ${selected ? 'bg-[#f4efe7]' : ''}`}>
                             <div className="flex items-center justify-between">
                               <span>{option}</span>
                               {selected ? <Check className="h-4 w-4 text-[#8b7661]" /> : null}
                             </div>
                           </div>
-                        )}</Listbox.Option>
+                        )}</ListboxOption>
                       ))}
-                    </Listbox.Options>
+                    </ListboxOptions>
                   </Transition>
                 </div>
               </Listbox>

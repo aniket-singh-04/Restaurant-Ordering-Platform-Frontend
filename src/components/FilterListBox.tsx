@@ -36,7 +36,7 @@ export function FilterListBox({
         <div className="relative">
           <ListboxButton
             className={`ui-select pr-11 text-left text-sm font-medium ${
-              value ? "text-[color:var(--text-primary)]" : "text-[color:var(--text-muted)]"
+              value ? "text-(--text-primary)" : "text-(--text-muted)"
             }`}
           >
             <span className="block truncate pr-10">{selectedLabel}</span>
@@ -49,17 +49,17 @@ export function FilterListBox({
                     e.stopPropagation();
                     onChange("");
                   }}
-                  className="rounded-full p-1 text-[color:var(--text-muted)] transition hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--accent)]"
+                  className="rounded-full p-1 text-(--text-muted) transition hover:bg-(--accent-soft) hover:text-(--accent)"
                 >
                   <X className="h-4 w-4" />
                 </button>
               )}
 
-              <ChevronDown className="h-5 w-5 text-[color:var(--text-muted)]" />
+              <ChevronDown className="h-5 w-5 text-(--text-muted)" />
             </span>
           </ListboxButton>
 
-          <ListboxOptions className="absolute left-0 z-50 mt-2 max-h-60 w-full overflow-auto rounded-[1.25rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface-strong)] p-1 shadow-[var(--shadow-md)]">
+          <ListboxOptions className="absolute left-0 z-500 mt-2 max-h-60 w-full overflow-auto scrollbar-thin rounded-[1.25rem] border border-(--border-subtle) bg-(--surface-strong) p-1 shadow-(--shadow-md)">
             {options.length > 0 ? (
               options.map((option) => (
                 <ListboxOption
@@ -69,13 +69,13 @@ export function FilterListBox({
                 >
                   {({ focus, selected }) => (
                     <li
-                      className={`flex cursor-pointer items-center justify-between rounded-[1rem] px-4 py-2.5 text-sm transition-all ${
+                      className={`flex cursor-pointer items-center justify-between rounded-2xl px-4 py-2.5 text-sm transition-all ${
                         focus
-                          ? "bg-[color:var(--accent-soft)] text-[color:var(--text-primary)]"
-                          : "text-[color:var(--text-secondary)]"
+                          ? "bg-(--accent-soft) text-(--text-primary)"
+                          : "text-(--text-secondary)"
                       } ${
                         selected
-                          ? "bg-[color:var(--accent-soft-strong)] font-semibold text-[color:var(--accent)]"
+                          ? "bg-(--accent-soft-strong) font-semibold text-(--accent)"
                           : ""
                       }`}
                     >
@@ -83,7 +83,7 @@ export function FilterListBox({
 
                       <Check
                         className={`h-4 w-4 transition-opacity ${
-                          selected ? "opacity-100 text-[color:var(--accent)]" : "opacity-0"
+                          selected ? "opacity-100 text-(--accent)" : "opacity-0"
                         }`}
                       />
                     </li>
@@ -91,7 +91,7 @@ export function FilterListBox({
                 </ListboxOption>
               ))
             ) : (
-              <li className="px-4 py-3 text-center text-sm text-[color:var(--text-muted)]">
+              <li className="px-4 py-3 text-center text-sm text-(--text-muted)">
                 No options available
               </li>
             )}

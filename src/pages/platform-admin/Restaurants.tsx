@@ -13,7 +13,8 @@ import { formatPrice } from "../../utils/formatPrice";
 import { FilterListBox } from "../../components/FilterListBox";
 import { reviewStatusOptions, suspensionStatusOptions } from "../../utils/filterOptions";
 
-const cardClass = "rounded-[28px] bg-white p-6 shadow-sm";
+// const cardClass = "rounded-4xl p-4 shadow-md border border-[#f0e6dc]";
+const cardClass = "ui-card";
 
 export default function PlatformAdminRestaurants() {
   const queryClient = useQueryClient();
@@ -131,7 +132,7 @@ export default function PlatformAdminRestaurants() {
       <section className="space-y-6 min-w-0">
 
         {/* Filters Card */}
-        <div className={`${cardClass} p-5 sm:p-6`}>
+        <div className={`${cardClass} relative z-20 p-5 sm:p-6`}>
           <p className="text-xs uppercase tracking-[0.35em] text-[#8b7661]">
             Restaurants
           </p>
@@ -188,7 +189,7 @@ export default function PlatformAdminRestaurants() {
               </div>
             </div>
           ) : restaurants.data.items.length ? (
-            <div className="overflow-x-auto rounded-xl shadow-md border border-gray-200">
+            <div className="overflow-x-auto scrollbar-thin rounded-xl shadow-md border border-gray-200">
               <table className="min-w-full text-sm divide-y divide-gray-200">
                 {/* HEADER */}
                 <thead className="bg-[#faf6f0] sticky top-0 z-10">
@@ -209,15 +210,12 @@ export default function PlatformAdminRestaurants() {
                 </thead>
 
                 {/* BODY */}
-                <tbody className="bg-white divide-y divide-gray-100">
+                <tbody className=" divide-y divide-gray-100">
                   {restaurants.data.items.map((restaurant) => (
                     <tr
                       key={restaurant.id}
                       onClick={() => setSelectedRestaurantId(restaurant.id)}
-                      className={`transition cursor-pointer ${selectedRestaurantId === restaurant.id
-                        ? "bg-[#f0e8de]"
-                        : "hover:bg-[#fef8f3]"
-                        }`}
+                      className={`transition cursor-pointer `}
                     >
                       {/* Restaurant Info */}
                       <td className="px-4 py-3 max-w-xs">

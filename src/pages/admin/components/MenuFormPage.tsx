@@ -708,9 +708,9 @@ export default function MenuFormPage() {
   const categoryLabel = form.category || "Select Category"
 
   return (
-    <div className="min-h-screen bg-[#fff9f2]  space-y-10">
+    <div className="min-h-screen  space-y-10">
 
-      <h1 className="text-3xl font-bold text-[#3b2f2f]">
+      <h1 className="ui-card text-3xl font-bold text-[#3b2f2f]">
         {isEditMode ? "Edit Menu Item" : "Create Menu Item"}
       </h1>
 
@@ -1060,7 +1060,7 @@ export default function MenuFormPage() {
       </AdminSection>
 
       {/* ACTIONS */}
-      <div className="flex justify-end gap-4 pt-4">
+      <div className="ui-card flex justify-end gap-4 pt-4">
         <button
           onClick={() => navigate("/admin/menu")}
           className="cursor-pointer px-6 py-2 border rounded-lg"

@@ -101,8 +101,8 @@ export default function MenuItemDetail() {
     return (
       <div className="state-shell flex items-center justify-center px-4 text-center">
         <div className="state-card px-6 py-10 sm:px-8">
-          <h1 className="font-display text-2xl font-semibold text-[color:var(--text-primary)]">This QR code is not available.</h1>
-          <p className="mt-2 text-sm text-[color:var(--text-secondary)]">
+          <h1 className="font-display text-2xl font-semibold text-(--text-primary)">This QR code is not available.</h1>
+          <p className="mt-2 text-sm text-(--text-secondary)">
             {qrContextQuery.error instanceof Error
               ? qrContextQuery.error.message
               : "Please ask the restaurant team for a fresh table QR code."}
@@ -123,7 +123,7 @@ export default function MenuItemDetail() {
     return (
       <div className="state-shell flex items-center justify-center px-4">
         <div className="state-card px-6 py-10 text-center sm:px-8">
-        <p className="mb-4 text-lg text-[color:var(--text-secondary)]">Item not found</p>
+        <p className="mb-4 text-lg text-(--text-secondary)">Item not found</p>
         <button
           type="button"
           onClick={() => navigate(buildQrMenuPath(qrId))}
@@ -194,9 +194,9 @@ export default function MenuItemDetail() {
 
       <main className="app-page">
         <div className="app-container">
-        <div className="ui-section-card overflow-hidden rounded-[2rem]">
+        <div className="ui-section-card overflow-hidden rounded-4xl">
           <div className="grid grid-cols-1 md:grid-cols-2">
-            <div className="relative rounded-[2rem] bg-[color:var(--surface-muted)]">
+            <div className="relative rounded-4xl bg-(--surface-muted)">
               <MenuImageToggle
                 items={{
                   name: item.name,
@@ -218,15 +218,15 @@ export default function MenuItemDetail() {
 
             <div className="flex flex-col justify-between p-8 text-left">
               <div className="space-y-4">
-                <h1 className="font-display text-3xl font-extrabold text-[color:var(--text-primary)] sm:text-4xl">
+                <h1 className="font-display text-3xl font-extrabold text-(--text-primary) sm:text-4xl">
                   {item.name}
                 </h1>
 
-                <div className="flex flex-wrap items-center gap-4 text-sm text-[color:var(--text-secondary)]">
+                <div className="flex flex-wrap items-center gap-4 text-sm text-(--text-secondary)">
                   <div className="flex items-center gap-1">
-                    <Star className="h-5 w-5 text-[color:var(--chart-3)]" />
+                    <Star className="h-5 w-5 text-(--chart-3)" />
                     {(ratingSummary.avgRating ?? 0).toFixed(1)}
-                    <span className="text-xs text-[color:var(--text-secondary)]">
+                    <span className="text-xs text-(--text-secondary)">
                       ({ratingSummary.totalRatings ?? 0})
                     </span>
                   </div>
@@ -237,43 +237,43 @@ export default function MenuItemDetail() {
                   </div>
 
                   {item.isVeg && (
-                    <div className="flex items-center gap-1 font-semibold text-[color:var(--success)]">
+                    <div className="flex items-center gap-1 font-semibold text-(--success)">
                       <Leaf className="h-5 w-5" />
                       Veg
                     </div>
                   )}
 
                   {item.isSpicy && (
-                    <div className="flex items-center gap-1 font-semibold text-[color:var(--danger)]">
+                    <div className="flex items-center gap-1 font-semibold text-(--danger)">
                       <Flame className="h-5 w-5" />
                       Spicy
                     </div>
                   )}
                 </div>
 
-                <p className="text-3xl font-extrabold text-[color:var(--accent)]">
+                <p className="text-3xl font-extrabold text-(--accent)">
                   {formatPrice(item.price)}
                 </p>
 
-                <p className="leading-relaxed text-[color:var(--text-secondary)]">
+                <p className="leading-relaxed text-(--text-secondary)">
                   {item.description}
                 </p>
 
-                <div className="rounded-[1.5rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface-muted)] p-5">
+                <div className="rounded-3xl border border-(--border-subtle) bg-(--surface-muted) p-5">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--text-secondary)]">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-(--text-secondary)">
                         Guest Rating
                       </p>
-                      <p className="mt-2 text-2xl font-extrabold text-[color:var(--text-primary)]">
+                      <p className="mt-2 text-2xl font-extrabold text-(--text-primary)">
                         {(ratingSummary.avgRating ?? 0).toFixed(1)}
-                        <span className="ml-2 text-sm font-medium text-[color:var(--text-secondary)]">
+                        <span className="ml-2 text-sm font-medium text-(--text-secondary)">
                           / 5 from {ratingSummary.totalRatings ?? 0} ratings
                         </span>
                       </p>
                     </div>
                     {ratingQuery.data?.myRating ? (
-                      <div className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-[color:var(--text-secondary)]">
+                      <div className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-(--text-secondary)">
                         Your rating: {ratingQuery.data.myRating.rating}/5
                       </div>
                     ) : null}
@@ -281,15 +281,15 @@ export default function MenuItemDetail() {
 
                   <div className="mt-4">
                     {!canUseRatings ? (
-                      <p className="text-sm text-[color:var(--text-secondary)]">
+                      <p className="text-sm text-(--text-secondary)">
                         Customer accounts can rate menu items after ordering.
                       </p>
                     ) : ratingQuery.isLoading ? (
-                      <p className="text-sm text-[color:var(--text-secondary)]">
+                      <p className="text-sm text-(--text-secondary)">
                         Checking rating eligibility...
                       </p>
                     ) : !ratingQuery.data?.eligible ? (
-                      <p className="text-sm text-[color:var(--text-secondary)]">
+                      <p className="text-sm text-(--text-secondary)">
                         Complete an order with this item first, then you can leave a rating here.
                       </p>
                     ) : (
@@ -307,7 +307,7 @@ export default function MenuItemDetail() {
                                 className={`rounded-full border px-3 py-2 transition ${
                                   isActive
                                     ? "border-amber-300 bg-amber-50 text-amber-600"
-                                    : "border-[color:var(--border-subtle)] bg-white text-[color:var(--text-secondary)]"
+                                    : "border-(--border-subtle) bg-white text-(--text-secondary)"
                                 }`}
                               >
                                 <Star className={`h-4 w-4 ${isActive ? "fill-current" : ""}`} />
@@ -321,7 +321,7 @@ export default function MenuItemDetail() {
                           onChange={(event) => setDraftReview(event.target.value)}
                           placeholder="Optional: share a quick note about this dish."
                           rows={3}
-                          className="w-full rounded-2xl border border-[color:var(--border-subtle)] bg-white px-4 py-3 text-sm text-[color:var(--text-primary)] outline-none focus:border-[color:var(--accent)]"
+                          className="w-full rounded-2xl border border-(--border-subtle) bg-white px-4 py-3 text-sm text-(--text-primary) outline-none focus:border-(--accent)"
                         />
 
                         <div className="flex flex-wrap items-center gap-3">
@@ -339,7 +339,7 @@ export default function MenuItemDetail() {
                                 ? "Update Rating"
                                 : "Submit Rating"}
                           </button>
-                          <p className="text-xs text-[color:var(--text-secondary)]">
+                          <p className="text-xs text-(--text-secondary)">
                             One rating per guest. You can update it later.
                           </p>
                         </div>

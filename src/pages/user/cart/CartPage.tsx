@@ -293,23 +293,23 @@ export default function CartPage() {
                 type="button"
                 aria-label="Go back to menu"
                 onClick={() => goBackOrNavigate(navigate, buildQrMenuPath(qrId), location.key)}
-                className="ui-icon-button warm-linear border-transparent text-white shadow-[var(--shadow-glow)]"
+                className="ui-icon-button warm-linear border-transparent text-white shadow-(--shadow-glow)"
               >
                 <IoMdArrowRoundBack size={22} />
               </button>
               <div>
                 <p className="ui-eyebrow">Checkout</p>
-                <h1 className="font-display text-3xl font-semibold text-[color:var(--text-primary)]">
+                <h1 className="font-display text-3xl font-semibold text-(--text-primary)">
                   Your Cart
                 </h1>
-                <p className="mt-1 text-sm text-[color:var(--text-secondary)]">
+                <p className="mt-1 text-sm text-(--text-secondary)">
                   Review your items and confirm how you want the restaurant to handle this order.
                 </p>
               </div>
             </div>
 
             {items.length === 0 ? (
-              <div className="ui-empty-state p-8 text-center text-[color:var(--text-secondary)]">
+              <div className="ui-empty-state p-8 text-center text-(--text-secondary)">
                 Your cart is empty.
               </div>
             ) : (
@@ -318,7 +318,7 @@ export default function CartPage() {
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="ui-eyebrow">Order Session</p>
-                      <h2 className="mt-2 text-lg font-semibold text-[color:var(--text-primary)]">
+                      <h2 className="mt-2 text-lg font-semibold text-(--text-primary)">
                         {checkoutContextHeading}
                       </h2>
                     </div>
@@ -331,7 +331,7 @@ export default function CartPage() {
                     </div>
                   </div>
 
-                  <p className="text-sm leading-6 text-[color:var(--text-secondary)]">
+                  <p className="text-sm leading-6 text-(--text-secondary)">
                     {checkoutContextDescription}
                   </p>
                 </div>
@@ -347,7 +347,7 @@ export default function CartPage() {
 
                       <div className="flex-1 space-y-1">
                         <div className="flex justify-between gap-3">
-                          <h3 className="font-semibold text-[color:var(--text-primary)]">{item.name}</h3>
+                          <h3 className="font-semibold text-(--text-primary)">{item.name}</h3>
                           <button
                             type="button"
                             aria-label={`Remove ${item.name} from cart`}
@@ -362,7 +362,7 @@ export default function CartPage() {
                             {item.addOns.map((addOn) => (
                               <span
                                 key={`${item.id}-${addOn.name}`}
-                                className="rounded-full bg-[color:var(--accent-soft)] px-2.5 py-1 text-[11px] font-medium text-[color:var(--accent)]"
+                                className="rounded-full bg-(--accent-soft) px-2.5 py-1 text-[11px] font-medium text-(--accent)"
                               >
                                 {addOn.name} (+{formatPrice(addOn.price)})
                               </span>
@@ -370,7 +370,7 @@ export default function CartPage() {
                           </div>
                         )}
 
-                        <p className="text-xs text-[color:var(--text-secondary)]">
+                        <p className="text-xs text-(--text-secondary)">
                           Unit total {formatPrice(item.finalUnitPrice)}
                         </p>
 
@@ -380,7 +380,7 @@ export default function CartPage() {
                               type="button"
                               aria-label={`Decrease quantity for ${item.name}`}
                               onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              className="flex h-8 w-8 items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[color:var(--surface-muted)]"
+                              className="flex h-8 w-8 items-center justify-center rounded-full border border-(--border-subtle) bg-(--surface-muted)"
                             >
                               <Minus size={14} />
                             </button>
@@ -391,13 +391,13 @@ export default function CartPage() {
                               type="button"
                               aria-label={`Increase quantity for ${item.name}`}
                               onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              className="flex h-8 w-8 items-center justify-center rounded-full border border-[color:var(--accent)] bg-[color:var(--accent)] text-white"
+                              className="flex h-8 w-8 items-center justify-center rounded-full border border-(--accent) bg-(--accent) text-white"
                             >
                               <Plus size={14} />
                             </button>
                           </div>
 
-                          <span className="font-semibold text-[color:var(--text-primary)]">
+                          <span className="font-semibold text-(--text-primary)">
                             {formatPrice(item.finalUnitPrice * item.quantity)}
                           </span>
                         </div>
@@ -411,13 +411,13 @@ export default function CartPage() {
 
           {items.length > 0 && (
             <aside className="mt-5 lg:mt-0 lg:sticky lg:top-24">
-              <div className="ui-card space-y-5 rounded-[2rem] p-5">
+              <div className="ui-card space-y-5 rounded-4xl p-5">
                 <div>
                   <p className="ui-eyebrow">Checkout Summary</p>
-                  <h2 className="mt-2 font-display text-2xl font-semibold text-[color:var(--text-primary)]">
+                  <h2 className="mt-2 font-display text-2xl font-semibold text-(--text-primary)">
                     Ready to place your order?
                   </h2>
-                  <p className="mt-2 text-sm leading-6 text-[color:var(--text-secondary)]">
+                  <p className="mt-2 text-sm leading-6 text-(--text-secondary)">
                     Choose the service style and payment preference, then confirm the total below.
                   </p>
 
@@ -427,32 +427,32 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                <div className="rounded-[1.5rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface-muted)] p-4">
+                <div className="rounded-3xl border border-(--border-subtle) bg-(--surface-muted) p-4">
                   <div className="space-y-3">
-                    <div className="flex justify-between text-sm text-[color:var(--text-secondary)]">
+                    <div className="flex justify-between text-sm text-(--text-secondary)">
                       <span>Subtotal</span>
-                      <span className="font-semibold text-[color:var(--text-primary)]">
+                      <span className="font-semibold text-(--text-primary)">
                         {formatPrice(subtotal)}
                       </span>
                     </div>
-                    <div className="flex justify-between text-sm text-[color:var(--text-secondary)]">
+                    <div className="flex justify-between text-sm text-(--text-secondary)">
                       <span>Tax</span>
-                      <span className="font-semibold text-[color:var(--text-primary)]">
+                      <span className="font-semibold text-(--text-primary)">
                         {formatPrice(tax)}
                       </span>
                     </div>
-                    <div className="flex justify-between text-sm text-[color:var(--text-secondary)]">
+                    <div className="flex justify-between text-sm text-(--text-secondary)">
                       <span>Dine-in charge</span>
-                      <span className="font-semibold text-[color:var(--text-primary)]">
+                      <span className="font-semibold text-(--text-primary)">
                         {formatPrice(dineInCharge)}
                       </span>
                     </div>
 
-                    <div className="h-px bg-[color:var(--border-subtle)]" />
+                    <div className="h-px bg-(--border-subtle)" />
 
-                    <div className="flex justify-between text-base text-[color:var(--text-primary)]">
+                    <div className="flex justify-between text-base text-(--text-primary)">
                       <span>Total</span>
-                      <span className="font-semibold text-[color:var(--text-primary)]">
+                      <span className="font-semibold text-(--text-primary)">
                         {formatPrice(total)}
                       </span>
                     </div>
@@ -478,14 +478,14 @@ export default function CartPage() {
                 <div
                   className={`rounded-[1.4rem] border p-4 ${
                     hasCheckoutContext
-                      ? "border-[color:var(--border-subtle)] bg-[color:var(--surface-muted)]"
+                      ? "border-(--border-subtle) bg-(--surface-muted)"
                       : "border-red-200 bg-red-50"
                   }`}
                 >
-                  <p className="text-sm font-semibold text-[color:var(--text-primary)]">Checkout context</p>
+                  <p className="text-sm font-semibold text-(--text-primary)">Checkout context</p>
                   <p
                     className={`mt-1 text-sm leading-6 ${
-                      hasCheckoutContext ? "text-[color:var(--text-secondary)]" : "text-red-600"
+                      hasCheckoutContext ? "text-(--text-secondary)" : "text-red-600"
                     }`}
                   >
                     {checkoutContextDescription}
@@ -532,7 +532,7 @@ function ChoiceGroup<T extends string>({
 }) {
   return (
     <fieldset className="space-y-3">
-      <legend className="ui-field-label !mb-0">{legend}</legend>
+      <legend className="ui-field-label mb-0!">{legend}</legend>
 
       <div className="space-y-2.5">
         {options.map((option) => {
@@ -543,8 +543,8 @@ function ChoiceGroup<T extends string>({
               key={option.value}
               className={`flex cursor-pointer items-start gap-3 rounded-[1.4rem] border p-4 transition ${
                 checked
-                  ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)] shadow-[var(--shadow-sm)]"
-                  : "border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--surface)_88%,transparent)] hover:border-[color:var(--border-strong)]"
+                  ? "border-(--accent) bg-(--accent-soft) shadow-(--shadow-sm)"
+                  : "border-(--border-subtle) bg-[color-mix(in_srgb,var(--surface)_88%,transparent)] hover:border-(--border-strong)"
               }`}
             >
               <input
@@ -559,7 +559,7 @@ function ChoiceGroup<T extends string>({
 
               <span className="min-w-0 flex-1">
                 <span className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-semibold text-[color:var(--text-primary)]">
+                  <span className="text-sm font-semibold text-(--text-primary)">
                     {option.label}
                   </span>
 
@@ -570,7 +570,7 @@ function ChoiceGroup<T extends string>({
                   ) : null}
                 </span>
 
-                <span className="mt-1 block text-sm leading-6 text-[color:var(--text-secondary)]">
+                <span className="mt-1 block text-sm leading-6 text-(--text-secondary)">
                   {option.description}
                 </span>
               </span>

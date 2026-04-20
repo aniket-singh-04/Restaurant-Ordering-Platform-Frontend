@@ -71,7 +71,7 @@ export default function MenuList() {
       >
         <div className="text-left">
           <p className="ui-eyebrow">Browse Menu</p>
-          <h1 className="mt-3 font-display text-4xl font-bold text-[color:var(--text-primary)]">Our Menu</h1>
+          <h1 className="mt-3 font-display text-4xl font-bold text-(--text-primary)">Our Menu</h1>
           <p className="mt-2 text-muted-foreground">
             {filteredItems.length} delicious items to explore
             {activeContext
@@ -96,7 +96,7 @@ export default function MenuList() {
                 onClick={() => setShowVegOnly(!showVegOnly)}
                 className={`ui-button-pill flex h-12 items-center gap-2 rounded-full px-4 font-semibold transition ${
                   showVegOnly
-                    ? "bg-[color:var(--success)] text-white shadow-[var(--shadow-sm)]"
+                    ? "bg-(--success) text-white shadow-(--shadow-sm)"
                     : "ui-button text-sm"
                 }`}
               >
@@ -133,7 +133,7 @@ export default function MenuList() {
               <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-secondary">
                 <Search className="h-8 w-8 text-muted-foreground" />
               </div>
-              <h3 className="mb-2 font-display text-xl text-[color:var(--text-primary)]">No dishes found</h3>
+              <h3 className="mb-2 font-display text-xl text-(--text-primary)">No dishes found</h3>
               <p className="text-muted-foreground">
                 {menuQuery.isError ? "We could not load this menu." : "Try adjusting your filters or search"}
               </p>

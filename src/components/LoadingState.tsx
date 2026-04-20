@@ -47,7 +47,7 @@ export function LoadingMetricCards({
       {Array.from({ length: count }).map((_, index) => (
         <div
           key={index}
-          className={joinClasses("ui-card rounded-[1.5rem] space-y-4", cardClassName)}
+          className={joinClasses("ui-card rounded-3xl space-y-4", cardClassName)}
         >
           <div className="flex items-start justify-between gap-3">
             <SkeletonBlock className="h-12 w-12 rounded-xl" />
@@ -77,7 +77,7 @@ export function LoadingListRows({
         <div
           key={index}
           className={joinClasses(
-            "rounded-[1.5rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface)] p-4 shadow-sm",
+            "rounded-3xl border border-(--border-subtle) bg-(--surface) p-4 shadow-sm",
             rowClassName,
           )}
         >
@@ -118,7 +118,7 @@ export function LoadingTableRows({
         {Array.from({ length: rows }).map((_, rowIndex) => (
           <div
             key={rowIndex}
-            className="grid gap-3 rounded-2xl border border-[color:var(--border-subtle)] bg-[color:var(--surface-strong)] px-3 py-4"
+            className="grid gap-3 rounded-2xl border border-(--border-subtle) bg-(--surface-strong) px-3 py-4"
             style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
           >
             {Array.from({ length: columns }).map((_, columnIndex) => (
@@ -147,7 +147,7 @@ export function LoadingCardGrid({
         <div
           key={index}
           className={joinClasses(
-            "overflow-hidden rounded-xl border border-[color:var(--border-subtle)] bg-[color:var(--surface-strong)] shadow-sm",
+            "overflow-hidden rounded-xl border border-(--border-subtle) bg-(--surface-strong) shadow-sm",
             cardClassName,
           )}
         >
@@ -186,7 +186,7 @@ export function LoadingOrderCards({
       {Array.from({ length: count }).map((_, index) => (
         <article
           key={index}
-          className="rounded-[2rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface)] p-5 shadow-sm"
+          className="rounded-4xl border border-(--border-subtle) bg-(--surface) p-5 shadow-sm"
         >
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0 flex-1 space-y-3">
@@ -208,7 +208,7 @@ export function LoadingOrderCards({
             {Array.from({ length: 4 }).map((__, cardIndex) => (
               <div
                 key={cardIndex}
-                className="rounded-2xl border border-[color:var(--border-subtle)] bg-[color:var(--surface-muted)] px-4 py-3"
+                className="rounded-2xl border border-(--border-subtle) bg-(--surface-muted) px-4 py-3"
               >
                 <SkeletonBlock className="h-3 w-20" />
                 <SkeletonBlock className="mt-3 h-4 w-24" />
@@ -220,7 +220,7 @@ export function LoadingOrderCards({
             {Array.from({ length: 2 }).map((__, itemIndex) => (
               <div
                 key={itemIndex}
-                className="rounded-2xl border border-[color:var(--border-subtle)] bg-[color:var(--surface-muted)] px-4 py-4"
+                className="rounded-2xl border border-(--border-subtle) bg-(--surface-muted) px-4 py-4"
               >
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div className="min-w-0 flex-1 space-y-2">

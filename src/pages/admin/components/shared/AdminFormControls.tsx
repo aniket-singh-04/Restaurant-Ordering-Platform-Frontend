@@ -12,23 +12,23 @@ export const ADMIN_LISTBOX_BUTTON_CLASS =
   "ui-select text-left";
 
 export const ADMIN_LISTBOX_OPTIONS_CLASS =
-  "absolute z-10 mt-2 w-full rounded-[1.25rem] border border-[color:var(--border-subtle)] bg-[color:var(--surface-strong)] p-1 shadow-[var(--shadow-md)]";
+  "absolute z-10 mt-2 w-full rounded-[1.25rem] border border-(--border-subtle) bg-(--surface-strong) p-1 shadow-(--shadow-md)";
 
 const joinClasses = (...classes: Array<string | undefined>) =>
   classes.filter(Boolean).join(" ");
 
 export const getAdminListboxOptionClass = (focus: boolean) =>
-  `relative cursor-pointer select-none rounded-[1rem] py-3 pl-10 pr-4 ${
+  `relative cursor-pointer select-none rounded-2xl py-3 pl-10 pr-4 ${
     focus
-      ? "bg-[color:var(--accent-soft)] text-[color:var(--accent)]"
-      : "text-[color:var(--text-primary)]"
+      ? "bg-(--accent-soft) text-(--accent)"
+      : "text-(--text-primary)"
   }`;
 
 export function AdminSection({
   title,
   children,
   className,
-  titleClassName = "font-display text-2xl font-bold text-[color:var(--text-primary)]",
+  titleClassName = "font-display text-2xl font-bold text-(--text-primary)",
 }: {
   title?: string;
   children: ReactNode;
@@ -161,7 +161,7 @@ export function AdminCheckboxField({
   ...props
 }: AdminCheckboxFieldProps) {
   return (
-    <label className={joinClasses("flex cursor-pointer items-center gap-2 text-[color:var(--text-secondary)]", containerClassName)}>
+    <label className={joinClasses("flex cursor-pointer items-center gap-2 text-(--text-secondary)", containerClassName)}>
       <input type="checkbox" {...props} className={className} />
       {label}
     </label>

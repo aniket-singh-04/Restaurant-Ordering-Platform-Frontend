@@ -11,7 +11,7 @@ import { formatPrice } from "../../utils/formatPrice";
 import { FilterListBox } from "../../components/FilterListBox";
 import { subscriptionAccessStatusOptions } from "../../utils/filterOptions";
 
-const cardClass = "rounded-[28px] bg-white shadow-sm";
+const cardClass = "ui-card";
 
 export default function PlatformAdminSubscriptions() {
   const queryClient = useQueryClient();
@@ -83,8 +83,8 @@ export default function PlatformAdminSubscriptions() {
   return (
     <div className="space-y-6 min-w-0">
       {/* Filters / Search Card */}
-      <section className={cardClass}>
-        <p className="text-xs uppercase tracking-[0.35em] text-[#8b7661]">Subscriptions</p>
+      <section className={`${cardClass} relative z-20`}>
+        <p className="text-xs pt-4 uppercase tracking-[0.35em] text-[#8b7661]">Subscriptions</p>
         <h1 className="mt-3 font-serif text-3xl font-bold">Manual subscription overrides</h1>
         <div className="mt-6 space-y-4">
           <input
@@ -93,7 +93,7 @@ export default function PlatformAdminSubscriptions() {
             placeholder="Search subscription or restaurant IDs..."
             className="w-full rounded-2xl border border-[#e0d2c3] px-4 py-3 text-sm placeholder-[#a89c8f] transition-all hover:border-[#d7c8b7] focus:border-[#9d8c7a] focus:outline-none focus:ring-2 focus:ring-[#8f5f2f] focus:ring-opacity-20"
           />
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-3 relative z-20">
             <FilterListBox
               label="Access Status"
               options={subscriptionAccessStatusOptions}
@@ -135,7 +135,7 @@ export default function PlatformAdminSubscriptions() {
             </div>
           </div>
         ) : subscriptions.data.items.length ? (
-          <div className="overflow-x-auto rounded-2xl border border-[#f0e6dc] shadow-sm">
+          <div className="overflow-x-auto scrollbar-thin rounded-2xl border border-[#f0e6dc] shadow-sm">
             <table className="min-w-full text-left text-sm divide-y divide-[#f0e6dc]">
               <thead className="bg-[#faf6f0]">
                 <tr>
@@ -149,7 +149,7 @@ export default function PlatformAdminSubscriptions() {
                 {subscriptions.data.items.map((subscription) => (
                   <tr
                     key={subscription.id}
-                    className="border-t border-[#f4efe7] transition-colors duration-150 hover:bg-[#f9f5ee] align-top"
+                    className="border-t border-[#f4efe7] transition-colors duration-150 align-top"
                   >
                     <td className="py-4 px-4 min-w-37.5">
                       <p className="font-semibold text-[#2a221c]">{subscription.planSnapshot.name}</p>

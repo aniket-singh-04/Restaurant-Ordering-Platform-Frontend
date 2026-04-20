@@ -2,7 +2,7 @@ import { Activity, AlertCircle, BadgeIndianRupee, Building2, ReceiptText, Users 
 import { usePlatformAdminDashboard } from "../../features/platform-admin/dashboard/api";
 import { formatNumber, formatPrice } from "../../utils/formatPrice";
 
-const cardClass = "ui-card rounded-[28px] p-6";
+const cardClass = "ui-card";
 
 export default function PlatformAdminDashboard() {
   const dashboard = usePlatformAdminDashboard();
@@ -73,7 +73,7 @@ export default function PlatformAdminDashboard() {
     <div className="space-y-8">
       {/* Header */}
       <header className={`${cardClass} relative overflow-hidden`}>
-        <div className="absolute inset-0 bg-linear-to-r from-[color:var(--accent-soft)] to-transparent opacity-70" />
+        <div className="absolute inset-0 bg-linear-to-r from-(--accent-soft) to-transparent opacity-70" />
 
         <div className="relative z-10">
           <p className="text-xs uppercase tracking-widest text-gray-500 font-medium">
@@ -102,7 +102,7 @@ export default function PlatformAdminDashboard() {
                 {metric.label}
               </p>
 
-              <div className="rounded-lg bg-[color:var(--accent-soft)] p-2 text-[color:var(--accent)] transition group-hover:scale-110">
+              <div className="rounded-lg bg-(--accent-soft) p-2 text-(--accent) transition group-hover:scale-110">
                 <metric.icon className="h-5 w-5" />
               </div>
             </div>
@@ -127,7 +127,7 @@ export default function PlatformAdminDashboard() {
           </div>
         </div>
 
-        <div className="ui-table-shell mt-6">
+        <div className="overflow-x-auto scrollbar-thin mt-6">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50">
               <tr className="text-left">

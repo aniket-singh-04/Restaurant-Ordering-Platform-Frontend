@@ -176,7 +176,7 @@ export default function AdminDashboard() {
         </div>
         <button
           type="button"
-          className="ui-icon-button w-fit warm-linear relative border-transparent p-3 text-white shadow-[var(--shadow-glow)]"
+          className="ui-icon-button w-fit warm-linear relative border-transparent p-3 text-white shadow-(--shadow-glow)"
           aria-label="Open notifications"
         >
           <Bell className="w-5 h-5" />
@@ -188,7 +188,7 @@ export default function AdminDashboard() {
 
       {/* Stats Grid */}
       {isStatsLoading ? (
-        <LoadingMetricCards count={4} className="gap-6" cardClassName="rounded-[1.5rem]" />
+        <LoadingMetricCards count={4} className="gap-6" cardClassName="rounded-3xl" />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, idx) => (
@@ -197,10 +197,10 @@ export default function AdminDashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.1 }}
-              className="ui-card rounded-[1.5rem]"
+              className="ui-card rounded-3xl"
             >
               <div className="flex justify-between mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[color:var(--accent-soft)] text-[color:var(--accent)]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-(--accent-soft) text-(--accent)">
                   <stat.icon className="w-6 h-6" />
                 </div>
                 <div
@@ -231,30 +231,30 @@ export default function AdminDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="ui-card rounded-[1.5rem]"
+          className="ui-card rounded-3xl"
         >
           <div className="flex justify-between items-center mb-6">
             <h2 className="font-serif font-semibold text-lg text-[#3b2f2f]">
               Recent Orders
             </h2>
-            <button type="button" className="text-[color:var(--accent)] font-semibold" onClick={() => navigate("/admin/orders")}>
+            <button type="button" className="text-(--accent) font-semibold" onClick={() => navigate("/admin/orders")}>
               View All
             </button>
           </div>
           <div className="space-y-4">
             {branchOrders.isLoading ? (
-              <LoadingListRows rows={4} rowClassName="bg-[color:var(--surface-muted)]" />
+              <LoadingListRows rows={4} rowClassName="bg-(--surface-muted)" />
             ) : recentOrders.length > 0 ? (
               recentOrders.map((order) => (
                 <div
                   key={order.id}
-                  className="flex flex-col gap-3 rounded-xl bg-[color:var(--surface-muted)] p-4 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 rounded-xl bg-(--surface-muted) p-4 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p
                         title={order.id}
-                        className="max-w-[12rem] truncate font-semibold text-[#3b2f2f] sm:max-w-[16rem]"
+                        className="max-w-48 truncate font-semibold text-[#3b2f2f] sm:max-w-[16rem]"
                       >
                         #{order.shortId}
                       </p>
@@ -290,20 +290,20 @@ export default function AdminDashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="ui-card rounded-[1.5rem]"
+          className="ui-card rounded-3xl"
         >
           <h2 className="font-serif font-semibold text-lg text-[#3b2f2f] mb-6">
             Quick Actions
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <button type="button" className="flex flex-col items-start gap-4 rounded-xl bg-[color:var(--surface-muted)] p-6 text-left">
+            <button type="button" className="flex flex-col items-start gap-4 rounded-xl bg-(--surface-muted) p-6 text-left">
               <ShoppingBag className="text-[#ef6820] w-8 h-8" />
               <div>
                 <p className="font-semibold text-[#3b2f2f]">New Order</p>
                 <p className="text-[#6b665f] text-sm">Create manual order</p>
               </div>
             </button>
-            <button type="button" className="flex flex-col items-start gap-4 rounded-xl bg-[color:var(--surface-muted)] p-6 text-left">
+            <button type="button" className="flex flex-col items-start gap-4 rounded-xl bg-(--surface-muted) p-6 text-left">
               <TrendingUp className="text-[#22c55e] w-8 h-8" />
               <div>
                 <p className="font-semibold text-[#3b2f2f]">Reports</p>
@@ -320,7 +320,7 @@ export default function AdminDashboard() {
             </div>
             <div className="space-y-3">
               {branchOrders.isLoading ? (
-                <LoadingListRows rows={3} rowClassName="bg-[color:var(--surface-muted)]" />
+                <LoadingListRows rows={3} rowClassName="bg-(--surface-muted)" />
               ) : popularItems.items.length > 0 ? (
                 popularItems.items.map((item, index) => (
                   <div

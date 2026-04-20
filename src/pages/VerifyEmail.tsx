@@ -64,7 +64,7 @@ export default function VerifyEmail() {
         </div>
         <div className="state-card px-6 py-8 text-center sm:px-8">
           <p className="ui-eyebrow">Email Verification</p>
-          <h1 className="mt-3 font-display text-3xl font-semibold text-[color:var(--text-primary)]">
+          <h1 className="mt-3 font-display text-3xl font-semibold text-(--text-primary)">
             {state === "loading"
               ? "Verifying..."
               : state === "success"
@@ -74,8 +74,8 @@ export default function VerifyEmail() {
           <p
             className={`mt-4 text-sm ${
               state === "error"
-                ? "text-[color:var(--danger)]"
-                : "text-[color:var(--text-secondary)]"
+                ? "text-(--danger)"
+                : "text-(--text-secondary)"
             }`}
           >
             {message}

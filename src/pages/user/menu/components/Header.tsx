@@ -16,7 +16,7 @@ export default function Header({ title, className, fallbackTo }: HeaderProps) {
 
   return (
     <header
-      className={`${className ? `${className} ` : ""}sticky top-0 z-40 border-b border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--surface)_82%,transparent)] backdrop-blur-xl`}
+      className={`${className ? `${className} ` : ""}sticky top-0 z-40 border-b border-(--border-subtle) bg-[color:color-mix(in_srgb,var(--surface)_82%,transparent)] backdrop-blur-xl`}
     >
       <div className="app-container flex h-16 items-center justify-between px-4">
         <button
@@ -29,11 +29,11 @@ export default function Header({ title, className, fallbackTo }: HeaderProps) {
 
             navigate(-1);
           }}
-          className="ui-icon-button h-10 min-w-10 rounded-full p-0 text-[color:var(--accent)]"
+          className="ui-icon-button h-10 min-w-10 rounded-full p-0 text-(--accent)"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h1 className="mx-4 min-w-0 flex-1 truncate text-center font-display text-lg font-semibold text-[color:var(--text-primary)]">
+        <h1 className="mx-4 min-w-0 flex-1 truncate text-center font-display text-lg font-semibold text-(--text-primary)">
           {title}
         </h1>
         <ThemeToggle compact />

@@ -332,7 +332,7 @@ export default function Analytics() {
           </div>
           <div className="space-y-4">
             {branchOrders.isLoading ? (
-              <LoadingListRows rows={4} rowClassName="bg-[color:var(--surface-muted)]" />
+              <LoadingListRows rows={4} rowClassName="bg-(--surface-muted)" />
             ) : topItems.items.length > 0 ? (
               topItems.items.map((item, index) => (
                 <div key={item.name} className="flex items-center gap-4">

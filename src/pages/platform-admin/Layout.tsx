@@ -42,7 +42,7 @@ return (
   <div className="panel-shell min-h-screen md:flex md:items-start">
 
     {/* Mobile Header */}
-    <div className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between border-b border-[color:var(--border-subtle)] bg-[color:color-mix(in_srgb,var(--surface)_85%,transparent)] px-3 py-2.5 shadow-[var(--shadow-sm)] backdrop-blur-xl md:hidden">
+    <div className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between border-b border-(--border-subtle) bg-[color-mix(in_srgb,var(--surface)_85%,transparent)] px-3 py-2.5 shadow-(--shadow-sm) backdrop-blur-xl md:hidden">
       <h1 className="font-display text-lg font-semibold tracking-tight">Owner Console</h1>
 
       <div className="flex items-center gap-2">
@@ -52,7 +52,7 @@ return (
           onClick={() => setIsOpen(true)}
           className="ui-icon-button h-10 min-w-10 rounded-lg p-0"
         >
-          <Menu className="h-5 w-5 text-[color:var(--text-primary)]" />
+          <Menu className="h-5 w-5 text-(--text-primary)" />
         </button>
       </div>
     </div>
@@ -74,16 +74,16 @@ return (
       <div className="panel-sidebar flex h-full flex-col border-r">
 
         {/* Header */}
-        <div className="border-b border-[color:var(--border-subtle)] px-5 py-3 md:px-6">
-          <p className="text-xs font-medium uppercase tracking-widest text-[color:var(--text-muted)]">
+        <div className="border-b border-(--border-subtle) px-5 py-3 md:px-6">
+          <p className="text-xs font-medium uppercase tracking-widest text-(--text-muted)">
             Platform
           </p>
 
-          <h1 className="mt-1 font-display text-xl font-bold tracking-tight text-[color:var(--text-primary)]">
+          <h1 className="mt-1 font-display text-xl font-bold tracking-tight text-(--text-primary)">
             Owner Console
           </h1>
 
-          <p className="mt-2 truncate text-sm text-[color:var(--text-secondary)]">
+          <p className="mt-2 truncate text-sm text-(--text-secondary)">
             {admin?.email}
           </p>
 
@@ -94,7 +94,7 @@ return (
               onClick={() => setIsOpen(false)}
               className="ui-icon-button h-10 min-w-10 rounded-lg p-0 md:hidden"
             >
-              <X className="h-5 w-5 text-[color:var(--text-primary)]" />
+              <X className="h-5 w-5 text-(--text-primary)" />
             </button>}
           </div>
         </div>
@@ -122,7 +122,7 @@ return (
         </nav>
 
         {/* Logout (Sticky bottom) */}
-        <div className="border-t border-[color:var(--border-subtle)] p-3 md:p-4">
+        <div className="border-t border-(--border-subtle) p-3 md:p-4">
           <button
             type="button"
             className="ui-button ui-button-pill flex w-full items-center justify-center gap-2 py-3 text-sm font-semibold"
@@ -142,7 +142,7 @@ return (
     {/* Main */}
     <main className="mt-14 min-w-0 flex-1 p-1.5 md:mt-0 md:p-4">
       <div className="max-w-7xl mx-auto">
-        <div className="panel-content p-1.5 md:p-3">
+        <div>
           <Outlet />
         </div>
       </div>

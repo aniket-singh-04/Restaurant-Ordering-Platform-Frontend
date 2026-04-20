@@ -21,10 +21,10 @@ type ToastContextValue = {
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 const variantStyles: Record<ToastVariant, string> = {
-  success: "border-[color:color-mix(in_srgb,var(--success)_28%,transparent)] bg-[color:var(--success-soft)] text-[color:var(--success)]",
-  error: "border-[color:color-mix(in_srgb,var(--danger)_28%,transparent)] bg-[color:var(--danger-soft)] text-[color:var(--danger)]",
-  info: "border-[color:color-mix(in_srgb,var(--info)_28%,transparent)] bg-[color:var(--info-soft)] text-[color:var(--info)]",
-  warning: "border-[color:color-mix(in_srgb,var(--warning)_28%,transparent)] bg-[color:var(--warning-soft)] text-[color:var(--warning)]",
+  success: "border-[color:color-mix(in_srgb,var(--success)_28%,transparent)] bg-(--success-soft) text-(--success)",
+  error: "border-[color:color-mix(in_srgb,var(--danger)_28%,transparent)] bg-(--danger-soft) text-(--danger)",
+  info: "border-[color:color-mix(in_srgb,var(--info)_28%,transparent)] bg-(--info-soft) text-(--info)",
+  warning: "border-[color:color-mix(in_srgb,var(--warning)_28%,transparent)] bg-(--warning-soft) text-(--warning)",
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -61,19 +61,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`rounded-[1.35rem] border p-4 shadow-[var(--shadow-md)] backdrop-blur ${variantStyles[toast.variant ?? "info"]}`}
+            className={`rounded-[1.35rem] border p-4 shadow-(--shadow-md) backdrop-blur ${variantStyles[toast.variant ?? "info"]}`}
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="font-semibold text-[color:var(--text-primary)]">{toast.title}</p>
+                <p className="font-semibold text-(--text-primary)">{toast.title}</p>
                 {toast.description && (
-                  <p className="mt-1 text-sm text-[color:var(--text-secondary)]">{toast.description}</p>
+                  <p className="mt-1 text-sm text-(--text-secondary)">{toast.description}</p>
                 )}
               </div>
               <button
                 type="button"
                 onClick={() => dismissToast(toast.id)}
-                className="text-xs font-semibold text-[color:var(--text-muted)] transition hover:text-[color:var(--text-primary)]"
+                className="text-xs font-semibold text-(--text-muted) transition hover:text-(--text-primary)"
                 aria-label="Dismiss notification"
               >
                 Close

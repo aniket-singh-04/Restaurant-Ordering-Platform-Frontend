@@ -44,8 +44,8 @@ export default function CategoryPills({
               text-sm font-semibold transition-all duration-300 ease-out
               active:scale-95 focus:outline-none
               ${isActive
-                  ? "warm-linear text-white shadow-[var(--shadow-glow)]"
-                  : "border border-[color:var(--border-subtle)] bg-[color:var(--surface)] text-[color:var(--text-secondary)] hover:border-[color:var(--accent)] hover:text-[color:var(--accent)]"
+                  ? "warm-linear text-white shadow-(--shadow-glow)"
+                  : "border border-(--border-subtle) bg-(--surface) text-(--text-secondary) hover:border-(--accent) hover:text-(--accent)"
                 }
             `}
             >

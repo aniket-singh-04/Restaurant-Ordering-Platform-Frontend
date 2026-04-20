@@ -7,7 +7,7 @@ import type { AdminUserRecord } from "../../features/platform-admin/auth/types";
 import { FilterListBox } from "../../components/FilterListBox";
 import { userRoleOptions, userStatusOptions, recordStatusOptions } from "../../utils/filterOptions";
 
-const cardClass = "rounded-[28px] bg-white p-6 shadow-sm";
+const cardClass = "ui-card";
 
 export default function PlatformAdminUsers() {
   const queryClient = useQueryClient();
@@ -101,7 +101,7 @@ export default function PlatformAdminUsers() {
     <div className="space-y-8">
 
       {/* Filters Section */}
-      <section className={`${cardClass} p-4 sm:p-6`}>
+      <section className={`${cardClass} p-4 sm:p-6 relative z-20`}>
         <p className="text-xs uppercase tracking-widest text-gray-500 font-medium">
           Users
         </p>
@@ -171,7 +171,7 @@ export default function PlatformAdminUsers() {
             </div>
           </div>
         ) : users.data.items.length ? (
-          <div className="w-full overflow-x-auto">
+          <div className="w-full rounded-xl shadow-md border border-gray-200 overflow-x-auto scrollbar-thin">
             <table className="min-w-175 w-full text-sm">
 
               {/* Head */}

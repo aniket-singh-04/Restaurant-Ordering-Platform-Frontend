@@ -18,7 +18,7 @@ export default function SpecialInstructions({
       transition={{ delay: 0.2 }}
       className={`space-y-3 ${className}`}
     >
-      <h3 className="font-display text-lg font-semibold text-[color:var(--text-primary)]">Special Instructions</h3>
+      <h3 className="font-display text-lg font-semibold text-(--text-primary)">Special Instructions</h3>
       <textarea
         placeholder="Any specific requests? (e.g., less spicy, no onions)"
         value={value}

@@ -30,7 +30,7 @@ export default function PlatformAdminOrders() {
   const [paymentMode, setPaymentMode] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState<string | undefined>();
 
-  const cardClass = "rounded-[28px] bg-white p-6 shadow-md border border-[#f0e6dc]";
+  const cardClass = "ui-card";
   const query = useMemo(
     () => ({
       page: 1,
@@ -112,11 +112,11 @@ export default function PlatformAdminOrders() {
   };
 
   return (
-    <div className="grid gap-3 xl:grid-cols-[1.5fr_0.5fr] overflow-x-hidden">
+    <div className="grid gap-3 xl:grid-cols-[1.5fr_0.5fr] overflow-x-hidden relative z-50 ">
       {/* LEFT SECTION */}
       <section className="space-y-6 min-w-0">
         {/* FILTERS CARD */}
-        <div className={cardClass}>
+        <div className={`${cardClass} relative z-20`}>
           <p className="text-xs uppercase tracking-[0.35em] text-[#8b7661]">Orders</p>
           <h1 className="mt-2 font-serif text-3xl font-bold text-[#3a2b20]">
             Exception-only Order Control

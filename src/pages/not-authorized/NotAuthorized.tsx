@@ -18,10 +18,10 @@ export default function NotAuthorized() {
         </div>
         <div className="state-card px-6 py-10 text-center sm:px-8">
           <p className="ui-eyebrow">Authorization</p>
-          <h1 className="mt-3 font-display text-5xl font-extrabold text-[color:var(--text-primary)]">
+          <h1 className="mt-3 font-display text-5xl font-extrabold text-(--text-primary)">
             Access Denied
           </h1>
-          <p className="mt-4 text-base text-[color:var(--text-secondary)]">
+          <p className="mt-4 text-base text-(--text-secondary)">
             You do not have permission to view this page.
           </p>
 

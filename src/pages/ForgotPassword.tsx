@@ -75,10 +75,10 @@ export default function ForgotPassword() {
         <div className="state-card px-6 py-8 sm:px-8">
           <div className="mx-auto max-w-md">
             <p className="ui-eyebrow text-center">Account Recovery</p>
-            <h2 className="mt-3 text-center font-display text-3xl font-semibold text-[color:var(--text-primary)]">
+            <h2 className="mt-3 text-center font-display text-3xl font-semibold text-(--text-primary)">
               Reset Password
             </h2>
-            <p className="mt-3 text-center text-sm text-[color:var(--text-secondary)]">
+            <p className="mt-3 text-center text-sm text-(--text-secondary)">
               Enter your email or phone number. We will send a password reset link to the
               account email.
             </p>
@@ -90,7 +90,7 @@ export default function ForgotPassword() {
                     Email Address
                   </label>
                   <div className="ui-field-shell">
-                    <HiOutlineMailOpen className="text-[color:var(--accent)]" />
+                    <HiOutlineMailOpen className="text-(--accent)" />
                     <input
                       id="forgot-email"
                       type="email"
@@ -106,7 +106,7 @@ export default function ForgotPassword() {
                     Phone Number
                   </label>
                   <div className="ui-field-shell">
-                    <FaPhone className="text-[color:var(--accent)]" />
+                    <FaPhone className="text-(--accent)" />
                     <input
                       id="forgot-phone"
                       type="tel"
@@ -118,7 +118,7 @@ export default function ForgotPassword() {
                 </div>
 
                 {error ? (
-                  <p className="rounded-2xl border border-[color:color-mix(in_srgb,var(--danger)_24%,transparent)] bg-[color:var(--danger-soft)] px-4 py-3 text-sm text-[color:var(--danger)]">
+                  <p className="rounded-2xl border border-[color-mix(in_srgb,var(--danger)_24%,transparent)] bg-(--danger-soft) px-4 py-3 text-sm text-(--danger)">
                     {error}
                   </p>
                 ) : null}
@@ -133,7 +133,7 @@ export default function ForgotPassword() {
               </form>
             ) : (
               <div className="mt-8 space-y-4">
-                <div className="rounded-2xl border border-[color:color-mix(in_srgb,var(--success)_24%,transparent)] bg-[color:var(--success-soft)] px-4 py-4 text-sm text-[color:var(--success)]">
+                <div className="rounded-2xl border border-[color-mix(in_srgb,var(--success)_24%,transparent)] bg-(--success-soft) px-4 py-4 text-sm text-(--success)">
                   {successMessage}
                 </div>
 
@@ -151,7 +151,7 @@ export default function ForgotPassword() {
               <button
                 type="button"
                 onClick={() => navigate("/login")}
-                className="mt-5 text-sm font-semibold text-[color:var(--accent)] transition hover:text-[color:var(--accent-hover)]"
+                className="mt-5 text-sm font-semibold text-(--accent) transition hover:text-(--accent-hover)"
               >
                 Back to login
               </button>
