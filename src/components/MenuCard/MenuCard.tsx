@@ -30,6 +30,7 @@ export default function MenuCard({ item, index }: MenuCardProps) {
             images: item.images,
             video: item.video,
           }}
+          lazyVideo
         />
 
         {item.has3DModel && (

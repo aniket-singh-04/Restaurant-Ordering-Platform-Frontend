@@ -287,6 +287,14 @@ export default function Subscriptions() {
     () => (plansQuery.data ?? []).filter((plan) => plan.billingCycle === billingCycle),
     [billingCycle, plansQuery.data],
   );
+  const scheduledChange = currentQuery.data?.scheduledChange ?? null;
+  const isPlanCurrent = (plan: { code: string; billingCycle: "MONTHLY" | "YEARLY" }) =>
+    currentQuery.data?.accessStatus === "ACTIVE" &&
+    currentQuery.data?.planSnapshot?.code === plan.code &&
+    currentQuery.data?.planSnapshot?.billingCycle === plan.billingCycle;
+  const isPlanScheduled = (plan: { code: string; billingCycle: "MONTHLY" | "YEARLY" }) =>
+    scheduledChange?.planSnapshot?.code === plan.code &&
+    scheduledChange?.planSnapshot?.billingCycle === plan.billingCycle;
   const isProprietorship = paymentConnectionForm.businessType === "proprietorship";
   const businessPanLabel = isProprietorship ? "Proprietor PAN (Optional)" : "Business PAN";
   const businessPanHelperText = isProprietorship
@@ -414,6 +422,30 @@ export default function Subscriptions() {
     setActionPlanId(planId);
     try {
       const result = await initiateSubscription(planId);
+      if (result.action === "UPDATED_IN_PLACE") {
+        await refreshAll();
+        pushToast({
+          title: "Plan change scheduled",
+          description: result.message ?? "The new plan will apply from the next billing cycle.",
+          variant: "success",
+        });
+        return;
+      }
+
+      if (result.action === "UNCHANGED") {
+        await refreshAll();
+        pushToast({
+          title: "No billing change needed",
+          description: result.message ?? "This subscription is already up to date.",
+          variant: "success",
+        });
+        return;
+      }
+
+      if (!result.checkout) {
+        throw new Error("Subscription checkout details were not returned.");
+      }
+
       const checkoutResult = await openCheckout({
         key: result.checkout.keyId,
         subscription_id: result.checkout.subscriptionId,
@@ -824,6 +856,37 @@ export default function Subscriptions() {
               </p>
             </div>
           </div>
+
+          {currentQuery.data &&
+            ["GRACE", "BLOCKED", "EXPIRED"].includes(currentQuery.data.status) && (
+              <div
+                className={`mt-6 rounded-xl border px-5 py-4 text-sm ${
+                  currentQuery.data.accessStatus === "GRACE"
+                    ? "border-amber-200 bg-amber-50 text-amber-900"
+                    : "border-red-200 bg-red-50 text-red-900"
+                }`}
+              >
+                {currentQuery.data.accessStatus === "GRACE" ? (
+                  <>
+                    <p className="font-semibold">Your subscription is in the grace period.</p>
+                    <p className="mt-1">
+                      Renew now to keep orders and payments running without interruption.
+                      Grace ends{" "}
+                      {currentQuery.data.graceEndsAt
+                        ? new Date(currentQuery.data.graceEndsAt).toLocaleDateString()
+                        : "soon"}.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-semibold">Your subscription has expired.</p>
+                    <p className="mt-1">
+                      Subscribe to a plan below to restore restaurant operations.
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
         </section>
 
         <section className="rounded-2xl border border-[#eedbc8] bg-white p-4 shadow-sm">
@@ -888,11 +951,34 @@ export default function Subscriptions() {
 
                 <button
                   type="button"
-                  disabled={loading || actionPlanId === plan.id || !canManageBilling}
+                  disabled={
+                    loading ||
+                    actionPlanId === plan.id ||
+                    !canManageBilling ||
+                    isPlanCurrent(plan) ||
+                    isPlanScheduled(plan)
+                  }
                   onClick={() => void handlePurchase(plan.id)}
                   className="w-full cursor-pointer rounded-xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {actionPlanId === plan.id ? "Processing..." : "Subscribe Now"}
+                  {actionPlanId === plan.id
+                    ? "Processing..."
+                    : isPlanScheduled(plan)
+                      ? "Scheduled for next cycle"
+                      : isPlanCurrent(plan)
+                      ? "Current Plan"
+                      : currentQuery.data &&
+                          currentQuery.data.accessStatus !== "ACTIVE" &&
+                          currentQuery.data.kind === "PAID"
+                        ? "Renew Now"
+                        : currentQuery.data?.accessStatus === "ACTIVE" &&
+                            currentQuery.data.kind === "PAID"
+                          ? "Schedule Change"
+                        : currentQuery.data &&
+                            currentQuery.data.accessStatus !== "ACTIVE" &&
+                            currentQuery.data.kind === "TRIAL"
+                          ? "Upgrade Now"
+                          : "Subscribe Now"}
                 </button>
               </article>
             ))}
@@ -920,6 +1006,21 @@ export default function Subscriptions() {
                       )}
                     </h3>
                   </div>
+                  {currentQuery.data.scheduledChange ? (
+                    <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                      <p className="font-semibold">Plan change scheduled</p>
+                      <p className="mt-1">
+                        {currentQuery.data.scheduledChange.planSnapshot.name} (
+                        {currentQuery.data.scheduledChange.planSnapshot.billingCycle}) will apply{" "}
+                        {currentQuery.data.scheduledChange.effectiveAt
+                          ? `on ${new Date(
+                              currentQuery.data.scheduledChange.effectiveAt,
+                            ).toLocaleDateString()}`
+                          : "from the next billing cycle"}
+                        .
+                      </p>
+                    </div>
+                  ) : null}
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="rounded-lg bg-white p-4 border border-[#f0e3d5]">
                       <p className="text-xs uppercase font-semibold tracking-widest text-[#8d7967]">Status</p>

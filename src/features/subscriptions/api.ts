@@ -40,6 +40,23 @@ export type RestaurantSubscriptionRecord = {
   lastReminderSentAt?: string;
   lastReminderType?: string;
   createdAt?: string;
+  scheduledChange?: {
+    planId?: string | null;
+    providerPlanId?: string | null;
+    planSnapshot: {
+      code: string;
+      planGroup: string;
+      name: string;
+      billingCycle: "MONTHLY" | "YEARLY";
+      amountMinor: number;
+      currency: string;
+      description?: string;
+    };
+    scheduleChangeAt: "now" | "cycle_end";
+    effectiveAt?: string | null;
+    requestedAt?: string | null;
+    status?: string;
+  } | null;
   planSnapshot: {
     code: string;
     planGroup: string;
@@ -47,6 +64,18 @@ export type RestaurantSubscriptionRecord = {
     billingCycle: "MONTHLY" | "YEARLY";
     amountMinor: number;
     currency: string;
+    description?: string;
+  };
+};
+
+export type InitiateSubscriptionResponse = {
+  action: "CHECKOUT_REQUIRED" | "UPDATED_IN_PLACE" | "UNCHANGED";
+  message?: string;
+  subscription: RestaurantSubscriptionRecord;
+  checkout?: {
+    keyId?: string;
+    subscriptionId: string;
+    name?: string;
     description?: string;
   };
 };
@@ -80,15 +109,7 @@ export const useSubscriptionHistory = () =>
 
 export const initiateSubscription = async (planId: string) => {
   const response = await api.post<{
-    data: {
-      subscription: RestaurantSubscriptionRecord;
-      checkout: {
-        keyId?: string;
-        subscriptionId: string;
-        name?: string;
-        description?: string;
-      };
-    };
+    data: InitiateSubscriptionResponse;
   }>("/api/v1/subscriptions/initiate", { planId });
 
   return response.data;

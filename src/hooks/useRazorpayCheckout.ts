@@ -22,7 +22,7 @@ type CheckoutOptions = {
   };
   handler?: (response: {
     razorpay_payment_id: string;
-    razorpay_order_id: string;
+    razorpay_order_id?: string;
     razorpay_signature: string;
     razorpay_subscription_id?: string;
   }) => void;
@@ -68,7 +68,7 @@ export const useRazorpayCheckout = () => {
 
       return await new Promise<{
         razorpay_payment_id: string;
-        razorpay_order_id: string;
+        razorpay_order_id?: string;
         razorpay_signature: string;
         razorpay_subscription_id?: string;
       }>((resolve, reject) => {

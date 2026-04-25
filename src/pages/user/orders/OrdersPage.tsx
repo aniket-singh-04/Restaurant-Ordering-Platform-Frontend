@@ -337,6 +337,10 @@ export default function OrdersPage() {
       });
 
       if (paymentAttemptId) {
+        if (!result.razorpay_order_id) {
+          throw new Error("Razorpay order confirmation was missing an order id.");
+        }
+
         await confirmOrderPayment(paymentAttemptId, {
           razorpay_order_id: result.razorpay_order_id,
           razorpay_payment_id: result.razorpay_payment_id,
