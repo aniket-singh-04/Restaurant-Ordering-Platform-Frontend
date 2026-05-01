@@ -112,7 +112,7 @@ export default function PlatformAdminOrders() {
   };
 
   return (
-    <div className="grid gap-3 xl:grid-cols-[1.5fr_0.5fr] overflow-x-hidden relative z-50 ">
+    <div className="grid gap-3 xl:grid-cols-[1.5fr_0.5fr] overflow-x-hidden relative z-20 ">
       {/* LEFT SECTION */}
       <section className="space-y-6 min-w-0">
         {/* FILTERS CARD */}
