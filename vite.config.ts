@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
+  // 👇 If deploying to the root domain (e.g., mealtap.in), use '/'
+  // 👇 If deploying to a subfolder (e.g., mealtap.in/app/), use '/app/'
+  base: '/', 
   plugins: [
     react({
       babel: {
